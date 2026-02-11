@@ -15,9 +15,8 @@ st.set_page_config(
     layout="centered"
 )
 
-# Configurar conexión con Google Sheets
 def conectar_google_sheets():
-    """Conecta con Google Sheets usando credenciales"""
+    """Conecta con Google Sheets usando credenciales y sincroniza encabezados"""
     try:
         # Cargar credenciales desde Streamlit secrets
         credentials_dict = st.secrets["gcp_service_account"]
@@ -53,27 +52,94 @@ def conectar_google_sheets():
         # Obtener la primera hoja
         worksheet = spreadsheet.sheet1
         
-        # Si está vacía, agregar encabezados
-        if not worksheet.get_all_values():
-            headers = [
-		        "Analista",
-                "Timestamp",
-                "OT-TE",
-                "Edad",
-                "Sexo",
-                "Departamento",
-                "Municipio",
-                "Solicitante",
-                "Nivel de Riesgo",
-                "Observaciones"
-            ]
-            worksheet.append_row(headers)
+        # Definir encabezados esperados (ORDEN IMPORTANTE)
+        headers_esperados = [
+            "Analista",
+            "Timestamp",
+            "OT-TE",
+            "Edad",
+            "Sexo",
+            "Departamento",
+            "Municipio",
+            "Solicitante",
+            "Nivel de Riesgo",
+            "Observaciones"
+        ]
         
-        return worksheet, spreadsheet.url
+        # Sincronizar encabezados
+        sincronizar_encabezados(worksheet, headers_esperados)
+        
+        return worksheet, spreadsheet.url, headers_esperados
         
     except Exception as e:
         st.error(f"Error al conectar con Google Sheets: {str(e)}")
-        return None, None
+        return None, None, None
+
+
+def sincronizar_encabezados(worksheet, headers_esperados):
+    """
+    Sincroniza los encabezados de Google Sheets con los campos del formulario.
+    Agrega columnas faltantes sin afectar datos existentes.
+    """
+    try:
+        # Obtener todos los valores actuales
+        valores_actuales = worksheet.get_all_values()
+        
+        if not valores_actuales:
+            # Hoja vacía: crear encabezados desde cero
+            worksheet.append_row(headers_esperados)
+            st.info("✅ Encabezados creados en Google Sheets")
+            return
+        
+        headers_actuales = valores_actuales[0]
+        
+        # Detectar columnas faltantes
+        columnas_faltantes = []
+        for header in headers_esperados:
+            if header not in headers_actuales:
+                columnas_faltantes.append(header)
+        
+        if columnas_faltantes:
+            # Agregar columnas faltantes al final
+            num_columnas_actuales = len(headers_actuales)
+            
+            for i, nueva_columna in enumerate(columnas_faltantes):
+                col_index = num_columnas_actuales + i + 1
+                # Actualizar encabezado (fila 1)
+                worksheet.update_cell(1, col_index, nueva_columna)
+            
+            st.success(f"✅ Columnas agregadas: {', '.join(columnas_faltantes)}")
+        
+    except Exception as e:
+        st.error(f"Error al sincronizar encabezados: {str(e)}")
+
+
+def guardar_registro(worksheet, headers_esperados, datos_formulario):
+    """
+    Guarda un registro asegurando que los datos coincidan con los encabezados.
+    """
+    try:
+        # Obtener encabezados actuales de la hoja
+        headers_actuales = worksheet.row_values(1)
+        
+        # Crear una fila con valores en el orden correcto
+        nueva_fila = []
+        
+        for header in headers_actuales:
+            if header in datos_formulario:
+                nueva_fila.append(datos_formulario[header])
+            else:
+                # Si el encabezado no está en los datos, poner vacío
+                nueva_fila.append("")
+        
+        # Agregar la fila
+        worksheet.append_row(nueva_fila)
+        
+        return True
+        
+    except Exception as e:
+        st.error(f"Error al guardar registro: {str(e)}")
+        return False
 
 # ============================================================================
 # FORMULARIO PÚBLICO
@@ -83,7 +149,7 @@ def formulario_publico():
     """Formulario tipo KoBoToolbox"""
     
     # Conectar a Google Sheets
-    worksheet, sheet_url = conectar_google_sheets()
+    worksheet, sheet_url, headers_esperados = conectar_google_sheets()
     
     if worksheet is None:
         st.error("⚠️ No se pudo conectar a Google Sheets. Verifica la configuración.")
@@ -200,43 +266,52 @@ def formulario_publico():
                     st.write(f"   • {error}")
             else:
                 try:
-                    # Verificar duplicados
-                    todas_filas = worksheet.get_all_values()
-                    ot_existentes = [fila[1] for fila in todas_filas[1:]]  # Skip header
-                    
-                    if ot_te.strip() in ot_existentes:
-                        st.error(f"❌ El caso con OT-TE '{ot_te}' ya existe en el sistema")
-                    else:
-                        # Preparar datos
-                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        nueva_fila = [
-                            analista.strip(),
-                            timestamp,
-                            ot_te.strip(),
-                            edad,
-                            sexo,
-                            departamento.strip(),
-                            municipio.strip(),
-                            solicitante,
-                            nivel_riesgo,
-                            observaciones.strip() if observaciones else ""
-                        ]
-                        
-                        # Guardar en Google Sheets
-                        worksheet.append_row(nueva_fila)
-                        
-                        # Mensaje de éxito
-                        st.success(f"✅ Caso {ot_te} registrado exitosamente!")
-                        st.balloons()
-                        
-                        # Mostrar resumen
-                        st.info(f"""
-                        **Resumen del registro:**
-                        - **OT-TE:** {ot_te}
-                        - **Municipio:** {municipio}, {departamento}
-                        - **Nivel de Riesgo:** {nivel_riesgo}
-                        - **Fecha:** {timestamp}
-                        """)
+					# Verificar duplicados
+					todas_filas = worksheet.get_all_values()
+					
+					# Encontrar índice de la columna OT-TE
+					headers_actuales = todas_filas[0]
+					try:
+					    ot_col_index = headers_actuales.index("OT-TE")
+					    ot_existentes = [fila[ot_col_index] for fila in todas_filas[1:] if len(fila) > ot_col_index]
+					except ValueError:
+					    # Si no encuentra la columna OT-TE, asumir que no hay duplicados
+					    ot_existentes = []
+					
+					if ot_te.strip() in ot_existentes:
+					    st.error(f"❌ El caso con OT-TE '{ot_te}' ya existe en el sistema")
+					else:
+					    # Preparar datos como diccionario
+					    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+					    
+					    datos_formulario = {
+					        "Analista": analista.strip(),
+					        "Timestamp": timestamp,
+					        "OT-TE": ot_te.strip(),
+					        "Edad": edad,
+					        "Sexo": sexo,
+					        "Departamento": departamento.strip(),
+					        "Municipio": municipio.strip(),
+					        "Solicitante": solicitante,
+					        "Nivel de Riesgo": nivel_riesgo,
+					        "Observaciones": observaciones.strip() if observaciones else ""
+					    }
+					    
+					    # Guardar usando la función mejorada
+					    if guardar_registro(worksheet, headers_esperados, datos_formulario):
+					        # Mensaje de éxito
+					        st.success(f"✅ Caso {ot_te} registrado exitosamente!")
+					        st.balloons()
+					        
+					        # Mostrar resumen
+					        st.info(f"""
+					        **Resumen del registro:**
+					        - **Analista:** {analista}
+					        - **OT-TE:** {ot_te}
+					        - **Municipio:** {municipio}, {departamento}
+					        - **Nivel de Riesgo:** {nivel_riesgo}
+					        - **Fecha:** {timestamp}
+					        """)
                         
                 except Exception as e:
                     st.error(f"❌ Error al guardar: {str(e)}")
@@ -252,7 +327,7 @@ def formulario_publico():
 def panel_visualizacion():
     """Panel para ver los datos registrados"""
     
-    worksheet, sheet_url = conectar_google_sheets()
+    worksheet, sheet_url, _ = conectar_google_sheets()
     
     if worksheet is None:
         st.error("No se pudo conectar a Google Sheets")
