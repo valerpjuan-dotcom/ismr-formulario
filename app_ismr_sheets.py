@@ -52,22 +52,32 @@ def conectar_google_sheets():
         
         # Obtener la primera hoja
         worksheet = spreadsheet.sheet1
+        # Encabezados esperados
+        headers = [
+            "Timestamp",
+            "OT-TE",
+            "Edad",
+            "Sexo",
+            "Departamento",
+            "Municipio",
+            "Solicitante",
+            "Nivel de Riesgo",
+            "Observaciones",
+            "Analista"
+        ]
         
-        # Si está vacía, agregar encabezados
-        if not worksheet.get_all_values():
-            headers = [
-                "Timestamp",
-                "OT-TE",
-                "Edad",
-                "Sexo",
-                "Departamento",
-                "Municipio",
-                "Solicitante",
-                "Nivel de Riesgo",
-                "Observaciones",
-                "Analista"
-            ]
+        # Obtener primera fila actual
+        current_headers = worksheet.row_values(1)
+        
+        # Si la hoja está vacía → agregar encabezados
+        if not current_headers:
             worksheet.append_row(headers)
+        
+        # Si ya existe pero falta alguna columna → actualizar
+        else:
+            if current_headers != headers:
+                worksheet.update('A1', [headers])
+
         
         return worksheet, spreadsheet.url
         
