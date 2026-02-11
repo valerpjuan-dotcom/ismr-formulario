@@ -54,7 +54,6 @@ def conectar_google_sheets():
         
         # Definir encabezados esperados (ORDEN IMPORTANTE)
         headers_esperados = [
-            "Analista",
             "Timestamp",
             "OT-TE",
             "Edad",
@@ -63,7 +62,8 @@ def conectar_google_sheets():
             "Municipio",
             "Solicitante",
             "Nivel de Riesgo",
-            "Observaciones"
+            "Observaciones",
+			"Analista"
         ]
         
         # Sincronizar encabezados
@@ -285,7 +285,6 @@ def formulario_publico():
 					    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 					    
 					    datos_formulario = {
-					        "Analista": analista.strip(),
 					        "Timestamp": timestamp,
 					        "OT-TE": ot_te.strip(),
 					        "Edad": edad,
@@ -294,7 +293,8 @@ def formulario_publico():
 					        "Municipio": municipio.strip(),
 					        "Solicitante": solicitante,
 					        "Nivel de Riesgo": nivel_riesgo,
-					        "Observaciones": observaciones.strip() if observaciones else ""
+					        "Observaciones": observaciones.strip() if observaciones else "",
+							"Analista": analista.strip()
 					    }
 					    
 					    # Guardar usando la función mejorada
