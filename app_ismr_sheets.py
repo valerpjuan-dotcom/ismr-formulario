@@ -54,6 +54,7 @@ def conectar_google_sheets():
         
         # Definir encabezados esperados (ORDEN IMPORTANTE)
         headers_esperados = [
+			"Analista",
             "Timestamp",
             "OT-TE",
             "Edad",
@@ -62,8 +63,7 @@ def conectar_google_sheets():
             "Municipio",
             "Solicitante",
             "Nivel de Riesgo",
-            "Observaciones",
-			"Analista"
+            "Observaciones"
         ]
         
         # Sincronizar encabezados
@@ -268,7 +268,7 @@ def formulario_publico():
                 try:
 					# Verificar duplicados
 					todas_filas = worksheet.get_all_values()
-					
+	
 					# Encontrar índice de la columna OT-TE
 					headers_actuales = todas_filas[0]
 					try:
@@ -285,6 +285,7 @@ def formulario_publico():
 					    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 					    
 					    datos_formulario = {
+							"Analista": analista.strip(),
 					        "Timestamp": timestamp,
 					        "OT-TE": ot_te.strip(),
 					        "Edad": edad,
@@ -293,8 +294,7 @@ def formulario_publico():
 					        "Municipio": municipio.strip(),
 					        "Solicitante": solicitante,
 					        "Nivel de Riesgo": nivel_riesgo,
-					        "Observaciones": observaciones.strip() if observaciones else "",
-							"Analista": analista.strip()
+					        "Observaciones": observaciones.strip() if observaciones else ""
 					    }
 					    
 					    # Guardar usando la función mejorada
