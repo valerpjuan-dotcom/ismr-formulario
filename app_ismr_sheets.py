@@ -56,6 +56,7 @@ def conectar_google_sheets():
         # Si está vacía, agregar encabezados
         if not worksheet.get_all_values():
             headers = [
+		        "Analista",
                 "Timestamp",
                 "OT-TE",
                 "Edad",
@@ -114,6 +115,13 @@ def formulario_publico():
             help="Código único del caso"
         )
         
+	    # Analista
+        analista = st.text_area(
+            "Analista",
+            placeholder="Escriba su nombre",
+            height=100
+        )
+
         col1, col2 = st.columns(2)
         
         with col1:
@@ -202,6 +210,7 @@ def formulario_publico():
                         # Preparar datos
                         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         nueva_fila = [
+                            analista.strip(),
                             timestamp,
                             ot_te.strip(),
                             edad,
