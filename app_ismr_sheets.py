@@ -15,6 +15,19 @@ st.set_page_config(
     layout="centered"
 )
 
+# Lista oficial de analistas
+LISTA_ANALISTAS = [
+    "Juan Andrés Valero Sierra",
+    "David Leonardo Cucaita Mariño",
+    "Heidy Cangrejo",
+    "Juan Sebastián Henao Avendaño",
+    "Juan Pablo Toca",
+    "Bibiana Tellez",
+    "Efraín Velazquez",
+    "Lina Sua",
+    "Camilo Medrano"
+]
+
 # Configurar conexión con Google Sheets
 def conectar_google_sheets():
     """Conecta con Google Sheets usando credenciales"""
@@ -126,10 +139,9 @@ def formulario_publico():
         )
 
         # Analista
-        analista = st.text_area(
-            "Analista",
-            placeholder="Escriba su nombre",
-            height=100
+        analista = st.selectbox(
+            "Analista *",
+            ["Seleccione..."] + LISTA_ANALISTAS
         )
         
         col1, col2 = st.columns(2)
@@ -203,6 +215,9 @@ def formulario_publico():
                 errores.append("Debe seleccionar una entidad solicitante")
             if nivel_riesgo == "Seleccione...":
                 errores.append("Debe seleccionar un nivel de riesgo")
+            if analista == "Seleccione...":
+                errores.append("Debe seleccionar un analista")
+
             
             if errores:
                 st.error("❌ Por favor corrija los siguientes errores:")
