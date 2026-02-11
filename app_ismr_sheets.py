@@ -64,7 +64,8 @@ def conectar_google_sheets():
                 "Municipio",
                 "Solicitante",
                 "Nivel de Riesgo",
-                "Observaciones"
+                "Observaciones",
+                "Analista"
             ]
             worksheet.append_row(headers)
         
@@ -112,6 +113,13 @@ def formulario_publico():
             "OT-TE *",
             placeholder="Ejemplo: OT-2024-001",
             help="Código único del caso"
+        )
+
+        # Analista
+        analista = st.text_area(
+            "Analista",
+            placeholder="Escriba su nombre",
+            height=100
         )
         
         col1, col2 = st.columns(2)
@@ -210,7 +218,8 @@ def formulario_publico():
                             municipio.strip(),
                             solicitante,
                             nivel_riesgo,
-                            observaciones.strip() if observaciones else ""
+                            observaciones.strip() if observaciones else "",
+                            analista.strip()
                         ]
                         
                         # Guardar en Google Sheets
