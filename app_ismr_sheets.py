@@ -4,9 +4,125 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import pandas as pd
 import json
+import hashlib
 
 # ============================================================================
-# CONFIGURACIÓN
+# CONFIGURACIÓN DE SEGURIDAD
+# ============================================================================
+
+def verificar_credenciales_analista(username, password):
+    """Verifica las credenciales de un analista"""
+    try:
+        analistas = st.secrets.get("analistas", {})
+        
+        if username not in analistas:
+            return False, None
+        
+        # Hash de la contraseña ingresada
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        
+        # Comparar con el hash almacenado
+        if password_hash == analistas[username]["password_hash"]:
+            return True, analistas[username]["nombre_completo"]
+        return False, None
+        
+    except Exception as e:
+        st.error(f"Error en autenticación: {str(e)}")
+        return False, None
+
+def verificar_credenciales_admin(username, password):
+    """Verifica las credenciales de un administrador"""
+    try:
+        admins = st.secrets.get("administradores", {})
+        
+        if username not in admins:
+            return False
+        
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        return password_hash == admins[username]["password_hash"]
+        
+    except Exception as e:
+        st.error(f"Error en autenticación: {str(e)}")
+        return False
+
+def login_analista():
+    """Página de login para analistas antes de llenar el formulario"""
+    st.title("🔐 Acceso de Analistas")
+    st.markdown("---")
+    
+    st.info("👋 Identifícate para registrar casos")
+    
+    with st.form("login_analista_form"):
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            username = st.text_input("Usuario", placeholder="tu.usuario")
+            password = st.text_input("Contraseña", type="password")
+        
+        submit = st.form_submit_button("🔓 Iniciar Sesión", use_container_width=True, type="primary")
+        
+        if submit:
+            if username and password:
+                es_valido, nombre_completo = verificar_credenciales_analista(username, password)
+                if es_valido:
+                    st.session_state.analista_autenticado = True
+                    st.session_state.analista_username = username
+                    st.session_state.analista_nombre = nombre_completo
+                    st.success(f"✅ Bienvenido, {nombre_completo}")
+                    st.rerun()
+                else:
+                    st.error("❌ Usuario o contraseña incorrectos")
+            else:
+                st.warning("⚠️ Por favor completa todos los campos")
+    
+    st.markdown("---")
+    st.caption("🔒 Si olvidaste tu contraseña, contacta al administrador del sistema")
+
+def login_admin():
+    """Página de login para administradores"""
+    st.title("🔐 Acceso Administrativo")
+    st.markdown("---")
+    
+    with st.form("login_admin_form"):
+        username = st.text_input("Usuario Administrador")
+        password = st.text_input("Contraseña", type="password")
+        submit = st.form_submit_button("Iniciar Sesión", use_container_width=True)
+        
+        if submit:
+            if verificar_credenciales_admin(username, password):
+                st.session_state.admin_autenticado = True
+                st.session_state.admin_username = username
+                st.rerun()
+            else:
+                st.error("❌ Usuario o contraseña incorrectos")
+    
+    st.markdown("---")
+    st.info("💡 Si olvidaste tu contraseña, contacta al administrador del sistema")
+
+def logout_analista():
+    """Cierra la sesión del analista"""
+    st.session_state.analista_autenticado = False
+    st.session_state.analista_username = None
+    st.session_state.analista_nombre = None
+    st.rerun()
+
+def logout_admin():
+    """Cierra la sesión del administrador"""
+    st.session_state.admin_autenticado = False
+    st.session_state.admin_username = None
+    st.rerun()
+
+def require_admin(func):
+    """Decorador para requerir autenticación de admin"""
+    def wrapper(*args, **kwargs):
+        if not st.session_state.get("admin_autenticado", False):
+            login_admin()
+            return
+        return func(*args, **kwargs)
+    return wrapper
+
+# ============================================================================
+# CONFIGURACIÓN DE STREAMLIT
 # ============================================================================
 
 st.set_page_config(
@@ -15,24 +131,25 @@ st.set_page_config(
     layout="centered"
 )
 
-# Lista oficial de analistas
-LISTA_ANALISTAS = [
-    "Juan Andrés Valero Sierra",
-    "David Leonardo Cucaita Mariño",
-    "Heidy Cangrejo",
-    "Juan Sebastián Henao Avendaño",
-    "Juan Pablo Toca",
-    "Bibiana Tellez",
-    "Efraín Velazquez",
-    "Lina Sua",
-    "Camilo Medrano"
-]
+# Inicializar session state
+if "analista_autenticado" not in st.session_state:
+    st.session_state.analista_autenticado = False
+if "analista_username" not in st.session_state:
+    st.session_state.analista_username = None
+if "analista_nombre" not in st.session_state:
+    st.session_state.analista_nombre = None
+if "admin_autenticado" not in st.session_state:
+    st.session_state.admin_autenticado = False
+if "admin_username" not in st.session_state:
+    st.session_state.admin_username = None
 
-# Configurar conexión con Google Sheets
+# ============================================================================
+# CONEXIÓN A GOOGLE SHEETS
+# ============================================================================
+
 def conectar_google_sheets():
     """Conecta con Google Sheets usando credenciales"""
     try:
-        # Cargar credenciales desde Streamlit secrets
         credentials_dict = st.secrets["gcp_service_account"]
         
         scopes = [
@@ -46,25 +163,10 @@ def conectar_google_sheets():
         )
         
         client = gspread.authorize(credentials)
-        
-        # Nombre de tu hoja de cálculo en Google Sheets
         sheet_name = st.secrets.get("sheet_name", "ISMR_Casos")
-        
-        try:
-            # Intentar abrir hoja existente
-            spreadsheet = client.open(sheet_name)
-        except:
-            # Si no existe, crearla
-            spreadsheet = client.create(sheet_name)
-            # Compartir con tu email para que puedas verla
-            spreadsheet.share(
-                st.secrets.get("admin_email", ""),
-                perm_type='user',
-                role='writer'
-            )
-        
-        # Obtener la primera hoja
+        spreadsheet = client.open(sheet_name)
         worksheet = spreadsheet.sheet1
+        
         # Encabezados esperados
         headers = [
             "Timestamp",
@@ -76,21 +178,17 @@ def conectar_google_sheets():
             "Solicitante",
             "Nivel de Riesgo",
             "Observaciones",
-            "Analista"
+            "Analista",
+            "Usuario Analista"  # ← NUEVO: Para saber el usuario que llenó
         ]
         
-        # Obtener primera fila actual
         current_headers = worksheet.row_values(1)
         
-        # Si la hoja está vacía → agregar encabezados
         if not current_headers:
             worksheet.append_row(headers)
-        
-        # Si ya existe pero falta alguna columna → actualizar
         else:
             if current_headers != headers:
                 worksheet.update('A1', [headers])
-
         
         return worksheet, spreadsheet.url
         
@@ -99,32 +197,38 @@ def conectar_google_sheets():
         return None, None
 
 # ============================================================================
-# FORMULARIO PÚBLICO
+# FORMULARIO PÚBLICO (AHORA REQUIERE LOGIN DE ANALISTA)
 # ============================================================================
 
 def formulario_publico():
     """Formulario tipo KoBoToolbox"""
+    
+    # VERIFICAR SI EL ANALISTA ESTÁ AUTENTICADO
+    if not st.session_state.get("analista_autenticado", False):
+        login_analista()
+        return
     
     # Conectar a Google Sheets
     worksheet, sheet_url = conectar_google_sheets()
     
     if worksheet is None:
         st.error("⚠️ No se pudo conectar a Google Sheets. Verifica la configuración.")
-        with st.expander("ℹ️ Ver instrucciones de configuración"):
-            st.markdown("""
-            ### Pasos para configurar:
-            
-            1. Ve a la **GUIA_GOOGLE_SHEETS.md** 
-            2. Sigue los pasos para obtener credenciales
-            3. Configura los secrets en Streamlit
-            """)
         return
     
-    # Header del formulario
-    st.title("📋 Formulario de Registro de Casos ISMR")
+    # Header del formulario con información del analista
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        st.title("📋 Formulario de Registro de Casos ISMR")
+    
+    with col2:
+        st.success(f"👤 {st.session_state.analista_nombre}")
+        if st.button("🚪 Salir", use_container_width=True):
+            logout_analista()
+    
     st.markdown("---")
     
-    st.info("👋 Complete el siguiente formulario para registrar un nuevo caso")
+    st.info(f"📝 Registrando como: **{st.session_state.analista_nombre}**")
     
     # Formulario
     with st.form("formulario_casos", clear_on_submit=True):
@@ -136,12 +240,6 @@ def formulario_publico():
             "OT-TE *",
             placeholder="Ejemplo: OT-2024-001",
             help="Código único del caso"
-        )
-
-        # Analista
-        analista = st.selectbox(
-            "Analista *",
-            ["Seleccione..."] + LISTA_ANALISTAS
         )
         
         col1, col2 = st.columns(2)
@@ -215,9 +313,6 @@ def formulario_publico():
                 errores.append("Debe seleccionar una entidad solicitante")
             if nivel_riesgo == "Seleccione...":
                 errores.append("Debe seleccionar un nivel de riesgo")
-            if analista == "Seleccione...":
-                errores.append("Debe seleccionar un analista")
-
             
             if errores:
                 st.error("❌ Por favor corrija los siguientes errores:")
@@ -227,7 +322,7 @@ def formulario_publico():
                 try:
                     # Verificar duplicados
                     todas_filas = worksheet.get_all_values()
-                    ot_existentes = [fila[1] for fila in todas_filas[1:]]  # Skip header
+                    ot_existentes = [fila[1] for fila in todas_filas[1:]]
                     
                     if ot_te.strip() in ot_existentes:
                         st.error(f"❌ El caso con OT-TE '{ot_te}' ya existe en el sistema")
@@ -244,7 +339,8 @@ def formulario_publico():
                             solicitante,
                             nivel_riesgo,
                             observaciones.strip() if observaciones else "",
-                            analista.strip()
+                            st.session_state.analista_nombre,  # ← Nombre completo del analista
+                            st.session_state.analista_username  # ← Usuario del analista
                         ]
                         
                         # Guardar en Google Sheets
@@ -260,22 +356,30 @@ def formulario_publico():
                         - **OT-TE:** {ot_te}
                         - **Municipio:** {municipio}, {departamento}
                         - **Nivel de Riesgo:** {nivel_riesgo}
+                        - **Registrado por:** {st.session_state.analista_nombre}
                         - **Fecha:** {timestamp}
                         """)
                         
                 except Exception as e:
                     st.error(f"❌ Error al guardar: {str(e)}")
     
-    # Footer con información
+    # Footer
     st.markdown("---")
     st.caption("🔒 Tus datos están seguros y se almacenan de forma automática")
 
 # ============================================================================
-# PANEL DE VISUALIZACIÓN (OPCIONAL)
+# PANEL DE VISUALIZACIÓN (PROTEGIDO PARA ADMINS)
 # ============================================================================
 
+@require_admin
 def panel_visualizacion():
-    """Panel para ver los datos registrados"""
+    """Panel para ver los datos registrados - REQUIERE AUTENTICACIÓN ADMIN"""
+    
+    # Botón de cerrar sesión en el sidebar
+    with st.sidebar:
+        st.success(f"👤 Admin: {st.session_state.admin_username}")
+        if st.button("🚪 Cerrar Sesión", use_container_width=True):
+            logout_admin()
     
     worksheet, sheet_url = conectar_google_sheets()
     
@@ -319,7 +423,7 @@ def panel_visualizacion():
             # Filtros
             st.subheader("🔍 Filtrar datos")
             
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
             
             with col1:
                 if 'Departamento' in df.columns:
@@ -339,6 +443,15 @@ def panel_visualizacion():
                 else:
                     riesgo = "Todos"
             
+            with col3:
+                if 'Analista' in df.columns:
+                    analista_filtro = st.selectbox(
+                        "Analista",
+                        ["Todos"] + sorted(df['Analista'].unique().tolist())
+                    )
+                else:
+                    analista_filtro = "Todos"
+            
             # Aplicar filtros
             df_filtrado = df.copy()
             
@@ -347,6 +460,9 @@ def panel_visualizacion():
             
             if riesgo != "Todos" and 'Nivel de Riesgo' in df.columns:
                 df_filtrado = df_filtrado[df_filtrado['Nivel de Riesgo'] == riesgo]
+            
+            if analista_filtro != "Todos" and 'Analista' in df.columns:
+                df_filtrado = df_filtrado[df_filtrado['Analista'] == analista_filtro]
             
             # Mostrar tabla
             st.subheader(f"📋 Resultados ({len(df_filtrado)} casos)")
@@ -376,38 +492,28 @@ def main():
     # Detectar modo
     query_params = st.query_params
     
-    # MODO PÚBLICO (por defecto)
+    # MODO PÚBLICO (FORMULARIO CON LOGIN DE ANALISTA)
     if 'admin' not in query_params:
         formulario_publico()
     else:
         # MODO ADMINISTRADOR
-        # Menú lateral
-        st.sidebar.title("📊 Sistema ISMR")
-        st.sidebar.markdown("---")
-        
-        opcion = st.sidebar.radio(
-            "Menú",
-            ["📋 Formulario", "📊 Ver Datos"]
-        )
-        
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("🔗 Enlace Público")
-        
-        # Generar URL pública
-        url_base = st.sidebar.text_input(
-            "URL de tu app",
-            value="https://tu-app.streamlit.app",
-            help="Cambia esto por tu URL real"
-        )
-        
-        st.sidebar.code(url_base, language=None)
-        st.sidebar.info("👆 Comparte este enlace para que registren casos")
-        
-        # Mostrar sección
-        if opcion == "📋 Formulario":
-            formulario_publico()
+        if not st.session_state.get("admin_autenticado", False):
+            login_admin()
         else:
-            panel_visualizacion()
+            # Menú lateral
+            st.sidebar.title("📊 Sistema ISMR")
+            st.sidebar.markdown("---")
+            
+            opcion = st.sidebar.radio(
+                "Menú",
+                ["📋 Formulario", "📊 Ver Datos"]
+            )
+            
+            # Mostrar sección
+            if opcion == "📋 Formulario":
+                formulario_publico()
+            else:
+                panel_visualizacion()
 
 if __name__ == "__main__":
     main()
