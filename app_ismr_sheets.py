@@ -25,7 +25,8 @@ LISTA_ANALISTAS = [
     "Bibiana Tellez",
     "Efraín Velazquez",
     "Lina Sua",
-    "Camilo Medrano"
+    "Camilo Medrano",
+    "NN"
 ]
 
 # Configurar conexión con Google Sheets
