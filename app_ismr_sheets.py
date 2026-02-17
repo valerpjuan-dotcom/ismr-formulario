@@ -23,7 +23,8 @@ defaults = {
     "nombre_completo": None,
     "debe_cambiar_password": False,
     "es_admin": False,
-    "vista": None  # None | "individual" | "colectivo"
+    "vista": None,
+    "hechos": []        # ← Lista de hechos de riesgo del formulario activo
 }
 for key, val in defaults.items():
     if key not in st.session_state:
@@ -37,256 +38,8 @@ def inyectar_css_selector():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
-
-        /* Reset y base */
-        .stApp {
-            background: #0A0A0F;
-        }
-
-        /* Ocultar elementos por defecto de Streamlit en pantalla selector */
+        .stApp { background: #0A0A0F; }
         #MainMenu, footer, header { visibility: hidden; }
-
-        /* Contenedor principal del selector */
-        .selector-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            font-family: 'DM Sans', sans-serif;
-            background: #0A0A0F;
-        }
-
-        /* Header del selector */
-        .selector-header {
-            text-align: center;
-            margin-bottom: 48px;
-        }
-
-        .selector-header .greeting {
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 300;
-            font-size: 14px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: #666;
-            margin-bottom: 8px;
-        }
-
-        .selector-header .user-name {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(28px, 5vw, 42px);
-            letter-spacing: 3px;
-            color: #F0F0F0;
-            margin-bottom: 4px;
-        }
-
-        .selector-header .subtitle {
-            font-size: 13px;
-            color: #555;
-            letter-spacing: 1px;
-        }
-
-        /* Grid de botones */
-        .selector-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            width: 100%;
-            max-width: 860px;
-        }
-
-        /* Cada tarjeta de selección */
-        .selector-card {
-            position: relative;
-            border-radius: 4px;
-            padding: 60px 40px;
-            cursor: pointer;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: flex-end;
-            min-height: 340px;
-            border: 1px solid transparent;
-        }
-
-        .selector-card:hover {
-            transform: translateY(-4px);
-        }
-
-        /* Tarjeta INDIVIDUAL */
-        .card-individual {
-            background: linear-gradient(145deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%);
-            border-color: rgba(79, 139, 255, 0.15);
-            box-shadow: 0 0 0 0 rgba(79, 139, 255, 0);
-        }
-
-        .card-individual:hover {
-            box-shadow: 0 20px 60px rgba(79, 139, 255, 0.15),
-                        inset 0 0 80px rgba(79, 139, 255, 0.05);
-            border-color: rgba(79, 139, 255, 0.4);
-        }
-
-        .card-individual .card-accent {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #4F8BFF, transparent);
-        }
-
-        .card-individual .card-number {
-            color: rgba(79, 139, 255, 0.25);
-        }
-
-        .card-individual .card-icon-bg {
-            background: rgba(79, 139, 255, 0.08);
-            border: 1px solid rgba(79, 139, 255, 0.15);
-        }
-
-        .card-individual .card-icon {
-            color: #4F8BFF;
-        }
-
-        .card-individual .card-title {
-            color: #E8EEFF;
-        }
-
-        .card-individual .card-desc {
-            color: rgba(200, 210, 255, 0.45);
-        }
-
-        .card-individual .card-arrow {
-            color: #4F8BFF;
-            border-color: rgba(79, 139, 255, 0.3);
-        }
-
-        /* Tarjeta COLECTIVO */
-        .card-colectivo {
-            background: linear-gradient(145deg, #1A1A1A 0%, #1E2A1E 50%, #0A3D0A 100%);
-            border-color: rgba(74, 222, 128, 0.12);
-            box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
-        }
-
-        .card-colectivo:hover {
-            box-shadow: 0 20px 60px rgba(74, 222, 128, 0.12),
-                        inset 0 0 80px rgba(74, 222, 128, 0.04);
-            border-color: rgba(74, 222, 128, 0.35);
-        }
-
-        .card-colectivo .card-accent {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #4ADE80, transparent);
-        }
-
-        .card-colectivo .card-number {
-            color: rgba(74, 222, 128, 0.2);
-        }
-
-        .card-colectivo .card-icon-bg {
-            background: rgba(74, 222, 128, 0.07);
-            border: 1px solid rgba(74, 222, 128, 0.15);
-        }
-
-        .card-colectivo .card-icon {
-            color: #4ADE80;
-        }
-
-        .card-colectivo .card-title {
-            color: #E8FFE8;
-        }
-
-        .card-colectivo .card-desc {
-            color: rgba(200, 255, 200, 0.4);
-        }
-
-        .card-colectivo .card-arrow {
-            color: #4ADE80;
-            border-color: rgba(74, 222, 128, 0.3);
-        }
-
-        /* Elementos internos de cada card */
-        .card-number {
-            position: absolute;
-            top: 28px;
-            right: 32px;
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 80px;
-            line-height: 1;
-            letter-spacing: -2px;
-            pointer-events: none;
-        }
-
-        .card-icon-bg {
-            width: 52px;
-            height: 52px;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 28px;
-        }
-
-        .card-icon {
-            font-size: 22px;
-        }
-
-        .card-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: clamp(26px, 3.5vw, 34px);
-            letter-spacing: 3px;
-            margin-bottom: 10px;
-            line-height: 1;
-        }
-
-        .card-desc {
-            font-size: 12px;
-            letter-spacing: 0.5px;
-            line-height: 1.6;
-            margin-bottom: 32px;
-            font-weight: 300;
-        }
-
-        .card-arrow {
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            padding: 8px 18px;
-            border-radius: 2px;
-            border: 1px solid;
-        }
-
-        /* Footer del selector */
-        .selector-footer {
-            margin-top: 40px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .logout-btn-wrapper button {
-            background: transparent !important;
-            border: 1px solid #333 !important;
-            color: #555 !important;
-            font-size: 11px !important;
-            letter-spacing: 2px !important;
-            text-transform: uppercase !important;
-            padding: 8px 20px !important;
-            border-radius: 2px !important;
-            transition: all 0.2s !important;
-        }
-
-        .logout-btn-wrapper button:hover {
-            border-color: #666 !important;
-            color: #999 !important;
-        }
-
-        /* Botones Streamlit para las tarjetas */
         .btn-individual > button,
         .btn-colectivo > button {
             width: 100% !important;
@@ -298,64 +51,24 @@ def inyectar_css_selector():
             letter-spacing: 3px !important;
             font-size: 28px !important;
         }
-
         .btn-individual > button {
             background: linear-gradient(145deg, #1A1A2E 0%, #16213E 50%, #0F3460 100%) !important;
             border-color: rgba(79, 139, 255, 0.3) !important;
             color: #E8EEFF !important;
         }
-
         .btn-individual > button:hover {
             border-color: rgba(79, 139, 255, 0.7) !important;
             box-shadow: 0 20px 60px rgba(79, 139, 255, 0.2) !important;
-            transform: translateY(-4px) !important;
         }
-
         .btn-colectivo > button {
             background: linear-gradient(145deg, #1A1A1A 0%, #1E2A1E 50%, #0A3D0A 100%) !important;
             border-color: rgba(74, 222, 128, 0.25) !important;
             color: #E8FFE8 !important;
         }
-
         .btn-colectivo > button:hover {
             border-color: rgba(74, 222, 128, 0.6) !important;
             box-shadow: 0 20px 60px rgba(74, 222, 128, 0.15) !important;
-            transform: translateY(-4px) !important;
         }
-
-        /* Estilos para los formularios */
-        .form-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .form-badge-individual {
-            background: rgba(79, 139, 255, 0.12);
-            border: 1px solid rgba(79, 139, 255, 0.3);
-            color: #4F8BFF;
-            font-size: 10px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 2px;
-            font-family: 'DM Sans', sans-serif;
-        }
-
-        .form-badge-colectivo {
-            background: rgba(74, 222, 128, 0.1);
-            border: 1px solid rgba(74, 222, 128, 0.3);
-            color: #4ADE80;
-            font-size: 10px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 2px;
-            font-family: 'DM Sans', sans-serif;
-        }
-
-        /* Botón volver */
         .stButton > button[kind="secondary"] {
             background: transparent !important;
             border: 1px solid #333 !important;
@@ -379,17 +92,14 @@ def conectar_sheet_usuarios():
         credentials = Credentials.from_service_account_info(credentials_dict, scopes=scopes)
         client = gspread.authorize(credentials)
         sheet_name = st.secrets.get("sheet_usuarios", "ISMR_Usuarios")
-
         try:
             spreadsheet = client.open(sheet_name)
         except:
             spreadsheet = client.create(sheet_name)
             spreadsheet.share(credentials_dict["client_email"], perm_type='user', role='writer')
-
         worksheet = spreadsheet.sheet1
         headers = ["username", "password_hash", "nombre_completo", "es_admin", "debe_cambiar_password"]
-        current_headers = worksheet.row_values(1)
-        if not current_headers:
+        if not worksheet.row_values(1):
             worksheet.append_row(headers)
         return worksheet
     except Exception as e:
@@ -432,9 +142,10 @@ def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe
     try:
         if obtener_usuario(username):
             return False
-        nueva_fila = [username, password_hash, nombre_completo,
-                      str(es_admin).upper(), str(debe_cambiar).upper()]
-        worksheet.append_row(nueva_fila)
+        worksheet.append_row([
+            username, password_hash, nombre_completo,
+            str(es_admin).upper(), str(debe_cambiar).upper()
+        ])
         return True
     except Exception as e:
         st.error(f"Error al crear usuario: {str(e)}")
@@ -449,16 +160,15 @@ def listar_usuarios():
     except:
         return []
 
+
 # ============================================================================
-# GOOGLE SHEETS - CASOS (Individual y Colectivo)
+# GOOGLE SHEETS - CASOS Y HECHOS
 # ============================================================================
 
 def conectar_sheet_casos(tipo="individual"):
     """
-    Conecta a la hoja de casos según el tipo.
-    tipo = "individual" → hoja 'Individual'
-    tipo = "colectivo"  → hoja 'Colectivo'
-    Ambas hojas están en el mismo Google Spreadsheet.
+    Retorna (hoja_casos, hoja_hechos, url) para el tipo dado.
+    Todas las hojas viven en el mismo Spreadsheet (sheet_name).
     """
     try:
         credentials_dict = st.secrets["gcp_service_account"]
@@ -469,37 +179,55 @@ def conectar_sheet_casos(tipo="individual"):
         credentials = Credentials.from_service_account_info(credentials_dict, scopes=scopes)
         client = gspread.authorize(credentials)
 
-        # Mismo spreadsheet para ambos tipos
         sheet_name = st.secrets.get("sheet_name", "ISMR_Casos")
         spreadsheet = client.open(sheet_name)
 
-        # Nombre de la pestaña según el tipo
-        tab_name = "Individual" if tipo == "individual" else "Colectivo"
+        # ── Nombres de pestañas ────────────────────────────────────────────
+        tab_casos  = "Individual"  if tipo == "individual" else "Colectivo"
+        tab_hechos = "Hechos_Individual" if tipo == "individual" else "Hechos_Colectivo"
 
-        # Buscar o crear la pestaña
+        # ── Hoja de Casos ──────────────────────────────────────────────────
         try:
-            worksheet = spreadsheet.worksheet(tab_name)
+            hoja_casos = spreadsheet.worksheet(tab_casos)
         except:
-            worksheet = spreadsheet.add_worksheet(title=tab_name, rows="1000", cols="20")
+            hoja_casos = spreadsheet.add_worksheet(title=tab_casos, rows="1000", cols="20")
 
-        # Encabezados
-        headers = [
-            "Timestamp", "OT-TE", "Edad", "Sexo",
+        headers_casos = [
+            "ID_Caso", "Timestamp", "OT-TE", "Edad", "Sexo",
             "Departamento", "Municipio", "Solicitante",
-            "Nivel de Riesgo", "Observaciones", "Analista", "Usuario Analista"
+            "Nivel de Riesgo", "Observaciones",
+            "Analista", "Usuario Analista"
         ]
+        if not hoja_casos.get_all_values():
+            hoja_casos.append_row(headers_casos)
 
-        current_headers = worksheet.row_values(1)
-        if not current_headers:
-            worksheet.append_row(headers)
-        elif current_headers != headers:
-            worksheet.update('A1', [headers])
+        # ── Hoja de Hechos de Riesgo ───────────────────────────────────────
+        try:
+            hoja_hechos = spreadsheet.worksheet(tab_hechos)
+        except:
+            hoja_hechos = spreadsheet.add_worksheet(title=tab_hechos, rows="1000", cols="20")
 
-        return worksheet, spreadsheet.url
+        headers_hechos = [
+            "ID_Hecho", "ID_Caso", "OT-TE",
+            "Tipo de Hecho", "Fecha del Hecho",
+            "Lugar", "Autor", "Descripcion",
+            "Analista", "Usuario Analista"
+        ]
+        if not hoja_hechos.get_all_values():
+            hoja_hechos.append_row(headers_hechos)
+
+        return hoja_casos, hoja_hechos, spreadsheet.url
 
     except Exception as e:
         st.error(f"Error al conectar Google Sheets ({tipo}): {str(e)}")
-        return None, None
+        return None, None, None
+
+
+def obtener_siguiente_id(hoja):
+    """ID autoincremental basado en filas existentes (sin encabezado)."""
+    valores = hoja.get_all_values()
+    return max(len(valores), 1)   # 1 si solo hay encabezado
+
 
 # ============================================================================
 # AUTENTICACIÓN
@@ -511,13 +239,13 @@ def verificar_credenciales(username, password):
         return False, None, False, False
     try:
         if 'password_hash' not in usuario:
-            st.error("❌ La hoja de usuarios no tiene el formato correcto. Verifica los encabezados.")
+            st.error("❌ La hoja de usuarios no tiene el formato correcto.")
             return False, None, False, False
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         if password_hash == usuario['password_hash']:
             debe_cambiar = str(usuario.get('debe_cambiar_password', 'FALSE')).upper() == 'TRUE'
-            es_admin = str(usuario.get('es_admin', 'FALSE')).upper() == 'TRUE'
-            nombre = usuario.get('nombre_completo', username)
+            es_admin     = str(usuario.get('es_admin', 'FALSE')).upper() == 'TRUE'
+            nombre       = usuario.get('nombre_completo', username)
             return True, nombre, debe_cambiar, es_admin
         return False, None, False, False
     except Exception as e:
@@ -528,6 +256,7 @@ def logout():
     for key in defaults:
         st.session_state[key] = defaults[key]
     st.rerun()
+
 
 # ============================================================================
 # PANTALLA: LOGIN
@@ -547,11 +276,12 @@ def login_page():
             if username and password:
                 es_valido, nombre_completo, debe_cambiar, es_admin = verificar_credenciales(username, password)
                 if es_valido:
-                    st.session_state.autenticado = True
-                    st.session_state.username = username
-                    st.session_state.nombre_completo = nombre_completo
+                    st.session_state.autenticado          = True
+                    st.session_state.username             = username
+                    st.session_state.nombre_completo      = nombre_completo
                     st.session_state.debe_cambiar_password = debe_cambiar
-                    st.session_state.es_admin = es_admin
+                    st.session_state.es_admin             = es_admin
+                    st.session_state.hechos               = []
                     st.rerun()
                 else:
                     st.error("❌ Usuario o contraseña incorrectos")
@@ -561,6 +291,7 @@ def login_page():
     st.markdown("---")
     st.caption("🔒 Si tienes problemas, contacta al administrador")
 
+
 # ============================================================================
 # PANTALLA: CAMBIO OBLIGATORIO DE CONTRASEÑA
 # ============================================================================
@@ -568,12 +299,12 @@ def login_page():
 def pantalla_cambiar_password():
     st.title("🔐 Cambio de Contraseña Obligatorio")
     st.markdown("---")
-    st.warning("⚠️ Debes cambiar tu contraseña por defecto antes de continuar")
+    st.warning("⚠️ Debes cambiar tu contraseña antes de continuar")
     st.info(f"👤 Usuario: **{st.session_state.username}**")
 
     with st.form("cambiar_password_form"):
-        nueva_password = st.text_input("Nueva Contraseña", type="password", help="Mínimo 8 caracteres")
-        confirmar_password = st.text_input("Confirmar Nueva Contraseña", type="password")
+        nueva_password   = st.text_input("Nueva Contraseña", type="password", help="Mínimo 8 caracteres")
+        confirmar_password = st.text_input("Confirmar Contraseña", type="password")
         st.caption("💡 Usa una contraseña segura con letras, números y símbolos")
         submit = st.form_submit_button("✅ Cambiar Contraseña", use_container_width=True, type="primary")
 
@@ -599,6 +330,7 @@ def pantalla_cambiar_password():
                 else:
                     st.error("❌ Error al actualizar. Intenta de nuevo.")
 
+
 # ============================================================================
 # PANTALLA: SELECTOR (Individual / Colectivo)
 # ============================================================================
@@ -609,9 +341,8 @@ def pantalla_selector():
     nombre = st.session_state.nombre_completo or "Analista"
     nombre_corto = nombre.split()[0] if nombre else "Analista"
 
-    # Header
     st.markdown(f"""
-    <div style="text-align:center; margin-bottom: 48px; margin-top: 20px;">
+    <div style="text-align:center; margin-bottom:48px; margin-top:20px;">
         <p style="font-family:'DM Sans',sans-serif; font-weight:300; font-size:13px;
                   letter-spacing:4px; text-transform:uppercase; color:#555; margin-bottom:6px;">
             BIENVENIDO
@@ -626,7 +357,6 @@ def pantalla_selector():
     </div>
     """, unsafe_allow_html=True)
 
-    # Botones en dos columnas
     col1, col2 = st.columns(2, gap="medium")
 
     with col1:
@@ -637,26 +367,19 @@ def pantalla_selector():
                       color:rgba(79,139,255,0.6); text-transform:uppercase; margin:6px 0 2px;">
                 REGISTRO
             </p>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
         st.markdown('<div class="btn-individual">', unsafe_allow_html=True)
-        if st.button(
-            "FORMULARIO\nINDIVIDUAL",
-            key="btn_individual",
-            use_container_width=True,
-            help="Registrar un caso individual"
-        ):
-            st.session_state.vista = "individual"
+        if st.button("FORMULARIO\nINDIVIDUAL", key="btn_individual",
+                     use_container_width=True, help="Registrar un caso individual"):
+            st.session_state.vista  = "individual"
+            st.session_state.hechos = []
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("""
-        <p style="text-align:center; font-size:11px; color:#444;
-                  letter-spacing:0.5px; margin-top:10px;">
-            Un caso por registro
-        </p>
-        """, unsafe_allow_html=True)
+        st.markdown("""<p style="text-align:center; font-size:11px; color:#444;
+                  letter-spacing:0.5px; margin-top:10px;">Un caso por registro</p>""",
+                    unsafe_allow_html=True)
 
     with col2:
         st.markdown("""
@@ -666,28 +389,20 @@ def pantalla_selector():
                       color:rgba(74,222,128,0.6); text-transform:uppercase; margin:6px 0 2px;">
                 REGISTRO
             </p>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
         st.markdown('<div class="btn-colectivo">', unsafe_allow_html=True)
-        if st.button(
-            "FORMULARIO\nCOLECTIVO",
-            key="btn_colectivo",
-            use_container_width=True,
-            help="Registrar un caso colectivo"
-        ):
-            st.session_state.vista = "colectivo"
+        if st.button("FORMULARIO\nCOLECTIVO", key="btn_colectivo",
+                     use_container_width=True, help="Registrar un caso colectivo"):
+            st.session_state.vista  = "colectivo"
+            st.session_state.hechos = []
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("""
-        <p style="text-align:center; font-size:11px; color:#444;
-                  letter-spacing:0.5px; margin-top:10px;">
-            Múltiples personas afectadas
-        </p>
-        """, unsafe_allow_html=True)
+        st.markdown("""<p style="text-align:center; font-size:11px; color:#444;
+                  letter-spacing:0.5px; margin-top:10px;">Múltiples personas afectadas</p>""",
+                    unsafe_allow_html=True)
 
-    # Botón cerrar sesión
     st.markdown("<br>", unsafe_allow_html=True)
     col_space1, col_logout, col_space2 = st.columns([2, 1, 2])
     with col_logout:
@@ -700,39 +415,38 @@ def pantalla_selector():
 # ============================================================================
 
 def formulario_casos(tipo="individual"):
-    """Formulario de registro — funciona para individual y colectivo"""
+    """Formulario de registro con sección de Hechos de Riesgo."""
 
     es_individual = tipo == "individual"
-    color = "#4F8BFF" if es_individual else "#4ADE80"
-    icono = "👤" if es_individual else "👥"
-    label_badge = "INDIVIDUAL" if es_individual else "COLECTIVO"
-    titulo = "Formulario Individual" if es_individual else "Formulario Colectivo"
+    color         = "#4F8BFF" if es_individual else "#4ADE80"
+    icono         = "👤"      if es_individual else "👥"
+    label_badge   = "INDIVIDUAL" if es_individual else "COLECTIVO"
+    titulo        = "Formulario Individual" if es_individual else "Formulario Colectivo"
 
-    worksheet, sheet_url = conectar_sheet_casos(tipo)
+    hoja_casos, hoja_hechos, sheet_url = conectar_sheet_casos(tipo)
 
-    if worksheet is None:
+    if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets")
         return
 
-    # Header
+    # ── Header ────────────────────────────────────────────────────────────
     col_back, col_title = st.columns([1, 4])
 
     with col_back:
         if st.button("← Volver", type="secondary"):
-            st.session_state.vista = None
+            st.session_state.vista  = None
+            st.session_state.hechos = []
             st.rerun()
 
     with col_title:
+        rgb = "79,139,255" if es_individual else "74,222,128"
         st.markdown(f"""
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
             <span style="font-size:22px;">{icono}</span>
             <span style="font-size:22px; font-weight:600; color:#F0F0F0;">{titulo}</span>
-            <span style="background:rgba({('79,139,255' if es_individual else '74,222,128')},0.1);
-                         border:1px solid rgba({('79,139,255' if es_individual else '74,222,128')},0.3);
+            <span style="background:rgba({rgb},0.1); border:1px solid rgba({rgb},0.3);
                          color:{color}; font-size:10px; letter-spacing:2px;
-                         padding:3px 9px; border-radius:2px;">
-                {label_badge}
-            </span>
+                         padding:3px 9px; border-radius:2px;">{label_badge}</span>
         </div>
         <p style="font-size:12px; color:#555; margin:0;">
             Registrando como: <strong style="color:#888;">{st.session_state.nombre_completo}</strong>
@@ -741,76 +455,205 @@ def formulario_casos(tipo="individual"):
 
     st.markdown("---")
 
-    with st.form(f"formulario_{tipo}", clear_on_submit=True):
-        st.subheader("📝 Información del Caso")
+    # ══════════════════════════════════════════════════════════════════════
+    # SECCIÓN 1 — DATOS DEL CASO
+    # ══════════════════════════════════════════════════════════════════════
+    st.subheader("📝 Información del Caso")
 
-        ot_te = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001")
+    ot_te = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001")
 
-        col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
 
-        with col1:
-            edad = st.number_input("Edad *", min_value=0, max_value=120, value=None)
-            sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"])
-            departamento = st.text_input("Departamento *", placeholder="Ejemplo: Antioquia")
+    with col1:
+        edad        = st.number_input("Edad *", min_value=0, max_value=120, value=None)
+        sexo        = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"])
+        departamento = st.text_input("Departamento *", placeholder="Ejemplo: Antioquia")
 
-        with col2:
-            municipio = st.text_input("Municipio *", placeholder="Ejemplo: Medellín")
-            solicitante = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"])
-            nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"])
+    with col2:
+        municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Medellín")
+        solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"])
+        nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"])
 
-        observaciones = st.text_area("Observaciones (Opcional)", height=100)
+    observaciones = st.text_area("Observaciones (Opcional)", height=80)
 
-        st.markdown("---")
+    # ══════════════════════════════════════════════════════════════════════
+    # SECCIÓN 2 — HECHOS DE RIESGO
+    # ══════════════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.subheader("⚠️ Hechos de Riesgo")
+    st.caption("Opcional. Agrega uno o varios hechos de riesgo asociados a este caso.")
 
-        btn_label = f"✅ REGISTRAR CASO {label_badge}"
-        submitted = st.form_submit_button(btn_label, use_container_width=True, type="primary")
+    # Mostrar hechos ya agregados
+    for i, hecho in enumerate(st.session_state.hechos):
+        with st.container(border=True):
+            col_tit, col_del = st.columns([5, 1])
+            with col_tit:
+                st.markdown(f"**Hecho #{i + 1} — {hecho['tipo']}**")
+            with col_del:
+                if st.button("🗑️", key=f"del_{tipo}_{i}", help="Eliminar este hecho"):
+                    st.session_state.hechos.pop(i)
+                    st.rerun()
 
-        if submitted:
-            errores = []
-            if not ot_te or ot_te.strip() == "":
-                errores.append("El campo OT-TE es obligatorio")
-            if edad is None or edad == 0:
-                errores.append("La edad es obligatoria")
-            if sexo == "Seleccione...":
-                errores.append("Debe seleccionar un sexo")
-            if not departamento or departamento.strip() == "":
-                errores.append("El departamento es obligatorio")
-            if not municipio or municipio.strip() == "":
-                errores.append("El municipio es obligatorio")
-            if solicitante == "Seleccione...":
-                errores.append("Debe seleccionar una entidad solicitante")
-            if nivel_riesgo == "Seleccione...":
-                errores.append("Debe seleccionar un nivel de riesgo")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"📅 **Fecha:** {hecho['fecha']}")
+                st.write(f"📍 **Lugar:** {hecho['lugar']}")
+            with c2:
+                st.write(f"👤 **Autor:** {hecho['autor']}")
+            st.write(f"📄 **Descripción:** {hecho['descripcion']}")
 
-            if errores:
-                st.error("❌ Por favor corrija los siguientes errores:")
-                for e in errores:
-                    st.write(f"   • {e}")
-            else:
-                try:
-                    todas_filas = worksheet.get_all_values()
-                    ot_existentes = [fila[1] for fila in todas_filas[1:]]
+    # Sub-formulario para agregar un hecho
+    with st.expander("➕ Agregar hecho de riesgo",
+                     expanded=len(st.session_state.hechos) == 0):
 
-                    if ot_te.strip() in ot_existentes:
-                        st.error(f"❌ El caso '{ot_te}' ya existe en esta hoja")
-                    else:
-                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        nueva_fila = [
-                            timestamp, ot_te.strip(), edad, sexo,
-                            departamento.strip(), municipio.strip(),
-                            solicitante, nivel_riesgo,
-                            observaciones.strip() if observaciones else "",
+        with st.form(f"form_hecho_{tipo}", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+
+            with c1:
+                tipo_hecho = st.selectbox("Tipo de Hecho *", [
+                    "Seleccione...", "Amenaza", "Atentado",
+                    "Desplazamiento forzado", "Homicidio", "Secuestro",
+                    "Extorsión", "Reclutamiento forzado",
+                    "Violencia sexual", "Confinamiento", "Otro"
+                ])
+                fecha_hecho = st.date_input("Fecha del Hecho *")
+                lugar_hecho = st.text_input("Lugar donde ocurrió *",
+                                            placeholder="Municipio, vereda, barrio...")
+
+            with c2:
+                autor_hecho = st.text_input("Autor *",
+                                            placeholder="Grupo armado, persona, etc.")
+                descripcion_hecho = st.text_area("Descripción *",
+                                                 placeholder="Describe brevemente el hecho...",
+                                                 height=122)
+
+            agregar = st.form_submit_button("➕ Agregar este hecho",
+                                            use_container_width=True)
+
+            if agregar:
+                err_h = []
+                if tipo_hecho == "Seleccione...":
+                    err_h.append("Selecciona el tipo de hecho")
+                if not lugar_hecho.strip():
+                    err_h.append("El lugar es obligatorio")
+                if not autor_hecho.strip():
+                    err_h.append("El autor es obligatorio")
+                if not descripcion_hecho.strip():
+                    err_h.append("La descripción es obligatoria")
+
+                if err_h:
+                    for e in err_h:
+                        st.error(f"• {e}")
+                else:
+                    st.session_state.hechos.append({
+                        "tipo":        tipo_hecho,
+                        "fecha":       str(fecha_hecho),
+                        "lugar":       lugar_hecho.strip(),
+                        "autor":       autor_hecho.strip(),
+                        "descripcion": descripcion_hecho.strip()
+                    })
+                    st.success("✅ Hecho agregado")
+                    st.rerun()
+
+    # ══════════════════════════════════════════════════════════════════════
+    # BOTÓN REGISTRAR CASO
+    # ══════════════════════════════════════════════════════════════════════
+    st.markdown("---")
+
+    if st.button(f"✅ REGISTRAR CASO {label_badge}",
+                 use_container_width=True, type="primary"):
+
+        errores = []
+        if not ot_te or ot_te.strip() == "":
+            errores.append("El campo OT-TE es obligatorio")
+        if edad is None or edad == 0:
+            errores.append("La edad es obligatoria")
+        if sexo == "Seleccione...":
+            errores.append("Debe seleccionar un sexo")
+        if not departamento or departamento.strip() == "":
+            errores.append("El departamento es obligatorio")
+        if not municipio or municipio.strip() == "":
+            errores.append("El municipio es obligatorio")
+        if solicitante == "Seleccione...":
+            errores.append("Debe seleccionar una entidad solicitante")
+        if nivel_riesgo == "Seleccione...":
+            errores.append("Debe seleccionar un nivel de riesgo")
+
+        if errores:
+            st.error("❌ Por favor corrija los siguientes errores:")
+            for e in errores:
+                st.write(f"   • {e}")
+        else:
+            try:
+                # Verificar duplicado OT-TE
+                todas_filas = hoja_casos.get_all_values()
+                ot_existentes = [fila[2] for fila in todas_filas[1:]]
+
+                if ot_te.strip() in ot_existentes:
+                    st.error(f"❌ El caso '{ot_te}' ya existe en esta hoja")
+                else:
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                    # Guardar caso → Hoja de Casos
+                    id_caso = obtener_siguiente_id(hoja_casos)
+                    hoja_casos.append_row([
+                        id_caso,
+                        timestamp,
+                        ot_te.strip(),
+                        edad,
+                        sexo,
+                        departamento.strip(),
+                        municipio.strip(),
+                        solicitante,
+                        nivel_riesgo,
+                        observaciones.strip() if observaciones else "",
+                        st.session_state.nombre_completo,
+                        st.session_state.username
+                    ])
+
+                    # Guardar hechos → Hoja de Hechos
+                    hechos_guardados = 0
+                    for hecho in st.session_state.hechos:
+                        id_hecho = obtener_siguiente_id(hoja_hechos)
+                        hoja_hechos.append_row([
+                            id_hecho,
+                            id_caso,
+                            ot_te.strip(),
+                            hecho["tipo"],
+                            hecho["fecha"],
+                            hecho["lugar"],
+                            hecho["autor"],
+                            hecho["descripcion"],
                             st.session_state.nombre_completo,
                             st.session_state.username
-                        ]
-                        worksheet.append_row(nueva_fila)
-                        st.success(f"✅ Caso {ot_te} registrado en {label_badge}!")
-                        st.balloons()
-                except Exception as e:
-                    st.error(f"❌ Error al guardar: {str(e)}")
+                        ])
+                        hechos_guardados += 1
+
+                    # Limpiar hechos del estado
+                    st.session_state.hechos = []
+
+                    # Confirmación
+                    st.success(f"✅ Caso **{ot_te}** registrado en {label_badge}!")
+                    if hechos_guardados > 0:
+                        st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
+                    st.balloons()
+
+                    st.info(f"""
+                    **Resumen:**
+                    - **ID Caso:** {id_caso}
+                    - **OT-TE:** {ot_te}
+                    - **Ubicación:** {municipio}, {departamento}
+                    - **Nivel de Riesgo:** {nivel_riesgo}
+                    - **Hechos registrados:** {hechos_guardados}
+                    - **Registrado por:** {st.session_state.nombre_completo}
+                    - **Fecha:** {timestamp}
+                    """)
+
+            except Exception as e:
+                st.error(f"❌ Error al guardar: {str(e)}")
 
     st.markdown("---")
-    st.caption(f"🔒 Los datos se guardan en la hoja '{label_badge.capitalize()}' de Google Sheets")
+    st.caption(f"🔒 Los datos se guardan en la hoja '{tab_casos if tipo=='individual' else 'Colectivo'}' de Google Sheets")
 
 
 # ============================================================================
@@ -825,57 +668,99 @@ def panel_visualizacion():
 
     for tab, tipo in [(tab_ind, "individual"), (tab_col, "colectivo")]:
         with tab:
-            worksheet, sheet_url = conectar_sheet_casos(tipo)
-            if worksheet is None:
+            hoja_casos, hoja_hechos, sheet_url = conectar_sheet_casos(tipo)
+
+            if hoja_casos is None:
                 st.error(f"No se pudo conectar a la hoja {tipo}")
                 continue
 
             if sheet_url:
                 st.markdown(f"[📝 Abrir en Google Sheets]({sheet_url})")
 
-            try:
-                datos = worksheet.get_all_records()
-                if datos:
-                    df = pd.DataFrame(datos)
+            # Sub-pestañas: Casos y Hechos
+            sub1, sub2 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo"])
 
-                    c1, c2, c3, c4 = st.columns(4)
-                    c1.metric("Total Casos", len(df))
-                    c2.metric("Departamentos", df['Departamento'].nunique() if 'Departamento' in df.columns else 0)
-                    c3.metric("Municipios", df['Municipio'].nunique() if 'Municipio' in df.columns else 0)
-                    riesgo_alto = df['Nivel de Riesgo'].isin(['EXTREMO', 'EXTRAORDINARIO']).sum() if 'Nivel de Riesgo' in df.columns else 0
-                    c4.metric("Riesgo Alto", riesgo_alto)
+            # ── Casos ──────────────────────────────────────────────────
+            with sub1:
+                try:
+                    datos = hoja_casos.get_all_records()
+                    if datos:
+                        df = pd.DataFrame(datos)
 
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        depto = st.selectbox("Departamento", ["Todos"] + sorted(df['Departamento'].unique().tolist()) if 'Departamento' in df.columns else ["Todos"], key=f"depto_{tipo}")
-                    with col2:
-                        riesgo = st.selectbox("Nivel de Riesgo", ["Todos"] + sorted(df['Nivel de Riesgo'].unique().tolist()) if 'Nivel de Riesgo' in df.columns else ["Todos"], key=f"riesgo_{tipo}")
-                    with col3:
-                        analista_f = st.selectbox("Analista", ["Todos"] + sorted(df['Analista'].unique().tolist()) if 'Analista' in df.columns else ["Todos"], key=f"analista_{tipo}")
+                        c1, c2, c3, c4 = st.columns(4)
+                        c1.metric("Total Casos", len(df))
+                        c2.metric("Departamentos", df['Departamento'].nunique() if 'Departamento' in df.columns else 0)
+                        c3.metric("Municipios",    df['Municipio'].nunique()    if 'Municipio'    in df.columns else 0)
+                        riesgo_alto = df['Nivel de Riesgo'].isin(['EXTREMO', 'EXTRAORDINARIO']).sum() if 'Nivel de Riesgo' in df.columns else 0
+                        c4.metric("Riesgo Alto", riesgo_alto)
 
-                    df_f = df.copy()
-                    if depto != "Todos" and 'Departamento' in df.columns:
-                        df_f = df_f[df_f['Departamento'] == depto]
-                    if riesgo != "Todos" and 'Nivel de Riesgo' in df.columns:
-                        df_f = df_f[df_f['Nivel de Riesgo'] == riesgo]
-                    if analista_f != "Todos" and 'Analista' in df.columns:
-                        df_f = df_f[df_f['Analista'] == analista_f]
+                        # Filtros
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            depto = st.selectbox("Departamento",
+                                ["Todos"] + sorted(df['Departamento'].unique().tolist()) if 'Departamento' in df.columns else ["Todos"],
+                                key=f"depto_{tipo}")
+                        with col2:
+                            riesgo = st.selectbox("Nivel de Riesgo",
+                                ["Todos"] + sorted(df['Nivel de Riesgo'].unique().tolist()) if 'Nivel de Riesgo' in df.columns else ["Todos"],
+                                key=f"riesgo_{tipo}")
+                        with col3:
+                            analista_f = st.selectbox("Analista",
+                                ["Todos"] + sorted(df['Analista'].unique().tolist()) if 'Analista' in df.columns else ["Todos"],
+                                key=f"analista_{tipo}")
 
-                    st.subheader(f"📋 Resultados ({len(df_f)} casos)")
-                    st.dataframe(df_f, use_container_width=True)
+                        df_f = df.copy()
+                        if depto != "Todos" and 'Departamento' in df.columns:
+                            df_f = df_f[df_f['Departamento'] == depto]
+                        if riesgo != "Todos" and 'Nivel de Riesgo' in df.columns:
+                            df_f = df_f[df_f['Nivel de Riesgo'] == riesgo]
+                        if analista_f != "Todos" and 'Analista' in df.columns:
+                            df_f = df_f[df_f['Analista'] == analista_f]
 
-                    csv = df_f.to_csv(index=False, encoding='utf-8-sig')
-                    st.download_button(
-                        f"📥 Descargar CSV {tipo}",
-                        data=csv,
-                        file_name=f"casos_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv",
-                        mime="text/csv",
-                        key=f"download_{tipo}"
-                    )
-                else:
-                    st.info(f"📭 No hay casos {tipo}s registrados")
-            except Exception as e:
-                st.error(f"Error al cargar datos: {str(e)}")
+                        st.subheader(f"📋 Resultados ({len(df_f)} casos)")
+                        st.dataframe(df_f, use_container_width=True, hide_index=True)
+
+                        csv = df_f.to_csv(index=False, encoding='utf-8-sig')
+                        st.download_button(f"📥 Descargar CSV Casos {tipo}", csv,
+                            f"casos_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv",
+                            "text/csv", key=f"dl_casos_{tipo}")
+                    else:
+                        st.info(f"📭 No hay casos {tipo}s registrados")
+                except Exception as e:
+                    st.error(f"Error al cargar casos: {str(e)}")
+
+            # ── Hechos de Riesgo ───────────────────────────────────────
+            with sub2:
+                try:
+                    datos_h = hoja_hechos.get_all_records()
+                    if datos_h:
+                        df_h = pd.DataFrame(datos_h)
+
+                        c1, c2, c3 = st.columns(3)
+                        c1.metric("Total Hechos", len(df_h))
+                        c2.metric("Tipos distintos",   df_h['Tipo de Hecho'].nunique() if 'Tipo de Hecho' in df_h.columns else 0)
+                        c3.metric("Casos con hechos",  df_h['ID_Caso'].nunique()       if 'ID_Caso'       in df_h.columns else 0)
+
+                        # Filtro por tipo de hecho
+                        tipo_f = st.selectbox("Filtrar por Tipo de Hecho",
+                            ["Todos"] + sorted(df_h['Tipo de Hecho'].unique().tolist()) if 'Tipo de Hecho' in df_h.columns else ["Todos"],
+                            key=f"tipo_hecho_{tipo}")
+
+                        df_hf = df_h.copy()
+                        if tipo_f != "Todos":
+                            df_hf = df_hf[df_hf['Tipo de Hecho'] == tipo_f]
+
+                        st.dataframe(df_hf, use_container_width=True, hide_index=True)
+
+                        csv_h = df_hf.to_csv(index=False, encoding='utf-8-sig')
+                        st.download_button(f"📥 Descargar CSV Hechos {tipo}", csv_h,
+                            f"hechos_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv",
+                            "text/csv", key=f"dl_hechos_{tipo}")
+                    else:
+                        st.info("📭 No hay hechos de riesgo registrados")
+                except Exception as e:
+                    st.error(f"Error al cargar hechos: {str(e)}")
+
 
 # ============================================================================
 # PANEL GESTIÓN USUARIOS (Admin)
@@ -893,10 +778,10 @@ def panel_gestion_usuarios():
             col1, col2 = st.columns(2)
             with col1:
                 nuevo_username = st.text_input("Usuario *", placeholder="nombre.apellido")
-                nuevo_nombre = st.text_input("Nombre Completo *", placeholder="Juan Pérez")
+                nuevo_nombre   = st.text_input("Nombre Completo *", placeholder="Juan Pérez")
             with col2:
                 password_default = st.text_input("Contraseña por Defecto *", value="ISMR2024")
-                es_admin_nuevo = st.checkbox("¿Es Administrador?", value=False)
+                es_admin_nuevo   = st.checkbox("¿Es Administrador?", value=False)
 
             st.info("💡 El usuario deberá cambiar la contraseña en su primer acceso")
             submit_crear = st.form_submit_button("✅ Crear Usuario", use_container_width=True, type="primary")
@@ -905,7 +790,7 @@ def panel_gestion_usuarios():
                 if nuevo_username and nuevo_nombre and password_default:
                     password_hash = hashlib.sha256(password_default.encode()).hexdigest()
                     if crear_usuario(nuevo_username, password_hash, nuevo_nombre, es_admin_nuevo, debe_cambiar=True):
-                        st.success(f"✅ Usuario '{nuevo_username}' creado exitosamente!")
+                        st.success(f"✅ Usuario '{nuevo_username}' creado!")
                         st.info(f"Usuario: **{nuevo_username}** | Contraseña temporal: **{password_default}**")
                     else:
                         st.error("❌ El usuario ya existe o hubo un problema al crearlo")
@@ -920,9 +805,10 @@ def panel_gestion_usuarios():
             c1, c2, c3 = st.columns(3)
             c1.metric("Total", len(df))
             admins = df[df['es_admin'].astype(str).str.upper() == 'TRUE'].shape[0] if 'es_admin' in df.columns else 0
-            c2.metric("Admins", admins)
+            c2.metric("Admins",    admins)
             c3.metric("Analistas", len(df) - admins)
-            st.dataframe(df[['username', 'nombre_completo', 'es_admin', 'debe_cambiar_password']], use_container_width=True)
+            st.dataframe(df[['username', 'nombre_completo', 'es_admin', 'debe_cambiar_password']],
+                         use_container_width=True)
         else:
             st.info("📭 No hay usuarios")
 
@@ -936,17 +822,19 @@ def panel_gestion_usuarios():
                     st.code(u.get('password_hash', 'N/A'), language=None)
                     st.caption(f"Debe cambiar: {u.get('debe_cambiar_password', 'N/A')}")
 
+
 # ============================================================================
 # MAIN
 # ============================================================================
 
 def main():
+
     # 1. No autenticado → Login
     if not st.session_state.autenticado:
         login_page()
         return
 
-    # 2. Debe cambiar contraseña → Forzar
+    # 2. Debe cambiar contraseña
     if st.session_state.debe_cambiar_password:
         pantalla_cambiar_password()
         return
@@ -957,10 +845,13 @@ def main():
         st.sidebar.success(f"👤 {st.session_state.nombre_completo}")
         st.sidebar.markdown("---")
 
-        opcion = st.sidebar.radio(
-            "Menú",
-            ["🏠 Inicio", "👤 Individual", "👥 Colectivo", "📊 Ver Datos", "👥 Gestionar Usuarios"]
-        )
+        opcion = st.sidebar.radio("Menú", [
+            "🏠 Inicio",
+            "👤 Individual",
+            "👥 Colectivo",
+            "📊 Ver Datos",
+            "👥 Gestionar Usuarios"
+        ])
 
         if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
             logout()
