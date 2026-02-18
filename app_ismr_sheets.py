@@ -440,9 +440,9 @@ def formulario_individual():
         edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key="ind_edad")
         sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key="ind_sexo")
         departamento = st.text_input("Departamento *", placeholder="Ejemplo: Antioquia", key="ind_depto")
-        año          = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None, key="ind_anio")
-        mes          = st.number_input("Mes OT *", min_value=1, max_value=12, value=None, key="ind_mes")
-    with col2:
+        año          = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None, key="ind_anio") 
+		mes          = st.number_input("Mes OT *", min_value=1, max_value=12, value=None, key="ind_mes")
+	with col2:
         municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Medellín", key="ind_muni")
         solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"], key="ind_sol")
         tipo_estudio = st.selectbox("Tipo de Estudio *", ["Seleccione...", "ORDEN DE TRABAJO OT", "TRÁMITE DE EMERGENCIA TE"], key="ind_tipo_estudio")
