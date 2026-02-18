@@ -164,27 +164,25 @@ def conectar_sheets_individual():
         except Exception:
             hoja_casos = spreadsheet.add_worksheet(title="Individual", rows="1000", cols="20")
 
-        if not hoja_casos.get_all_values():
-            hoja_casos.append_row([
-                "Timestamp", "OT-TE", "Edad", "Sexo",
-                "Departamento", "Municipio", "Solicitante",
-                "Nivel de Riesgo", "Observaciones",
-                "Analista", "Usuario Analista", "ID_Caso",
-                "Tipo de Estudio", "Año OT"
-            ])
-
+        _sincronizar_encabezados(hoja_casos, [
+            "Timestamp", "OT-TE", "Edad", "Sexo",
+            "Departamento", "Municipio", "Solicitante",
+            "Nivel de Riesgo", "Observaciones",
+            "Analista", "Usuario Analista", "ID_Caso",
+            "Tipo de Estudio", "Año OT"   # ← tus nuevos campos ya están aquí
+        ])
+        
         # Hoja de hechos individuales
         try:
             hoja_hechos = spreadsheet.worksheet("Hechos_Individual")
         except Exception:
             hoja_hechos = spreadsheet.add_worksheet(title="Hechos_Individual", rows="1000", cols="20")
 
-        if not hoja_hechos.get_all_values():
-            hoja_hechos.append_row([
-                "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
-                "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
-                "Analista", "Usuario Analista"
-            ])
+        _sincronizar_encabezados(hoja_hechos, [
+                            "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
+                        "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
+                        "Analista", "Usuario Analista"
+                        ])
 
         return hoja_casos, hoja_hechos, spreadsheet.url
 
@@ -216,12 +214,11 @@ def conectar_sheets_colectivo():
         except Exception:
             hoja_casos = spreadsheet.add_worksheet(title="Colectivo", rows="1000", cols="20")
 
-        if not hoja_casos.get_all_values():
-            hoja_casos.append_row([
-                "Timestamp", "OT-TE", "Nombre Colectivo", "Fecha Creacion Colectivo",
+        _sincronizar_encabezados(hoja_casos, [
+            "Timestamp", "OT-TE", "Nombre Colectivo", "Fecha Creacion Colectivo",
                 "Sector", "Departamento", "Municipio",
                 "Analista", "Usuario Analista", "ID_Caso"
-            ])
+        ])        
 
         # Hoja de hechos colectivos
         try:
@@ -229,12 +226,11 @@ def conectar_sheets_colectivo():
         except Exception:
             hoja_hechos = spreadsheet.add_worksheet(title="Hechos_Colectivo", rows="1000", cols="20")
 
-        if not hoja_hechos.get_all_values():
-            hoja_hechos.append_row([
-                "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
+        _sincronizar_encabezados(hoja_hechos, [
+                    "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
                 "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
                 "Analista", "Usuario Analista"
-            ])
+                ])
 
         return hoja_casos, hoja_hechos, spreadsheet.url
 
