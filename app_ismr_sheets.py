@@ -136,9 +136,9 @@ def conectar_sheet_casos(tipo="individual"):
         try: hoja_casos = spreadsheet.worksheet(tab_casos)
         except: hoja_casos = spreadsheet.add_worksheet(title=tab_casos, rows="1000", cols="20")
         if not hoja_casos.get_all_values():
-            hoja_casos.append_row(["ID_Caso","Timestamp","OT-TE","Edad","Sexo",
+            hoja_casos.append_row(["Timestamp","OT-TE","Edad","Sexo",
                                    "Departamento","Municipio","Solicitante",
-                                   "Nivel de Riesgo","Observaciones","Analista","Usuario Analista"])
+                                   "Nivel de Riesgo","Observaciones","Analista","Usuario Analista","ID_Caso"])
 
         try: hoja_hechos = spreadsheet.worksheet(tab_hechos)
         except: hoja_hechos = spreadsheet.add_worksheet(title=tab_hechos, rows="1000", cols="20")
