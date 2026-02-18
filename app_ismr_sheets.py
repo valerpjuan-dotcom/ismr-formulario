@@ -169,7 +169,7 @@ def conectar_sheets_individual():
             "Departamento", "Municipio", "Solicitante",
             "Nivel de Riesgo", "Observaciones",
             "Analista", "Usuario Analista", "ID_Caso",
-            "Tipo de Estudio", "Año OT"   # ← tus nuevos campos ya están aquí
+            "Tipo de Estudio", "Año OT", "Mes OT"   # ← tus nuevos campos ya están aquí
         ])
         
         # Hoja de hechos individuales
@@ -441,6 +441,7 @@ def formulario_individual():
         sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key="ind_sexo")
         departamento = st.text_input("Departamento *", placeholder="Ejemplo: Antioquia", key="ind_depto")
         año          = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None, key="ind_anio")
+	mes          = st.number_input("Mes OT *", min_value=2000, max_value=2026, value=None, key="ind_mes")
     with col2:
         municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Medellín", key="ind_muni")
         solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"], key="ind_sol")
@@ -515,7 +516,8 @@ def formulario_individual():
         if solicitante == "Seleccione...":               errores.append("Debe seleccionar una entidad solicitante")
         if nivel_riesgo == "Seleccione...":              errores.append("Debe seleccionar un nivel de riesgo")
         if tipo_estudio == "Seleccione...":              errores.append("Debe seleccionar un tipo de estudio")    
-        if año is None:                    errores.append("el año es obligatorio")
+        if año is None:                                  errores.append("el año es obligatorio")
+	if mes is None:                                  errores.append("el mes es obligatorio")
         
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
@@ -534,7 +536,7 @@ def formulario_individual():
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
                         st.session_state.nombre_completo, st.session_state.username, id_caso, 
-                        tipo_estudio, año
+                        tipo_estudio, año, mes
                     ])
                     hechos_guardados = 0
                     for hecho in st.session_state.hechos_individual:
