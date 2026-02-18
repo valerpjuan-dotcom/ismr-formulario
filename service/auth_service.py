@@ -1,6 +1,6 @@
 import streamlit as st
 import hashlib
-from data.usuarios_repo import obtener_usuario
+from data.mongo.usuarios_repo import obtener_usuario
 from configuration.settings import defaults
 
 

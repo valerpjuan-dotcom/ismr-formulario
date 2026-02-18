@@ -5,8 +5,8 @@ import pandas as pd
 from datetime import datetime
 
 from configuration.settings import TAB_NOMBRES
-from data.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios
-from data.casos_repo import conectar_sheet_casos
+from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios
+from data.mongo.casos_repo import conectar_sheet_casos
 from service.auth_service import verificar_credenciales, logout, obtener_siguiente_id
 from front.styles import inyectar_css_selector
 
