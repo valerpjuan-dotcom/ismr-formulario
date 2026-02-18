@@ -8,8 +8,17 @@ def _get_client():
     Cliente MongoDB singleton — reutiliza la conexión en todos los reruns
     de Streamlit gracias a cache_resource.
     """
-    uri = st.secrets["mongodb"]["uri"]
-    return MongoClient(uri)
+    uri = st.secrets["mongodb"]["uri"].split("?")[0]  # elimina query params del URI
+    return MongoClient(
+        uri,
+        tls=True,
+        tlsAllowInvalidCertificates=False,
+        serverSelectionTimeoutMS=10000,
+        connectTimeoutMS=10000,
+        socketTimeoutMS=10000,
+        retryWrites=True,
+        appName="ISMR",
+    )
 
 
 def _conectar_coleccion_usuarios():
