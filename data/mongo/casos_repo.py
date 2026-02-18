@@ -1,7 +1,8 @@
 import streamlit as st
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 
 from configuration.settings import TAB_NOMBRES
+from data.mongo.usuarios_repo import _get_client
 
 # Cabeceras canónicas por colección — espejo de lo que crea Google Sheets
 _CABECERAS_CASOS = [
@@ -17,12 +18,10 @@ _CABECERAS_HECHOS = [
 
 
 def _conectar_db():
-    """Retorna la base de datos MongoDB, o None si falla."""
+    """Retorna la base de datos MongoDB usando el cliente singleton."""
     try:
-        uri = st.secrets["mongodb"]["uri"]
         db_name = st.secrets["mongodb"].get("db_name", "ismr")
-        client = MongoClient(uri)
-        return client[db_name]
+        return _get_client()[db_name]
     except Exception as e:
         st.error(f"Error al conectar MongoDB: {str(e)}")
         return None
@@ -36,8 +35,7 @@ def conectar_sheet_casos(tipo="individual"):
       - get_all_values() -> list[list]
       - get_all_records() -> list[dict]
       - append_row(values: list) -> None
-    El tercer valor es la URI de MongoDB (sin credenciales) como
-    equivalente a la URL del spreadsheet.
+    Crea índices automáticamente si no existen (idempotente).
     """
     db = _conectar_db()
     if db is None:
@@ -47,12 +45,18 @@ def conectar_sheet_casos(tipo="individual"):
         tab_casos  = TAB_NOMBRES[tipo]["casos"]
         tab_hechos = TAB_NOMBRES[tipo]["hechos"]
 
-        # Los nombres de colección siguen el mismo esquema que las hojas
         nombre_col_casos  = f"casos_{tab_casos.lower()}"
         nombre_col_hechos = f"hechos_{tab_hechos.lower()}"
 
-        proxy_casos  = WorksheetProxy(db[nombre_col_casos],  _CABECERAS_CASOS)
-        proxy_hechos = WorksheetProxy(db[nombre_col_hechos], _CABECERAS_HECHOS)
+        col_casos  = db[nombre_col_casos]
+        col_hechos = db[nombre_col_hechos]
+
+        # Índices — idempotentes, no fallan si ya existen
+        col_casos.create_index([("OT-TE", ASCENDING)], unique=True, background=True)
+        col_hechos.create_index([("ID_Caso", ASCENDING)], background=True)
+
+        proxy_casos  = WorksheetProxy(col_casos,  _CABECERAS_CASOS)
+        proxy_hechos = WorksheetProxy(col_hechos, _CABECERAS_HECHOS)
 
         uri = st.secrets["mongodb"]["uri"]
         db_url = uri.split("@")[-1] if "@" in uri else uri  # oculta credenciales
@@ -89,7 +93,6 @@ class WorksheetProxy:
         """
         try:
             docs = list(self._col.find({}, {"_id": 0}))
-            # Asegura que cada doc tenga todas las cabeceras (rellena vacíos)
             return [self._completar_cabeceras(d) for d in docs]
         except Exception as e:
             st.error(f"Error al leer registros: {str(e)}")

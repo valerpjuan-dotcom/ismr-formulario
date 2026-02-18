@@ -2,14 +2,25 @@ import streamlit as st
 from pymongo import MongoClient
 
 
+@st.cache_resource
+def _get_client():
+    """
+    Cliente MongoDB singleton — reutiliza la conexión en todos los reruns
+    de Streamlit gracias a cache_resource.
+    """
+    uri = st.secrets["mongodb"]["uri"]
+    return MongoClient(uri)
+
+
 def _conectar_coleccion_usuarios():
     """Retorna la colección MongoDB de usuarios, o None si falla."""
     try:
-        uri = st.secrets["mongodb"]["uri"]
         db_name = st.secrets["mongodb"].get("db_name", "ismr")
-        client = MongoClient(uri)
-        db = client[db_name]
-        return db["usuarios"]
+        db = _get_client()[db_name]
+        coleccion = db["usuarios"]
+        # Crea índice único en username si no existe (idempotente)
+        coleccion.create_index("username", unique=True, background=True)
+        return coleccion
     except Exception as e:
         st.error(f"Error al conectar MongoDB (usuarios): {str(e)}")
         return None
@@ -19,8 +30,6 @@ def conectar_sheet_usuarios():
     """
     Equivalente a conectar_sheet_usuarios() de Google Sheets.
     Retorna la colección si la conexión es exitosa, None si falla.
-    En MongoDB no es necesario crear cabeceras; los documentos se crean
-    con la estructura correcta en crear_usuario().
     """
     return _conectar_coleccion_usuarios()
 
@@ -58,7 +67,7 @@ def actualizar_password(username, nuevo_hash, debe_cambiar=False):
             {"username": username},
             {"$set": {
                 "password_hash": nuevo_hash,
-                "debe_cambiar_password": str(debe_cambiar).upper()
+                "debe_cambiar_password": "FALSE"
             }}
         )
         return resultado.matched_count > 0
@@ -70,8 +79,7 @@ def actualizar_password(username, nuevo_hash, debe_cambiar=False):
 def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe_cambiar=True):
     """
     Inserta un nuevo usuario. Retorna False si el usuario ya existe.
-    Los booleanos se almacenan como strings 'TRUE'/'FALSE' para mantener
-    compatibilidad con la lectura de Google Sheets.
+    Los booleanos se almacenan como strings 'TRUE'/'FALSE'.
     """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
@@ -83,8 +91,8 @@ def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe
             "username": username,
             "password_hash": password_hash,
             "nombre_completo": nombre_completo,
-            "es_admin": str(es_admin).upper(),
-            "debe_cambiar_password": str(debe_cambiar).upper()
+            "es_admin": "TRUE" if es_admin else "FALSE",
+            "debe_cambiar_password": "TRUE" if debe_cambiar else "FALSE"
         })
         return True
     except Exception as e:
@@ -110,11 +118,15 @@ def listar_usuarios():
 
 def _normalizar_usuario(doc):
     """
-    Garantiza que las keys booleanas sean strings 'TRUE'/'FALSE',
-    igual que Google Sheets, para que service/auth_service.py funcione
-    sin modificaciones.
+    Normaliza es_admin y debe_cambiar_password a strings 'TRUE'/'FALSE'
+    sin importar cómo estén almacenados en MongoDB (bool, string, etc.).
     """
     for campo in ("es_admin", "debe_cambiar_password"):
-        if campo in doc and isinstance(doc[campo], bool):
-            doc[campo] = str(doc[campo]).upper()
+        valor = doc.get(campo, False)
+        if isinstance(valor, bool):
+            doc[campo] = "TRUE" if valor else "FALSE"
+        elif isinstance(valor, str):
+            doc[campo] = "TRUE" if valor.strip().upper() == "TRUE" else "FALSE"
+        else:
+            doc[campo] = "FALSE"
     return doc
