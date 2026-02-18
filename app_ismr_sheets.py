@@ -517,7 +517,7 @@ def formulario_individual():
         if nivel_riesgo == "Seleccione...":              errores.append("Debe seleccionar un nivel de riesgo")
         if tipo_estudio == "Seleccione...":              errores.append("Debe seleccionar un tipo de estudio")    
         if año is None:                                  errores.append("el año es obligatorio")
-	    if mes is None:                                  errores.append("el mes es obligatorio")
+        if mes is None:                                  errores.append("el mes es obligatorio")
         
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
