@@ -385,10 +385,10 @@ def formulario_casos(tipo="individual"):
                     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     id_caso   = obtener_siguiente_id(hoja_casos)
                     hoja_casos.append_row([
-                        id_caso, timestamp, ot_te.strip(), edad, sexo,
+                        timestamp, ot_te.strip(), edad, sexo,
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
-                        st.session_state.nombre_completo, st.session_state.username
+                        st.session_state.nombre_completo, st.session_state.username, id_caso
                     ])
                     hechos_guardados = 0
                     for hecho in st.session_state.hechos:
