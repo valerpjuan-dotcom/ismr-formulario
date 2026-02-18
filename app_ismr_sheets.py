@@ -247,16 +247,20 @@ def obtener_siguiente_id(hoja):
     return max(len(hoja.get_all_values()), 1)
 
 def _sincronizar_encabezados(hoja, encabezados_esperados):
+    cache_key = f"_headers_synced_{hoja.title}"
+    if st.session_state.get(cache_key):
+        return
     valores = hoja.get_all_values()
     if not valores:
         hoja.append_row(encabezados_esperados)
-        return
-    encabezados_actuales = valores[0]
-    faltantes = [col for col in encabezados_esperados if col not in encabezados_actuales]
-    if faltantes:
-        col_inicio = len(encabezados_actuales) + 1
-        for i, nombre_col in enumerate(faltantes):
-            hoja.update_cell(1, col_inicio + i, nombre_col)
+    else:
+        encabezados_actuales = valores[0]
+        faltantes = [col for col in encabezados_esperados if col not in encabezados_actuales]
+        if faltantes:
+            col_inicio = len(encabezados_actuales) + 1
+            for i, nombre_col in enumerate(faltantes):
+                hoja.update_cell(1, col_inicio + i, nombre_col)
+    st.session_state[cache_key] = True
 
 
 # ══════════════════════════════════════════════════════════════════════════════
