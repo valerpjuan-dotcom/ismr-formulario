@@ -169,7 +169,8 @@ def conectar_sheets_individual():
                 "Timestamp", "OT-TE", "Edad", "Sexo",
                 "Departamento", "Municipio", "Solicitante",
                 "Nivel de Riesgo", "Observaciones",
-                "Analista", "Usuario Analista", "ID_Caso"
+                "Analista", "Usuario Analista", "ID_Caso",
+                "Tipo de Estudio", "Año OT"
             ])
 
         # Hoja de hechos individuales
@@ -427,9 +428,11 @@ def formulario_individual():
         edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key="ind_edad")
         sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key="ind_sexo")
         departamento = st.text_input("Departamento *", placeholder="Ejemplo: Antioquia", key="ind_depto")
+        año          = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None, key="ind_anio")
     with col2:
         municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Medellín", key="ind_muni")
         solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"], key="ind_sol")
+        tipo_estudio = st.selectbox("Tipo de Estudio *", ["Seleccione...", "ORDEN DE TRABAJO OT", "TRÁMITE DE EMERGENCIA TE"], key="ind_tipo_estudio")
         nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"], key="ind_riesgo")
 
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key="ind_obs")
@@ -499,7 +502,9 @@ def formulario_individual():
         if not municipio or not municipio.strip():       errores.append("El municipio es obligatorio")
         if solicitante == "Seleccione...":               errores.append("Debe seleccionar una entidad solicitante")
         if nivel_riesgo == "Seleccione...":              errores.append("Debe seleccionar un nivel de riesgo")
-
+        if tipo_estudio == "Seleccione...":              errores.append("Debe seleccionar un tipo de estudio")    
+        if año is None:                    errores.append("el año es obligatorio")
+        
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
             for e in errores: st.write(f"   • {e}")
@@ -516,7 +521,8 @@ def formulario_individual():
                         timestamp, ot_te.strip(), edad, sexo,
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
-                        st.session_state.nombre_completo, st.session_state.username, id_caso
+                        st.session_state.nombre_completo, st.session_state.username, id_caso, 
+                        tipo_estudio, año
                     ])
                     hechos_guardados = 0
                     for hecho in st.session_state.hechos_individual:
