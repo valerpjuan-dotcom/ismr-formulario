@@ -70,10 +70,21 @@ def _credenciales():
     ]
     return Credentials.from_service_account_info(credentials_dict, scopes=scopes), credentials_dict
 
+@st.cache_resource(ttl=300)
+def _get_spreadsheet():
+    creds, _ = _credenciales()
+    client = gspread.authorize(creds)
+    return client.open(st.secrets.get("sheet_name", "ISMR_Casos"))
+
+@st.cache_resource(ttl=300)
+def _get_client_usuarios():
+    creds, creds_dict = _credenciales()
+    client = gspread.authorize(creds)
+    return client, creds_dict
+
 def conectar_sheet_usuarios():
     try:
-        creds, creds_dict = _credenciales()
-        client = gspread.authorize(creds)
+        client, creds_dict = _get_client_usuarios()
         sheet_name = st.secrets.get("sheet_usuarios", "ISMR_Usuarios")
         try:
             spreadsheet = client.open(sheet_name)
@@ -154,9 +165,7 @@ def conectar_sheets_individual():
       • 'Hechos_Individual' — hechos de riesgo asociados a casos individuales
     """
     try:
-        creds, _ = _credenciales()
-        client = gspread.authorize(creds)
-        spreadsheet = client.open(st.secrets.get("sheet_name", "ISMR_Casos"))
+        spreadsheet = _get_spreadsheet()
 
         # Hoja de casos individuales
         try:
@@ -204,9 +213,7 @@ def conectar_sheets_colectivo():
       • 'Hechos_Colectivo' — hechos de riesgo asociados a casos colectivos
     """
     try:
-        creds, _ = _credenciales()
-        client = gspread.authorize(creds)
-        spreadsheet = client.open(st.secrets.get("sheet_name", "ISMR_Casos"))
+        spreadsheet = _get_spreadsheet()
 
         # Hoja de casos colectivos
         try:
@@ -245,6 +252,17 @@ def conectar_sheets_colectivo():
 
 def obtener_siguiente_id(hoja):
     return max(len(hoja.get_all_values()), 1)
+
+def _leer_con_retry(hoja, metodo="get_all_records", max_retries=4):
+    for intento in range(max_retries):
+        try:
+            return getattr(hoja, metodo)()
+        except Exception as e:
+            if "429" in str(e):
+                time.sleep((2 ** intento) + 1)
+            else:
+                raise
+    raise Exception(f"Cuota agotada tras {max_retries} intentos")
 
 def _sincronizar_encabezados(hoja, encabezados_esperados):
     """
@@ -954,7 +972,7 @@ def panel_visualizacion():
 
             with sub1:
                 try:
-                    datos = hoja_casos.get_all_records()
+                    datos = _leer_con_retry(hoja_casos)
                     if datos:
                         df = pd.DataFrame(datos)
                         c1, c2, c3, c4 = st.columns(4)
@@ -986,7 +1004,7 @@ def panel_visualizacion():
 
             with sub2:
                 try:
-                    datos_h = hoja_hechos.get_all_records()
+                    datos_h = _leer_con_retry(hoja_hechos)
                     if datos_h:
                         df_h = pd.DataFrame(datos_h)
                         c1, c2, c3 = st.columns(3)
@@ -1017,7 +1035,7 @@ def panel_visualizacion():
 
             with sub1:
                 try:
-                    datos = hoja_casos.get_all_records()
+                    datos = _leer_con_retry(hoja_casos)
                     if datos:
                         df = pd.DataFrame(datos)
                         c1, c2, c3, c4 = st.columns(4)
@@ -1049,7 +1067,7 @@ def panel_visualizacion():
 
             with sub2:
                 try:
-                    datos_h = hoja_hechos.get_all_records()
+                    datos_h = _leer_con_retry(hoja_hechos)
                     if datos_h:
                         df_h = pd.DataFrame(datos_h)
                         c1, c2, c3 = st.columns(3)
