@@ -169,9 +169,9 @@ def conectar_sheets_individual():
             "Departamento", "Municipio", "Solicitante",
             "Nivel de Riesgo", "Observaciones",
             "Analista", "Usuario Analista", "ID_Caso",
-            "Tipo de Estudio", "Año OT", "Mes OT"   # ← tus nuevos campos ya están aquí
+            "Tipo de Estudio", "Año OT"
         ])
-        
+
         # Hoja de hechos individuales
         try:
             hoja_hechos = spreadsheet.worksheet("Hechos_Individual")
@@ -179,10 +179,10 @@ def conectar_sheets_individual():
             hoja_hechos = spreadsheet.add_worksheet(title="Hechos_Individual", rows="1000", cols="20")
 
         _sincronizar_encabezados(hoja_hechos, [
-                            "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
-                        "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
-                        "Analista", "Usuario Analista"
-                        ])
+            "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
+            "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
+            "Analista", "Usuario Analista"
+        ])
 
         return hoja_casos, hoja_hechos, spreadsheet.url
 
@@ -216,9 +216,9 @@ def conectar_sheets_colectivo():
 
         _sincronizar_encabezados(hoja_casos, [
             "Timestamp", "OT-TE", "Nombre Colectivo", "Fecha Creacion Colectivo",
-                "Sector", "Departamento", "Municipio",
-                "Analista", "Usuario Analista", "ID_Caso"
-        ])        
+            "Sector", "Departamento", "Municipio",
+            "Analista", "Usuario Analista", "ID_Caso"
+        ])
 
         # Hoja de hechos colectivos
         try:
@@ -227,10 +227,10 @@ def conectar_sheets_colectivo():
             hoja_hechos = spreadsheet.add_worksheet(title="Hechos_Colectivo", rows="1000", cols="20")
 
         _sincronizar_encabezados(hoja_hechos, [
-                    "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
-                "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
-                "Analista", "Usuario Analista"
-                ])
+            "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
+            "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
+            "Analista", "Usuario Analista"
+        ])
 
         return hoja_casos, hoja_hechos, spreadsheet.url
 
@@ -247,6 +247,13 @@ def obtener_siguiente_id(hoja):
     return max(len(hoja.get_all_values()), 1)
 
 def _sincronizar_encabezados(hoja, encabezados_esperados):
+    """
+    Compara los encabezados actuales de la hoja con los esperados.
+    Si faltan columnas, las agrega al final automaticamente.
+    Si la hoja esta vacia, escribe todos los encabezados desde cero.
+    Usa cache de sesion para ejecutarse solo una vez por hoja y evitar
+    gastar cuota de lectura de la API en cada recarga de la app.
+    """
     cache_key = f"_headers_synced_{hoja.title}"
     if st.session_state.get(cache_key):
         return
@@ -261,6 +268,81 @@ def _sincronizar_encabezados(hoja, encabezados_esperados):
             for i, nombre_col in enumerate(faltantes):
                 hoja.update_cell(1, col_inicio + i, nombre_col)
     st.session_state[cache_key] = True
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BORRADORES
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _conectar_hoja_borradores():
+    """Retorna la hoja Borradores del spreadsheet principal, creandola si no existe."""
+    try:
+        creds, _ = _credenciales()
+        client = gspread.authorize(creds)
+        spreadsheet = client.open(st.secrets.get("sheet_name", "ISMR_Casos"))
+        try:
+            hoja = spreadsheet.worksheet("Borradores")
+        except Exception:
+            hoja = spreadsheet.add_worksheet(title="Borradores", rows="500", cols="10")
+        _sincronizar_encabezados(hoja, [
+            "username", "tipo", "timestamp_guardado", "campos_json", "hechos_json"
+        ])
+        return hoja
+    except Exception as e:
+        st.error(f"Error al conectar hoja de borradores: {e}")
+        return None
+
+def guardar_borrador(tipo, campos, hechos):
+    import json
+    hoja = _conectar_hoja_borradores()
+    if not hoja:
+        return False
+    try:
+        username  = st.session_state.username
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        campos_json = json.dumps(campos, ensure_ascii=False)
+        hechos_json = json.dumps(hechos, ensure_ascii=False)
+        datos = hoja.get_all_values()
+        for idx, fila in enumerate(datos[1:], start=2):
+            if len(fila) >= 2 and fila[0] == username and fila[1] == tipo:
+                hoja.update(f"A{idx}:E{idx}", [[username, tipo, timestamp, campos_json, hechos_json]])
+                return True
+        hoja.append_row([username, tipo, timestamp, campos_json, hechos_json])
+        return True
+    except Exception as e:
+        st.error(f"Error al guardar borrador: {e}")
+        return False
+
+def cargar_borrador(tipo):
+    import json
+    hoja = _conectar_hoja_borradores()
+    if not hoja:
+        return None, None, None
+    try:
+        username = st.session_state.username
+        for fila in hoja.get_all_values()[1:]:
+            if len(fila) >= 5 and fila[0] == username and fila[1] == tipo:
+                campos = json.loads(fila[3]) if fila[3] else {}
+                hechos = json.loads(fila[4]) if fila[4] else []
+                return campos, hechos, fila[2]
+        return None, None, None
+    except Exception as e:
+        st.error(f"Error al cargar borrador: {e}")
+        return None, None, None
+
+def eliminar_borrador(tipo):
+    hoja = _conectar_hoja_borradores()
+    if not hoja:
+        return
+    try:
+        username = st.session_state.username
+        datos = hoja.get_all_values()
+        for idx, fila in enumerate(datos[1:], start=2):
+            if len(fila) >= 2 and fila[0] == username and fila[1] == tipo:
+                hoja.delete_rows(idx)
+                return
+    except Exception as e:
+        st.error(f"Error al eliminar borrador: {e}")
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -408,12 +490,39 @@ def formulario_individual():
         st.error("⚠️ No se pudo conectar a Google Sheets")
         return
 
-    # Encabezado
+    # ── Cargar borrador si existe (solo la primera vez en esta sesión) ─────────
+    if not st.session_state.get("_borrador_ind_revisado"):
+        campos_b, hechos_b, ts_b = cargar_borrador("individual")
+        if campos_b:
+            st.session_state["_borrador_ind_pendiente"] = (campos_b, hechos_b, ts_b)
+        st.session_state["_borrador_ind_revisado"] = True
+
+    # ── Aviso de borrador pendiente ───────────────────────────────────────────
+    if st.session_state.get("_borrador_ind_pendiente"):
+        campos_b, hechos_b, ts_b = st.session_state["_borrador_ind_pendiente"]
+        st.warning(f"📂 Tienes un borrador guardado del **{ts_b}**. ¿Deseas retomarlo?")
+        col_si, col_no = st.columns(2)
+        with col_si:
+            if st.button("✅ Sí, retomar borrador", use_container_width=True, type="primary"):
+                for k, v in campos_b.items():
+                    st.session_state[k] = v
+                st.session_state.hechos_individual = hechos_b
+                del st.session_state["_borrador_ind_pendiente"]
+                st.rerun()
+        with col_no:
+            if st.button("🗑️ No, descartar borrador", use_container_width=True):
+                eliminar_borrador("individual")
+                del st.session_state["_borrador_ind_pendiente"]
+                st.rerun()
+        st.markdown("---")
+
+    # ── Encabezado ────────────────────────────────────────────────────────────
     col_back, col_title = st.columns([1, 4])
     with col_back:
         if st.button("← Volver", type="secondary"):
             st.session_state.vista             = None
             st.session_state.hechos_individual = []
+            st.session_state.pop("_borrador_ind_revisado", None)
             st.rerun()
     with col_title:
         st.markdown("""
@@ -440,7 +549,7 @@ def formulario_individual():
         edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key="ind_edad")
         sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key="ind_sexo")
         departamento = st.text_input("Departamento *", placeholder="Ejemplo: Antioquia", key="ind_depto")
-        año          = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None, key="ind_anio") 
+        año          = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None, key="ind_anio")
         mes          = st.number_input("Mes OT *", min_value=1, max_value=12, value=None, key="ind_mes")
     with col2:
         municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Medellín", key="ind_muni")
@@ -450,7 +559,7 @@ def formulario_individual():
 
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key="ind_obs")
 
-    # Hechos de riesgo
+    # ── Hechos de riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
     st.subheader("⚠️ Hechos de Riesgo")
     st.caption("Opcional. Agrega uno o varios hechos de riesgo asociados a este caso.")
@@ -501,12 +610,35 @@ def formulario_individual():
                         "autor": autor_hecho.strip(),
                         "descripcion": descripcion_hecho.strip()
                     })
-                    st.success("✅ Hecho agregado")
+                    # Auto-guardar borrador al agregar hecho
+                    guardar_borrador("individual", {
+                        "ind_ot": ot_te, "ind_edad": edad, "ind_sexo": sexo,
+                        "ind_depto": departamento, "ind_muni": municipio,
+                        "ind_sol": solicitante, "ind_riesgo": nivel_riesgo,
+                        "ind_tipo_estudio": tipo_estudio, "ind_anio": año,
+                        "ind_mes": mes, "ind_obs": observaciones
+                    }, st.session_state.hechos_individual)
+                    st.success("✅ Hecho agregado y borrador actualizado")
                     st.rerun()
 
-    # Botón registrar
+    # ── Botones: Guardar borrador y Registrar ─────────────────────────────────
     st.markdown("---")
-    if st.button("✅ REGISTRAR CASO INDIVIDUAL", use_container_width=True, type="primary"):
+    col_draft, col_register = st.columns([1, 2])
+    with col_draft:
+        if st.button("💾 Guardar borrador", use_container_width=True):
+            ok = guardar_borrador("individual", {
+                "ind_ot": ot_te, "ind_edad": edad, "ind_sexo": sexo,
+                "ind_depto": departamento, "ind_muni": municipio,
+                "ind_sol": solicitante, "ind_riesgo": nivel_riesgo,
+                "ind_tipo_estudio": tipo_estudio, "ind_anio": año,
+                "ind_mes": mes, "ind_obs": observaciones
+            }, st.session_state.hechos_individual)
+            if ok:
+                st.success("💾 Borrador guardado. Puedes retomarlo luego.")
+    with col_register:
+        registrar = st.button("✅ REGISTRAR CASO INDIVIDUAL", use_container_width=True, type="primary")
+
+    if registrar:
         errores = []
         if not ot_te or not ot_te.strip():               errores.append("El campo OT-TE es obligatorio")
         if edad is None or edad == 0:                    errores.append("La edad es obligatoria")
@@ -515,10 +647,10 @@ def formulario_individual():
         if not municipio or not municipio.strip():       errores.append("El municipio es obligatorio")
         if solicitante == "Seleccione...":               errores.append("Debe seleccionar una entidad solicitante")
         if nivel_riesgo == "Seleccione...":              errores.append("Debe seleccionar un nivel de riesgo")
-        if tipo_estudio == "Seleccione...":              errores.append("Debe seleccionar un tipo de estudio")    
-        if año is None:                                  errores.append("el año es obligatorio")
-        if mes is None:                                  errores.append("el mes es obligatorio")
-        
+        if tipo_estudio == "Seleccione...":              errores.append("Debe seleccionar un tipo de estudio")
+        if año is None:                                  errores.append("El año es obligatorio")
+        if mes is None:                                  errores.append("El mes es obligatorio")
+
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
             for e in errores: st.write(f"   • {e}")
@@ -535,7 +667,7 @@ def formulario_individual():
                         timestamp, ot_te.strip(), edad, sexo,
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
-                        st.session_state.nombre_completo, st.session_state.username, id_caso, 
+                        st.session_state.nombre_completo, st.session_state.username, id_caso,
                         tipo_estudio, año, mes
                     ])
                     hechos_guardados = 0
@@ -548,7 +680,9 @@ def formulario_individual():
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         hechos_guardados += 1
+                    eliminar_borrador("individual")
                     st.session_state.hechos_individual = []
+                    st.session_state.pop("_borrador_ind_revisado", None)
                     st.success(f"✅ Caso **{ot_te}** registrado como Individual!")
                     if hechos_guardados > 0:
                         st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
@@ -559,6 +693,7 @@ def formulario_individual():
                     - **OT-TE:** {ot_te}
                     - **Ubicación:** {municipio}, {departamento}
                     - **Nivel de Riesgo:** {nivel_riesgo}
+                    - **Tipo de Estudio:** {tipo_estudio}
                     - **Hechos registrados:** {hechos_guardados}
                     - **Registrado por:** {st.session_state.nombre_completo}
                     - **Fecha:** {timestamp}
@@ -595,12 +730,39 @@ def formulario_colectivo():
         st.error("⚠️ No se pudo conectar a Google Sheets")
         return
 
-    # Encabezado
+    # ── Cargar borrador si existe (solo la primera vez en esta sesión) ─────────
+    if not st.session_state.get("_borrador_col_revisado"):
+        campos_b, hechos_b, ts_b = cargar_borrador("colectivo")
+        if campos_b:
+            st.session_state["_borrador_col_pendiente"] = (campos_b, hechos_b, ts_b)
+        st.session_state["_borrador_col_revisado"] = True
+
+    # ── Aviso de borrador pendiente ───────────────────────────────────────────
+    if st.session_state.get("_borrador_col_pendiente"):
+        campos_b, hechos_b, ts_b = st.session_state["_borrador_col_pendiente"]
+        st.warning(f"📂 Tienes un borrador guardado del **{ts_b}**. ¿Deseas retomarlo?")
+        col_si, col_no = st.columns(2)
+        with col_si:
+            if st.button("✅ Sí, retomar borrador", use_container_width=True, type="primary"):
+                for k, v in campos_b.items():
+                    st.session_state[k] = v
+                st.session_state.hechos_colectivo = hechos_b
+                del st.session_state["_borrador_col_pendiente"]
+                st.rerun()
+        with col_no:
+            if st.button("🗑️ No, descartar borrador", use_container_width=True):
+                eliminar_borrador("colectivo")
+                del st.session_state["_borrador_col_pendiente"]
+                st.rerun()
+        st.markdown("---")
+
+    # ── Encabezado ────────────────────────────────────────────────────────────
     col_back, col_title = st.columns([1, 4])
     with col_back:
         if st.button("← Volver", type="secondary"):
             st.session_state.vista            = None
             st.session_state.hechos_colectivo = []
+            st.session_state.pop("_borrador_col_revisado", None)
             st.rerun()
     with col_title:
         st.markdown("""
@@ -629,24 +791,13 @@ def formulario_colectivo():
             placeholder="Nombre del grupo u organización",
             key="col_nombre"
         )
-        fecha_creacion = st.date_input(
-            "Fecha de Creación del Colectivo *",
-            key="col_fecha"
-        )
+        fecha_creacion = st.date_input("Fecha de Creación del Colectivo *", key="col_fecha")
         sector = st.selectbox("Sector *", SECTORES_COLECTIVO, key="col_sector")
     with col2:
-        departamento = st.text_input(
-            "Departamento *",
-            placeholder="Ejemplo: Córdoba",
-            key="col_depto"
-        )
-        municipio = st.text_input(
-            "Municipio *",
-            placeholder="Ejemplo: Montería",
-            key="col_muni"
-        )
+        departamento = st.text_input("Departamento *", placeholder="Ejemplo: Córdoba", key="col_depto")
+        municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Montería", key="col_muni")
 
-    # Hechos de riesgo
+    # ── Hechos de riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
     st.subheader("⚠️ Hechos de Riesgo")
     st.caption("Opcional. Agrega uno o varios hechos de riesgo asociados a este colectivo.")
@@ -697,12 +848,31 @@ def formulario_colectivo():
                         "autor": autor_hecho.strip(),
                         "descripcion": descripcion_hecho.strip()
                     })
-                    st.success("✅ Hecho agregado")
+                    # Auto-guardar borrador al agregar hecho
+                    guardar_borrador("colectivo", {
+                        "col_ot": ot_te, "col_nombre": nombre_colectivo,
+                        "col_sector": sector, "col_depto": departamento,
+                        "col_muni": municipio
+                    }, st.session_state.hechos_colectivo)
+                    st.success("✅ Hecho agregado y borrador actualizado")
                     st.rerun()
 
-    # Botón registrar
+    # ── Botones: Guardar borrador y Registrar ─────────────────────────────────
     st.markdown("---")
-    if st.button("✅ REGISTRAR CASO COLECTIVO", use_container_width=True, type="primary"):
+    col_draft, col_register = st.columns([1, 2])
+    with col_draft:
+        if st.button("💾 Guardar borrador", use_container_width=True):
+            ok = guardar_borrador("colectivo", {
+                "col_ot": ot_te, "col_nombre": nombre_colectivo,
+                "col_sector": sector, "col_depto": departamento,
+                "col_muni": municipio
+            }, st.session_state.hechos_colectivo)
+            if ok:
+                st.success("💾 Borrador guardado. Puedes retomarlo luego.")
+    with col_register:
+        registrar = st.button("✅ REGISTRAR CASO COLECTIVO", use_container_width=True, type="primary")
+
+    if registrar:
         errores = []
         if not ot_te or not ot_te.strip():                       errores.append("El campo OT-TE es obligatorio")
         if not nombre_colectivo or not nombre_colectivo.strip(): errores.append("El nombre del colectivo es obligatorio")
@@ -723,16 +893,9 @@ def formulario_colectivo():
                     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     id_caso   = obtener_siguiente_id(hoja_casos)
                     hoja_casos.append_row([
-                        timestamp,
-                        ot_te.strip(),
-                        nombre_colectivo.strip(),
-                        str(fecha_creacion),
-                        sector,
-                        departamento.strip(),
-                        municipio.strip(),
-                        st.session_state.nombre_completo,
-                        st.session_state.username,
-                        id_caso
+                        timestamp, ot_te.strip(), nombre_colectivo.strip(),
+                        str(fecha_creacion), sector, departamento.strip(), municipio.strip(),
+                        st.session_state.nombre_completo, st.session_state.username, id_caso
                     ])
                     hechos_guardados = 0
                     for hecho in st.session_state.hechos_colectivo:
@@ -744,7 +907,9 @@ def formulario_colectivo():
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         hechos_guardados += 1
+                    eliminar_borrador("colectivo")
                     st.session_state.hechos_colectivo = []
+                    st.session_state.pop("_borrador_col_revisado", None)
                     st.success(f"✅ Caso **{ot_te}** registrado como Colectivo!")
                     if hechos_guardados > 0:
                         st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
