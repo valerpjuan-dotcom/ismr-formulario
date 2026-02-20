@@ -17,9 +17,11 @@ _CABECERAS_HECHOS = [
 ]
 _CABECERAS_PERFILES = [
     "ID_Perfil", "ID_Caso", "OT-TE",
-    "Tipo de Perfil", "Género", "Rango de Edad",
-    "Nivel Educativo", "Ocupación", "Zona de Residencia",
-    "Grupo Étnico", "Analista", "Usuario Analista"
+    "Modo de Participación", "Año Ingreso/Traslado/Captura", "Bloque de Operación",
+    "Estructura", "Lugar de Acreditación", "Rol/Actividades",
+    "Otro Rol", "Subpoblación Índice 1", "Meses Privado de Libertad",
+    "Tipo Institución Penitenciaria", "Pabellón Alta Seguridad",
+    "Analista", "Usuario Analista"
 ]
 
 
