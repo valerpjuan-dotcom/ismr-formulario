@@ -15,6 +15,12 @@ _CABECERAS_HECHOS = [
     "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
     "Analista", "Usuario Analista"
 ]
+_CABECERAS_PERFILES = [
+    "ID_Perfil", "ID_Caso", "OT-TE",
+    "Tipo de Perfil", "Género", "Rango de Edad",
+    "Nivel Educativo", "Ocupación", "Zona de Residencia",
+    "Grupo Étnico", "Analista", "Usuario Analista"
+]
 
 
 def _conectar_db():
@@ -39,32 +45,37 @@ def conectar_sheet_casos(tipo="individual"):
     """
     db = _conectar_db()
     if db is None:
-        return None, None, None
+        return None, None, None, None
 
     try:
-        tab_casos  = TAB_NOMBRES[tipo]["casos"]
-        tab_hechos = TAB_NOMBRES[tipo]["hechos"]
+        tab_casos    = TAB_NOMBRES[tipo]["casos"]
+        tab_hechos   = TAB_NOMBRES[tipo]["hechos"]
+        tab_perfiles = TAB_NOMBRES[tipo]["perfiles"]
 
-        nombre_col_casos  = f"casos_{tab_casos.lower()}"
-        nombre_col_hechos = f"hechos_{tab_hechos.lower()}"
+        nombre_col_casos    = f"casos_{tab_casos.lower()}"
+        nombre_col_hechos   = f"hechos_{tab_hechos.lower()}"
+        nombre_col_perfiles = f"perfiles_{tab_perfiles.lower()}"
 
-        col_casos  = db[nombre_col_casos]
-        col_hechos = db[nombre_col_hechos]
+        col_casos    = db[nombre_col_casos]
+        col_hechos   = db[nombre_col_hechos]
+        col_perfiles = db[nombre_col_perfiles]
 
         # Índices — idempotentes, no fallan si ya existen
         col_casos.create_index([("OT-TE", ASCENDING)], unique=True, background=True)
         col_hechos.create_index([("ID_Caso", ASCENDING)], background=True)
+        col_perfiles.create_index([("ID_Caso", ASCENDING)], background=True)
 
-        proxy_casos  = WorksheetProxy(col_casos,  _CABECERAS_CASOS)
-        proxy_hechos = WorksheetProxy(col_hechos, _CABECERAS_HECHOS)
+        proxy_casos    = WorksheetProxy(col_casos,    _CABECERAS_CASOS)
+        proxy_hechos   = WorksheetProxy(col_hechos,   _CABECERAS_HECHOS)
+        proxy_perfiles = WorksheetProxy(col_perfiles, _CABECERAS_PERFILES)
 
         uri = st.secrets["mongodb"]["uri"]
         db_url = uri.split("@")[-1] if "@" in uri else uri  # oculta credenciales
 
-        return proxy_casos, proxy_hechos, db_url
+        return proxy_casos, proxy_hechos, proxy_perfiles, db_url
     except Exception as e:
         st.error(f"Error al conectar colecciones MongoDB ({tipo}): {str(e)}")
-        return None, None, None
+        return None, None, None, None
 
 
 # ── Proxy de Worksheet ────────────────────────────────────────────────────────
