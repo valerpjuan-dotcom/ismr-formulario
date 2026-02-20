@@ -192,71 +192,218 @@ def formulario_casos(tipo="individual"):
                     })
                     st.success("✅ Hecho agregado"); st.rerun()
 
-    # ── Perfiles ──────────────────────────────────────────────────────────────
+    # ── Perfil Antiguo ────────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("🧑‍🤝‍🧑 Perfiles")
-    st.caption("Opcional. Agrega uno o varios perfiles asociados a este caso.")
+    st.subheader("🪖 Perfil Antiguo")
+    st.caption("Opcional. Agrega uno o varios perfiles FARC-EP asociados a este caso.")
 
     if "perfiles" not in st.session_state:
         st.session_state.perfiles = []
 
+    # Mostrar perfiles ya agregados
     for i, perfil in enumerate(st.session_state.perfiles):
         with st.container(border=True):
             col_tit, col_del = st.columns([5, 1])
-            with col_tit: st.markdown(f"**Perfil #{i+1} — {perfil['tipo_perfil']}**")
+            with col_tit: st.markdown(f"**Perfil #{i+1} — {perfil.get('modo_participacion', '')}**")
             with col_del:
                 if st.button("🗑️", key=f"del_perfil_{tipo}_{i}"):
                     st.session_state.perfiles.pop(i); st.rerun()
             c1, c2 = st.columns(2)
             with c1:
-                st.write(f"👤 **Género:** {perfil['genero']}")
-                st.write(f"🎂 **Rango de Edad:** {perfil['rango_edad']}")
-                st.write(f"🎓 **Nivel Educativo:** {perfil['nivel_educativo']}")
-                st.write(f"💼 **Ocupación:** {perfil['ocupacion']}")
+                st.write(f"📋 **Modo de Participación:** {perfil.get('modo_participacion','')}")
+                st.write(f"📅 **Año Ingreso/Traslado/Captura:** {perfil.get('anio_ingreso','')}")
+                st.write(f"🗺️ **Bloque:** {perfil.get('bloque','')}")
+                st.write(f"🏗️ **Estructura:** {perfil.get('estructura','')}")
+                st.write(f"📍 **Lugar de Acreditación:** {perfil.get('lugar_acreditacion','')}")
             with c2:
-                st.write(f"🏘️ **Zona de Residencia:** {perfil['zona_residencia']}")
-                st.write(f"🌿 **Grupo Étnico:** {perfil['grupo_etnico']}")
+                st.write(f"🎭 **Rol/Actividades:** {perfil.get('rol','')}")
+                if perfil.get('otro_rol'): st.write(f"❓ **Otro Rol:** {perfil.get('otro_rol','')}")
+                if perfil.get('subpoblacion'): st.write(f"👥 **Subpoblación (Índice 1):** {perfil.get('subpoblacion','')}")
+                if perfil.get('meses_privado'): st.write(f"⛓️ **Meses Privado de Libertad:** {perfil.get('meses_privado','')}")
+                if perfil.get('tipo_institucion'): st.write(f"🏛️ **Tipo Institución:** {perfil.get('tipo_institucion','')}")
+                if perfil.get('pabellon_alta_seguridad'): st.write(f"🔒 **Pabellón Alta Seguridad:** {perfil.get('pabellon_alta_seguridad','')}")
 
-    with st.expander("➕ Agregar perfil", expanded=len(st.session_state.perfiles) == 0):
-        with st.form(f"form_perfil_{tipo}", clear_on_submit=True):
-            c1, c2 = st.columns(2)
-            with c1:
-                tipo_perfil     = st.selectbox("Tipo de Perfil *", [
-                    "Seleccione...", "Víctima", "Testigo", "Familiar", "Representante legal", "Otro"])
-                genero          = st.selectbox("Género *", [
-                    "Seleccione...", "Hombre", "Mujer", "No binario", "No Reporta"])
-                rango_edad      = st.selectbox("Rango de Edad *", [
-                    "Seleccione...", "0-17", "18-28", "29-40", "41-60", "61+", "No Reporta"])
-                nivel_educativo = st.selectbox("Nivel Educativo *", [
-                    "Seleccione...", "Ninguno", "Primaria", "Secundaria", "Técnico", "Universitario", "No Reporta"])
-            with c2:
-                ocupacion       = st.selectbox("Ocupación *", [
-                    "Seleccione...", "Estudiante", "Agricultor", "Comerciante", "Desempleado",
-                    "Líder social", "Servidor público", "Otro", "No Reporta"])
-                zona_residencia = st.selectbox("Zona de Residencia *", [
-                    "Seleccione...", "Urbana", "Rural", "Rural disperso", "No Reporta"])
-                grupo_etnico    = st.selectbox("Grupo Étnico *", [
-                    "Seleccione...", "Mestizo", "Afrocolombiano", "Indígena",
-                    "Rom/Gitano", "Raizal", "Palenquero", "No Reporta"])
-            if st.form_submit_button("➕ Agregar este perfil", use_container_width=True):
-                err_p = []
-                if tipo_perfil     == "Seleccione...": err_p.append("Selecciona el tipo de perfil")
-                if genero          == "Seleccione...": err_p.append("El género es obligatorio")
-                if rango_edad      == "Seleccione...": err_p.append("El rango de edad es obligatorio")
-                if nivel_educativo == "Seleccione...": err_p.append("El nivel educativo es obligatorio")
-                if ocupacion       == "Seleccione...": err_p.append("La ocupación es obligatoria")
-                if zona_residencia == "Seleccione...": err_p.append("La zona de residencia es obligatoria")
-                if grupo_etnico    == "Seleccione...": err_p.append("El grupo étnico es obligatorio")
-                if err_p:
-                    for e in err_p: st.error(f"• {e}")
-                else:
-                    st.session_state.perfiles.append({
-                        "tipo_perfil": tipo_perfil, "genero": genero,
-                        "rango_edad": rango_edad, "nivel_educativo": nivel_educativo,
-                        "ocupacion": ocupacion, "zona_residencia": zona_residencia,
-                        "grupo_etnico": grupo_etnico
-                    })
-                    st.success("✅ Perfil agregado"); st.rerun()
+    # Mapeo bloque → opciones de estructura
+    _ESTRUCTURAS = {
+        "Bloque Caribe o Martín Caballero": [
+            "Seleccione...", "Frente Urbano José Antequera", "Frente 59 Resistencia Guajira",
+            "Frente 41 Cacique Upar", "Frente 37 Martín Caballero", "Frente 35 Benkos Biohó",
+            "Frente 19 José Prudencio Padilla", "Compañía Móvil Efraín Guzmán"],
+        "Bloque Central o Comando Conjunto Central Adán Izquierdo": [
+            "Seleccione...", "Frente 50 Cacique Calarcá", "Frente 21 Cacica La Gaitana",
+            "Escuela Hernán Murillo Toro", "Emisora Manuel Cepeda Vargas", "Compañía Tulio Varón",
+            "Compañía Móvil Miler Salcedo", "Compañía Móvil Jacobo Prías Alape",
+            "Compañía Móvil Héroes de Marquetalia", "Compañía Móvil Daniel Aldana",
+            "Comisión Política René González", "Comisión de Finanzas Manuelita Sáenz",
+            "Columna Alfredo González"],
+        "Bloque Magdalena Medio": [
+            "Seleccione...", "Unidad Iván Ríos", "Frente 46", "Frente 4 José Antonio Galán",
+            "Frente 33 Mariscal Sucre", "Frente 23 Policarpa Salavarrieta",
+            "Frente 20 Los Comuneros", "Frente 12 José Antonio Galán",
+            "Compañía Móvil Salvador Díaz", "Compañía Móvil Resistencia Bari",
+            "Compañía Móvil Gerardo Guevara", "Compañía Móvil Catatumbo",
+            "Compañía Móvil 29 de Mayo", "Columna Móvil Gildardo Rodríguez",
+            "Columna Móvil Arturo Ruiz Bari", "Frente 24 Héroes y Mártires de Santa Rosa",
+            "Columna Móvil Raúl Eduardo Mahecha"],
+        "Bloque Móvil Arturo Ruiz": [
+            "Seleccione...", "Columna Móvil Miller Perdomo", "Columna Móvil Libardo García",
+            "Columna Móvil Ismael Romero", "Columna Móvil Gabriel Galvis",
+            "Columna Móvil Alirio Torres"],
+        "Bloque Noroccidental José María Córdova o Iván Ríos": [
+            "Seleccione...", "Frente Urbano Jacobo Arenas",
+            "Frente o Columna Móvil Aurelio Rodríguez", "Frente 9 Atanasio Girardot",
+            "Frente 58 Mártires de Las Cañas", "Frente 57 Efraín Ballesteros",
+            "Frente 5 Antonio Nariño", "Frente 47 Rodrigo Gaitán o Leonardo Posada Pedraza",
+            "Frente 36 Jair Aldana Baquero", "Frente 34 Alberto Martínez",
+            "Frente 18 Cacique Coyara", "Compañía Héroes y Mártires del Cairo",
+            "Columna Móvil Mario Vélez"],
+        "Bloque Occidental Comandante Alfonso Cano": [
+            "Seleccione...", "Frente Urbano Manuel Cepeda Vargas", "Frente 8 José Gonzalo Franco",
+            "Frente 60 Jaime Pardo Leal", "Frente 6 Hernando González Acosta",
+            "Frente 30 José Antonio Páez", "Frente 29 Alfonso Arteaga",
+            "Compañía Víctor Saavedra", "Compañía Simón Rodríguez",
+            "Compañía Móvil Mariscal Sucre", "Compañía Ambrosio González",
+            "Compañía Alonso Cortés", "Columna Móvil Jacobo Arenas",
+            "Columna Móvil Daniel Aldana"],
+        "Bloque Oriental Comandante Jorge Briceño": [
+            "Seleccione...", "Frente 16 José Antonio Páez", "Frente 11 José Antonio Anzoátegui",
+            "Compañía Móvil Rigoberto Lozada", "Frente Vladimir Steven", "Frente Urias Rondón",
+            "Frente Urbano Antonio Nariño (RUAN)", "Frente Reinaldo Cuellar",
+            "Frente Felipe Rincón", "Frente Esteban Martínez", "Frente Acacio Medina",
+            "Frente Abelardo Romero", "Frente 42 Manuel Cepeda Vargas",
+            "Frente 40 Jacobo Arenas", "Frente 39 Ricaurte Jiménez",
+            "Frente 38 Ciro Trujillo Castaño", "Compañía Móvil Yerminson Ruíz",
+            "Compañía Móvil Xiomara Marín", "Compañía Móvil Urias Rondón",
+            "Compañía Móvil Quino Méndez", "Compañía Móvil Octavio Suárez Briceño",
+            "Compañía Móvil Martín Martínez"],
+        "Bloque Sur": [
+            "Seleccione...", "Unidad José Antonio Galán", "Guardia de Bloque Joaquín Gómez",
+            "Guardia de Bloque Fabián Ramírez", "Frente 66 Joselo Losada", "Frente 64",
+            "Frente 63 Rodolfo Tanas", "Frente 61 Cacique Timanco",
+            "Frente 49 Héctor Ramírez", "Frente 48 Pedro Martínez o Antonio José de Sucre",
+            "Frente 32 Ernesto Che Guevara", "Frente 3 José Antequera",
+            "Frente 2 Antonio José de Sucre", "Frente 17 Angelino Godoy",
+            "Frente 15 José Ignacio Mora", "Frente 14 José Antonio Galán",
+            "Frente 13 Cacica Gaitana", "Compañía Móvil Mixta", "Comisión Taller",
+            "Columna Móvil Yesid Ortiz", "Columna Móvil Teófilo Forero"],
+        "No aplica": [
+            "Seleccione...", "Secretariado Nacional", "Estado Mayor Central",
+            "Comisión Internacional", "Pondores (Fonseca)", "San José de Oriente (La Paz)",
+            "Caño Indio (Tibú)", "Filipinas (Arauquita)", "Las Brisas de Tamarindo (Vidrí)",
+            "Agua Bonita (La Montañita)", "Monterredondo (Miranda)", "Llanogrande (Dabeiba)",
+            "La Fila (Icononzo)", "El Estrecho (Patía)", "Las Colinas (San José del Guaviare)",
+            "La Guajira (Mesetas)", "La Plancha (Anorí)", "El Oso (Planadas)",
+            "La Reforma (Vistahermosa)", "Miravalle (San Vicente del Caguán)",
+            "La Variante (Tumaco)", "Los Monos (Caldono)", "El Ceral (Buenos Aires)",
+            "Caracolí (Carmen del Darién)", "Carrizal (Remedios)",
+            "Charras (San José del Guaviare)"],
+    }
+
+    with st.expander("➕ Agregar Perfil Antiguo", expanded=len(st.session_state.perfiles) == 0):
+
+        # ── Campos 1, 2, 3: siempre visibles ─────────────────────────────────
+        p_modo = st.selectbox("MODO DE PARTICIPACIÓN EN LAS FARC-EP *",
+            ["Seleccione...", "Combatiente", "Miliciano/a", "Colaborador/a",
+             "Privado de la libertad", "Otro"],
+            key=f"p_modo_{tipo}")
+
+        p_anio = st.selectbox("AÑO DE INGRESO, TRASLADO O CAPTURA *",
+            ["Seleccione..."] + [str(a) for a in range(1960, 2017)],
+            key=f"p_anio_{tipo}")
+
+        p_bloque = st.selectbox("SELECCIONE EL BLOQUE DE OPERACIÓN *",
+            ["Seleccione..."] + list(_ESTRUCTURAS.keys()),
+            key=f"p_bloque_{tipo}")
+
+        # ── Campo 4: estructura condicional según bloque ───────────────────────
+        p_estructura = "Seleccione..."
+        if p_bloque != "Seleccione...":
+            opciones_estructura = _ESTRUCTURAS[p_bloque]
+            p_estructura = st.selectbox("ESTRUCTURA *", opciones_estructura,
+                key=f"p_estructura_{tipo}")
+
+        # ── Campos 5 y 6: siempre visibles tras bloque ────────────────────────
+        p_lugar_acreditacion = st.selectbox("LUGAR DE ACREDITACIÓN *",
+            ["Seleccione...", "Pondores (Fonseca)", "San José de Oriente (La Paz)",
+             "Caño Indio (Tibú)", "Filipinas (Arauquita)", "Las Brisas de Tamarindo (Vidrí)",
+             "Agua Bonita (La Montañita)", "Monterredondo (Miranda)", "Llanogrande (Dabeiba)",
+             "La Fila (Icononzo)", "El Estrecho (Patía)", "Las Colinas (San José del Guaviare)",
+             "La Guajira (Mesetas)", "La Plancha (Anorí)", "El Oso (Planadas)",
+             "La Reforma (Vistahermosa)", "Miravalle (San Vicente del Caguán)",
+             "La Variante (Tumaco)", "Los Monos (Caldono)", "El Ceral (Buenos Aires)",
+             "Caracolí (Carmen del Darién)", "Carrizal (Remedios)",
+             "Charras (San José del Guaviare)"],
+            key=f"p_lugar_{tipo}")
+
+        _ROLES = ["Seleccione...", "Combatiente", "Mando Medio", "Comandante",
+                  "Miliciano/a", "Colaborador/a", "Finanzas", "Inteligencia",
+                  "Comunicaciones", "Sanidad", "Logística", "Político",
+                  "Jurídico", "Minería/Economía", "Otro"]
+        p_rol = st.selectbox("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES, key=f"p_rol_{tipo}")
+
+        # ── Campo 7: texto libre si el rol requiere especificación ─────────────
+        p_otro_rol = ""
+        if p_rol == "Otro":
+            p_otro_rol = st.text_input("¿QUÉ OTRO ROL?", key=f"p_otro_rol_{tipo}")
+
+        # ── Campo 8: subpoblación Índice 1 ────────────────────────────────────
+        _SUBPOBLACIONES = ["Seleccione...", "Reincorporado/a", "Indultado/a",
+                           "Condenado/a", "Acusado/a", "Imputado/a",
+                           "En libertad condicional", "No aplica"]
+        p_subpoblacion = st.selectbox("SUBPOBLACIÓN (ÍNDICE 1)",
+            _SUBPOBLACIONES, key=f"p_subpob_{tipo}")
+
+        # ── Campos 9 y 10: privación de libertad (condicional) ────────────────
+        mostrar_libertad = (p_modo == "Privado de la libertad") or (p_subpoblacion == "Indultado/a")
+
+        p_meses_privado    = ""
+        p_tipo_institucion = "Seleccione..."
+        if mostrar_libertad:
+            p_meses_privado = st.number_input("NO. MESES PRIVADO DE LA LIBERTAD",
+                min_value=0, max_value=600, step=1, key=f"p_meses_{tipo}")
+            _INSTITUCIONES = ["Seleccione...", "Establecimiento Penitenciario (EP)",
+                              "Establecimiento Carcelario (EC)",
+                              "Complejo Carcelario (CO)",
+                              "Centro de Reclusión Militar (CRM)",
+                              "Otro"]
+            p_tipo_institucion = st.selectbox("TIPO DE INSTITUCIÓN PENITENCIARIA",
+                _INSTITUCIONES, key=f"p_inst_{tipo}")
+
+        # ── Campo 11: pabellón alta seguridad (solo si CO) ────────────────────
+        p_pabellon = ""
+        if mostrar_libertad and p_tipo_institucion == "Complejo Carcelario (CO)":
+            p_pabellon = st.selectbox("PABELLÓN DE ALTA SEGURIDAD",
+                ["Seleccione...", "Sí", "No"], key=f"p_pabellon_{tipo}")
+
+        # ── Botón agregar ─────────────────────────────────────────────────────
+        st.markdown("")
+        if st.button("➕ Agregar este perfil", use_container_width=True,
+                     key=f"btn_add_perfil_{tipo}", type="secondary"):
+            err_p = []
+            if p_modo        == "Seleccione...": err_p.append("El modo de participación es obligatorio")
+            if p_anio        == "Seleccione...": err_p.append("El año de ingreso es obligatorio")
+            if p_bloque      == "Seleccione...": err_p.append("El bloque de operación es obligatorio")
+            if p_estructura  == "Seleccione...": err_p.append("La estructura es obligatoria")
+            if p_lugar_acreditacion == "Seleccione...": err_p.append("El lugar de acreditación es obligatorio")
+            if p_rol         == "Seleccione...": err_p.append("El rol es obligatorio")
+            if p_rol == "Otro" and not p_otro_rol.strip(): err_p.append("Especifica el otro rol")
+            if err_p:
+                for e in err_p: st.error(f"• {e}")
+            else:
+                st.session_state.perfiles.append({
+                    "modo_participacion":  p_modo,
+                    "anio_ingreso":        p_anio,
+                    "bloque":              p_bloque,
+                    "estructura":          p_estructura,
+                    "lugar_acreditacion":  p_lugar_acreditacion,
+                    "rol":                 p_rol,
+                    "otro_rol":            p_otro_rol.strip() if p_otro_rol else "",
+                    "subpoblacion":        p_subpoblacion if p_subpoblacion != "Seleccione..." else "",
+                    "meses_privado":       str(p_meses_privado) if mostrar_libertad else "",
+                    "tipo_institucion":    p_tipo_institucion if p_tipo_institucion != "Seleccione..." else "",
+                    "pabellon_alta_seguridad": p_pabellon if p_pabellon != "Seleccione..." else "",
+                })
+                st.success("✅ Perfil Antiguo agregado"); st.rerun()
     st.markdown("---")
     if st.button(f"✅ REGISTRAR CASO {label_badge}", use_container_width=True, type="primary"):
         errores = []
@@ -301,9 +448,17 @@ def formulario_casos(tipo="individual"):
                         id_perfil = obtener_siguiente_id(hoja_perfiles)
                         hoja_perfiles.append_row([
                             id_perfil, id_caso, ot_te.strip(),
-                            perfil["tipo_perfil"], perfil["genero"], perfil["rango_edad"],
-                            perfil["nivel_educativo"], perfil["ocupacion"],
-                            perfil["zona_residencia"], perfil["grupo_etnico"],
+                            perfil.get("modo_participacion", ""),
+                            perfil.get("anio_ingreso", ""),
+                            perfil.get("bloque", ""),
+                            perfil.get("estructura", ""),
+                            perfil.get("lugar_acreditacion", ""),
+                            perfil.get("rol", ""),
+                            perfil.get("otro_rol", ""),
+                            perfil.get("subpoblacion", ""),
+                            perfil.get("meses_privado", ""),
+                            perfil.get("tipo_institucion", ""),
+                            perfil.get("pabellon_alta_seguridad", ""),
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         perfiles_guardados += 1
