@@ -11,7 +11,11 @@ st.set_page_config(page_title="Sistema ISMR", page_icon="📋", layout="centered
 defaults = {
     "autenticado": False, "username": None, "nombre_completo": None,
     "debe_cambiar_password": False, "es_admin": False, "vista": None,
-    "hechos_individual": [], "hechos_colectivo": []
+    "hechos_individual": [], "hechos_colectivo": [],
+    "antecedentes_individual": [], "antecedentes_colectivo": [],
+    "perfil_antiguo_individual": [], "perfil_antiguo_colectivo": [],
+    "desplazamientos_individual": [], "desplazamientos_colectivo": [],
+    "verificaciones_individual": [], "verificaciones_colectivo": [],
 }
 for key, val in defaults.items():
     if key not in st.session_state:
@@ -59,7 +63,7 @@ def inyectar_css_selector():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# GOOGLE SHEETS — USUARIOS
+# GOOGLE SHEETS — CREDENCIALES Y CACHE
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _credenciales():
@@ -81,6 +85,11 @@ def _get_client_usuarios():
     creds, creds_dict = _credenciales()
     client = gspread.authorize(creds)
     return client, creds_dict
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GOOGLE SHEETS — USUARIOS
+# ══════════════════════════════════════════════════════════════════════════════
 
 def conectar_sheet_usuarios():
     try:
@@ -157,47 +166,79 @@ def listar_usuarios():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def conectar_sheets_individual():
-    """
-    Conecta y retorna (hoja_casos_individual, hoja_hechos_individual, url).
-
-    Hojas en el spreadsheet ISMR_Casos:
-      • 'Individual'        — datos del caso individual
-      • 'Hechos_Individual' — hechos de riesgo asociados a casos individuales
-    """
     try:
         spreadsheet = _get_spreadsheet()
 
-        # Hoja de casos individuales
         try:
             hoja_casos = spreadsheet.worksheet("Individual")
         except Exception:
             hoja_casos = spreadsheet.add_worksheet(title="Individual", rows="1000", cols="20")
-
         _sincronizar_encabezados(hoja_casos, [
             "Timestamp", "OT-TE", "Edad", "Sexo",
             "Departamento", "Municipio", "Solicitante",
             "Nivel de Riesgo", "Observaciones",
             "Analista", "Usuario Analista", "ID_Caso",
-            "Tipo de Estudio", "Año OT"
+            "Tipo de Estudio", "Año OT", "Mes OT"
         ])
 
-        # Hoja de hechos individuales
         try:
             hoja_hechos = spreadsheet.worksheet("Hechos_Individual")
         except Exception:
             hoja_hechos = spreadsheet.add_worksheet(title="Hechos_Individual", rows="1000", cols="20")
-
         _sincronizar_encabezados(hoja_hechos, [
             "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
             "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
             "Analista", "Usuario Analista"
         ])
 
-        return hoja_casos, hoja_hechos, spreadsheet.url
+        try:
+            hoja_antecedentes = spreadsheet.worksheet("Antecedentes_Individual")
+        except Exception:
+            hoja_antecedentes = spreadsheet.add_worksheet(title="Antecedentes_Individual", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_antecedentes, [
+            "ID_Antecedente", "ID_Caso", "OT-TE",
+            "Registra OT Antecedentes", "Registra Resoluciones o Medidas Vigentes",
+            "Analista", "Usuario Analista"
+        ])
+
+        try:
+            hoja_perfil = spreadsheet.worksheet("PerfilAntiguo_Individual")
+        except Exception:
+            hoja_perfil = spreadsheet.add_worksheet(title="PerfilAntiguo_Individual", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_perfil, [
+            "ID_Perfil", "ID_Caso", "OT-TE",
+            "Modo de Participacion", "Lugar de Acreditacion",
+            "Analista", "Usuario Analista"
+        ])
+
+        try:
+            hoja_desplazamientos = spreadsheet.worksheet("Desplazamientos_Individual")
+        except Exception:
+            hoja_desplazamientos = spreadsheet.add_worksheet(title="Desplazamientos_Individual", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_desplazamientos, [
+            "ID_Desplazamiento", "ID_Caso", "OT-TE",
+            "Motivo Desplazamiento", "Medio de Transporte",
+            "Departamento Origen", "Departamento Destino",
+            "Analista", "Usuario Analista"
+        ])
+
+        try:
+            hoja_verificaciones = spreadsheet.worksheet("Verificaciones_Individual")
+        except Exception:
+            hoja_verificaciones = spreadsheet.add_worksheet(title="Verificaciones_Individual", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_verificaciones, [
+            "ID_Verificacion", "ID_Caso", "OT-TE",
+            "Fuente", "Nombre Fuente",
+            "Analista", "Usuario Analista"
+        ])
+
+        return (hoja_casos, hoja_hechos, hoja_antecedentes,
+                hoja_perfil, hoja_desplazamientos, hoja_verificaciones,
+                spreadsheet.url)
 
     except Exception as e:
         st.error(f"Error al conectar sheets individuales: {e}")
-        return None, None, None
+        return None, None, None, None, None, None, None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -205,45 +246,77 @@ def conectar_sheets_individual():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def conectar_sheets_colectivo():
-    """
-    Conecta y retorna (hoja_casos_colectivo, hoja_hechos_colectivo, url).
-
-    Hojas en el spreadsheet ISMR_Casos:
-      • 'Colectivo'        — datos del caso colectivo
-      • 'Hechos_Colectivo' — hechos de riesgo asociados a casos colectivos
-    """
     try:
         spreadsheet = _get_spreadsheet()
 
-        # Hoja de casos colectivos
         try:
             hoja_casos = spreadsheet.worksheet("Colectivo")
         except Exception:
             hoja_casos = spreadsheet.add_worksheet(title="Colectivo", rows="1000", cols="20")
-
         _sincronizar_encabezados(hoja_casos, [
             "Timestamp", "OT-TE", "Nombre Colectivo", "Fecha Creacion Colectivo",
             "Sector", "Departamento", "Municipio",
             "Analista", "Usuario Analista", "ID_Caso"
         ])
 
-        # Hoja de hechos colectivos
         try:
             hoja_hechos = spreadsheet.worksheet("Hechos_Colectivo")
         except Exception:
             hoja_hechos = spreadsheet.add_worksheet(title="Hechos_Colectivo", rows="1000", cols="20")
-
         _sincronizar_encabezados(hoja_hechos, [
             "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
             "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
             "Analista", "Usuario Analista"
         ])
 
-        return hoja_casos, hoja_hechos, spreadsheet.url
+        try:
+            hoja_antecedentes = spreadsheet.worksheet("Antecedentes_Colectivo")
+        except Exception:
+            hoja_antecedentes = spreadsheet.add_worksheet(title="Antecedentes_Colectivo", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_antecedentes, [
+            "ID_Antecedente", "ID_Caso", "OT-TE",
+            "Registra OT Antecedentes", "Registra Resoluciones o Medidas Vigentes",
+            "Analista", "Usuario Analista"
+        ])
+
+        try:
+            hoja_perfil = spreadsheet.worksheet("PerfilAntiguo_Colectivo")
+        except Exception:
+            hoja_perfil = spreadsheet.add_worksheet(title="PerfilAntiguo_Colectivo", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_perfil, [
+            "ID_Perfil", "ID_Caso", "OT-TE",
+            "Modo de Participacion", "Lugar de Acreditacion",
+            "Analista", "Usuario Analista"
+        ])
+
+        try:
+            hoja_desplazamientos = spreadsheet.worksheet("Desplazamientos_Colectivo")
+        except Exception:
+            hoja_desplazamientos = spreadsheet.add_worksheet(title="Desplazamientos_Colectivo", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_desplazamientos, [
+            "ID_Desplazamiento", "ID_Caso", "OT-TE",
+            "Motivo Desplazamiento", "Medio de Transporte",
+            "Departamento Origen", "Departamento Destino",
+            "Analista", "Usuario Analista"
+        ])
+
+        try:
+            hoja_verificaciones = spreadsheet.worksheet("Verificaciones_Colectivo")
+        except Exception:
+            hoja_verificaciones = spreadsheet.add_worksheet(title="Verificaciones_Colectivo", rows="1000", cols="10")
+        _sincronizar_encabezados(hoja_verificaciones, [
+            "ID_Verificacion", "ID_Caso", "OT-TE",
+            "Fuente", "Nombre Fuente",
+            "Analista", "Usuario Analista"
+        ])
+
+        return (hoja_casos, hoja_hechos, hoja_antecedentes,
+                hoja_perfil, hoja_desplazamientos, hoja_verificaciones,
+                spreadsheet.url)
 
     except Exception as e:
         st.error(f"Error al conectar sheets colectivos: {e}")
-        return None, None, None
+        return None, None, None, None, None, None, None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -265,13 +338,6 @@ def _leer_con_retry(hoja, metodo="get_all_records", max_retries=4):
     raise Exception(f"Cuota agotada tras {max_retries} intentos")
 
 def _sincronizar_encabezados(hoja, encabezados_esperados):
-    """
-    Compara los encabezados actuales de la hoja con los esperados.
-    Si faltan columnas, las agrega al final automaticamente.
-    Si la hoja esta vacia, escribe todos los encabezados desde cero.
-    Usa cache de sesion para ejecutarse solo una vez por hoja y evitar
-    gastar cuota de lectura de la API en cada recarga de la app.
-    """
     cache_key = f"_headers_synced_{hoja.title}"
     if st.session_state.get(cache_key):
         return
@@ -287,16 +353,14 @@ def _sincronizar_encabezados(hoja, encabezados_esperados):
                 hoja.update_cell(1, col_inicio + i, nombre_col)
     st.session_state[cache_key] = True
 
+
 # ══════════════════════════════════════════════════════════════════════════════
 # BORRADORES
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _conectar_hoja_borradores():
-    """Retorna la hoja Borradores del spreadsheet principal, creandola si no existe."""
     try:
-        creds, _ = _credenciales()
-        client = gspread.authorize(creds)
-        spreadsheet = client.open(st.secrets.get("sheet_name", "ISMR_Casos"))
+        spreadsheet = _get_spreadsheet()
         try:
             hoja = spreadsheet.worksheet("Borradores")
         except Exception:
@@ -361,6 +425,219 @@ def eliminar_borrador(tipo):
     except Exception as e:
         st.error(f"Error al eliminar borrador: {e}")
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECCIONES REUTILIZABLES — ANTECEDENTES
+# ══════════════════════════════════════════════════════════════════════════════
+
+def seccion_antecedentes(tipo):
+    """tipo: 'individual' o 'colectivo'"""
+    key_list = f"antecedentes_{tipo}"
+    lista    = st.session_state[key_list]
+
+    st.markdown("---")
+    st.subheader("📁 Antecedentes")
+    st.caption("Opcional. Registra antecedentes asociados a este caso.")
+
+    for i, ant in enumerate(lista):
+        with st.container(border=True):
+            col_tit, col_del = st.columns([5, 1])
+            with col_tit:
+                st.markdown(f"**Antecedente #{i+1}**")
+            with col_del:
+                if st.button("🗑️", key=f"del_ant_{tipo}_{i}"):
+                    lista.pop(i)
+                    st.rerun()
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"📋 **Registra OT antecedentes:** {ant['registra_ot']}")
+            with c2:
+                st.write(f"📋 **Registra resoluciones/medidas vigentes:** {ant['registra_resoluciones']}")
+
+    with st.expander("➕ Agregar antecedente", expanded=len(lista) == 0):
+        with st.form(f"form_antecedente_{tipo}", clear_on_submit=True):
+            st.markdown("**¿Registra OT antecedentes?**")
+            col_a, col_b = st.columns(2)
+            with col_a:
+                registra_ot = st.radio(
+                    "Registra OT antecedentes",
+                    ["Sí", "No"],
+                    horizontal=True,
+                    key=f"ant_ot_{tipo}",
+                    label_visibility="collapsed"
+                )
+            st.markdown("**¿Registra resoluciones o medidas vigentes?**")
+            col_c, col_d = st.columns(2)
+            with col_c:
+                registra_res = st.radio(
+                    "Registra resoluciones o medidas vigentes",
+                    ["Sí", "No"],
+                    horizontal=True,
+                    key=f"ant_res_{tipo}",
+                    label_visibility="collapsed"
+                )
+            if st.form_submit_button("➕ Agregar antecedente", use_container_width=True):
+                lista.append({
+                    "registra_ot": registra_ot,
+                    "registra_resoluciones": registra_res
+                })
+                st.success("✅ Antecedente agregado")
+                st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECCIONES REUTILIZABLES — PERFIL ANTIGUO
+# ══════════════════════════════════════════════════════════════════════════════
+
+def seccion_perfil_antiguo(tipo):
+    key_list = f"perfil_antiguo_{tipo}"
+    lista    = st.session_state[key_list]
+
+    st.markdown("---")
+    st.subheader("🗂️ Perfil Antiguo")
+    st.caption("Opcional. Registra información de perfil anterior.")
+
+    for i, perfil in enumerate(lista):
+        with st.container(border=True):
+            col_tit, col_del = st.columns([5, 1])
+            with col_tit:
+                st.markdown(f"**Perfil #{i+1}**")
+            with col_del:
+                if st.button("🗑️", key=f"del_perf_{tipo}_{i}"):
+                    lista.pop(i)
+                    st.rerun()
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"🎭 **Modo de participación:** {perfil['modo_participacion']}")
+            with c2:
+                st.write(f"📍 **Lugar de acreditación:** {perfil['lugar_acreditacion']}")
+
+    with st.expander("➕ Agregar perfil antiguo", expanded=len(lista) == 0):
+        with st.form(f"form_perfil_{tipo}", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                modo = st.text_input("Modo de Participación *", placeholder="Ej: Combatiente, Miliciano...", key=f"perf_modo_{tipo}")
+            with c2:
+                lugar = st.text_input("Lugar de Acreditación *", placeholder="Ej: Bogotá D.C.", key=f"perf_lugar_{tipo}")
+            if st.form_submit_button("➕ Agregar perfil", use_container_width=True):
+                errores = []
+                if not modo.strip():  errores.append("El modo de participación es obligatorio")
+                if not lugar.strip(): errores.append("El lugar de acreditación es obligatorio")
+                if errores:
+                    for e in errores: st.error(f"• {e}")
+                else:
+                    lista.append({
+                        "modo_participacion": modo.strip(),
+                        "lugar_acreditacion": lugar.strip()
+                    })
+                    st.success("✅ Perfil agregado")
+                    st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECCIONES REUTILIZABLES — DESPLAZAMIENTOS
+# ══════════════════════════════════════════════════════════════════════════════
+
+def seccion_desplazamientos(tipo):
+    key_list = f"desplazamientos_{tipo}"
+    lista    = st.session_state[key_list]
+
+    st.markdown("---")
+    st.subheader("🚗 Desplazamientos")
+    st.caption("Opcional. Registra desplazamientos asociados a este caso.")
+
+    for i, desp in enumerate(lista):
+        with st.container(border=True):
+            col_tit, col_del = st.columns([5, 1])
+            with col_tit:
+                st.markdown(f"**Desplazamiento #{i+1}**")
+            with col_del:
+                if st.button("🗑️", key=f"del_desp_{tipo}_{i}"):
+                    lista.pop(i)
+                    st.rerun()
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"❓ **Motivo:** {desp['motivo']}")
+                st.write(f"🚌 **Medio de transporte:** {desp['medio']}")
+            with c2:
+                st.write(f"📤 **Departamento origen:** {desp['depto_origen']}")
+                st.write(f"📥 **Departamento destino:** {desp['depto_destino']}")
+
+    with st.expander("➕ Agregar desplazamiento", expanded=len(lista) == 0):
+        with st.form(f"form_desplazamiento_{tipo}", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                motivo      = st.text_input("Motivo Desplazamiento *", placeholder="Ej: Amenaza directa", key=f"desp_motivo_{tipo}")
+                depto_origen = st.text_input("Departamento de Origen *", placeholder="Ej: Antioquia", key=f"desp_origen_{tipo}")
+            with c2:
+                medio        = st.text_input("Medio de Transporte *", placeholder="Ej: Bus, a pie...", key=f"desp_medio_{tipo}")
+                depto_destino = st.text_input("Departamento Destino *", placeholder="Ej: Bogotá D.C.", key=f"desp_destino_{tipo}")
+            if st.form_submit_button("➕ Agregar desplazamiento", use_container_width=True):
+                errores = []
+                if not motivo.strip():       errores.append("El motivo es obligatorio")
+                if not medio.strip():        errores.append("El medio de transporte es obligatorio")
+                if not depto_origen.strip(): errores.append("El departamento de origen es obligatorio")
+                if not depto_destino.strip():errores.append("El departamento destino es obligatorio")
+                if errores:
+                    for e in errores: st.error(f"• {e}")
+                else:
+                    lista.append({
+                        "motivo": motivo.strip(),
+                        "medio": medio.strip(),
+                        "depto_origen": depto_origen.strip(),
+                        "depto_destino": depto_destino.strip()
+                    })
+                    st.success("✅ Desplazamiento agregado")
+                    st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECCIONES REUTILIZABLES — VERIFICACIONES
+# ══════════════════════════════════════════════════════════════════════════════
+
+def seccion_verificaciones(tipo):
+    key_list = f"verificaciones_{tipo}"
+    lista    = st.session_state[key_list]
+
+    st.markdown("---")
+    st.subheader("✅ Verificaciones")
+    st.caption("Opcional. Registra fuentes de verificación para este caso.")
+
+    for i, ver in enumerate(lista):
+        with st.container(border=True):
+            col_tit, col_del = st.columns([5, 1])
+            with col_tit:
+                st.markdown(f"**Verificación #{i+1}**")
+            with col_del:
+                if st.button("🗑️", key=f"del_ver_{tipo}_{i}"):
+                    lista.pop(i)
+                    st.rerun()
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"🔎 **Fuente:** {ver['fuente']}")
+            with c2:
+                st.write(f"👤 **Nombre fuente:** {ver['nombre_fuente']}")
+
+    with st.expander("➕ Agregar verificación", expanded=len(lista) == 0):
+        with st.form(f"form_verificacion_{tipo}", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                fuente = st.text_input("Fuente *", placeholder="Ej: Entrevista, Documento oficial...", key=f"ver_fuente_{tipo}")
+            with c2:
+                nombre_fuente = st.text_input("Nombre Fuente *", placeholder="Ej: Juan Pérez, Alcaldía de...", key=f"ver_nombre_{tipo}")
+            if st.form_submit_button("➕ Agregar verificación", use_container_width=True):
+                errores = []
+                if not fuente.strip():       errores.append("La fuente es obligatoria")
+                if not nombre_fuente.strip():errores.append("El nombre de la fuente es obligatorio")
+                if errores:
+                    for e in errores: st.error(f"• {e}")
+                else:
+                    lista.append({
+                        "fuente": fuente.strip(),
+                        "nombre_fuente": nombre_fuente.strip()
+                    })
+                    st.success("✅ Verificación agregada")
+                    st.rerun()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -475,8 +752,12 @@ def pantalla_selector():
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👤</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-individual">', unsafe_allow_html=True)
         if st.button("FORMULARIO\nINDIVIDUAL", key="btn_individual", use_container_width=True):
-            st.session_state.vista             = "individual"
-            st.session_state.hechos_individual = []
+            st.session_state.vista                    = "individual"
+            st.session_state.hechos_individual        = []
+            st.session_state.antecedentes_individual  = []
+            st.session_state.perfil_antiguo_individual= []
+            st.session_state.desplazamientos_individual=[]
+            st.session_state.verificaciones_individual= []
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Un caso por registro</p>', unsafe_allow_html=True)
@@ -485,8 +766,12 @@ def pantalla_selector():
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👥</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-colectivo">', unsafe_allow_html=True)
         if st.button("FORMULARIO\nCOLECTIVO", key="btn_colectivo", use_container_width=True):
-            st.session_state.vista            = "colectivo"
-            st.session_state.hechos_colectivo = []
+            st.session_state.vista                   = "colectivo"
+            st.session_state.hechos_colectivo        = []
+            st.session_state.antecedentes_colectivo  = []
+            st.session_state.perfil_antiguo_colectivo= []
+            st.session_state.desplazamientos_colectivo=[]
+            st.session_state.verificaciones_colectivo= []
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Múltiples personas afectadas</p>', unsafe_allow_html=True)
@@ -503,19 +788,19 @@ def pantalla_selector():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def formulario_individual():
-    hoja_casos, hoja_hechos, sheet_url = conectar_sheets_individual()
+    resultado = conectar_sheets_individual()
+    hoja_casos, hoja_hechos, hoja_antecedentes, hoja_perfil, hoja_desplazamientos, hoja_verificaciones, sheet_url = resultado
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets")
         return
 
-    # ── Cargar borrador si existe (solo la primera vez en esta sesión) ─────────
+    # ── Cargar borrador ───────────────────────────────────────────────────────
     if not st.session_state.get("_borrador_ind_revisado"):
         campos_b, hechos_b, ts_b = cargar_borrador("individual")
         if campos_b:
             st.session_state["_borrador_ind_pendiente"] = (campos_b, hechos_b, ts_b)
         st.session_state["_borrador_ind_revisado"] = True
 
-    # ── Aviso de borrador pendiente ───────────────────────────────────────────
     if st.session_state.get("_borrador_ind_pendiente"):
         campos_b, hechos_b, ts_b = st.session_state["_borrador_ind_pendiente"]
         st.warning(f"📂 Tienes un borrador guardado del **{ts_b}**. ¿Deseas retomarlo?")
@@ -540,6 +825,10 @@ def formulario_individual():
         if st.button("← Volver", type="secondary"):
             st.session_state.vista             = None
             st.session_state.hechos_individual = []
+            st.session_state.antecedentes_individual   = []
+            st.session_state.perfil_antiguo_individual = []
+            st.session_state.desplazamientos_individual= []
+            st.session_state.verificaciones_individual = []
             st.session_state.pop("_borrador_ind_revisado", None)
             st.rerun()
     with col_title:
@@ -576,6 +865,15 @@ def formulario_individual():
         nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"], key="ind_riesgo")
 
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key="ind_obs")
+
+    # ── Antecedentes ──────────────────────────────────────────────────────────
+    seccion_antecedentes("individual")
+
+    # ── Perfil Antiguo ────────────────────────────────────────────────────────
+    seccion_perfil_antiguo("individual")
+
+    # ── Desplazamientos ───────────────────────────────────────────────────────
+    seccion_desplazamientos("individual")
 
     # ── Hechos de riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -622,22 +920,15 @@ def formulario_individual():
                     for e in err_h: st.error(f"• {e}")
                 else:
                     st.session_state.hechos_individual.append({
-                        "tipo": tipo_hecho,
-                        "fecha": str(fecha_hecho),
-                        "lugar": lugar_hecho.strip(),
-                        "autor": autor_hecho.strip(),
+                        "tipo": tipo_hecho, "fecha": str(fecha_hecho),
+                        "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
                         "descripcion": descripcion_hecho.strip()
                     })
-                    # Auto-guardar borrador al agregar hecho
-                    guardar_borrador("individual", {
-                        "ind_ot": ot_te, "ind_edad": edad, "ind_sexo": sexo,
-                        "ind_depto": departamento, "ind_muni": municipio,
-                        "ind_sol": solicitante, "ind_riesgo": nivel_riesgo,
-                        "ind_tipo_estudio": tipo_estudio, "ind_anio": año,
-                        "ind_mes": mes, "ind_obs": observaciones
-                    }, st.session_state.hechos_individual)
-                    st.success("✅ Hecho agregado y borrador actualizado")
+                    st.success("✅ Hecho agregado")
                     st.rerun()
+
+    # ── Verificaciones ────────────────────────────────────────────────────────
+    seccion_verificaciones("individual")
 
     # ── Botones: Guardar borrador y Registrar ─────────────────────────────────
     st.markdown("---")
@@ -652,7 +943,7 @@ def formulario_individual():
                 "ind_mes": mes, "ind_obs": observaciones
             }, st.session_state.hechos_individual)
             if ok:
-                st.success("💾 Borrador guardado. Puedes retomarlo luego.")
+                st.success("💾 Borrador guardado.")
     with col_register:
         registrar = st.button("✅ REGISTRAR CASO INDIVIDUAL", use_container_width=True, type="primary")
 
@@ -688,19 +979,59 @@ def formulario_individual():
                         st.session_state.nombre_completo, st.session_state.username, id_caso,
                         tipo_estudio, año, mes
                     ])
+
+                    # Guardar hechos
                     hechos_guardados = 0
                     for hecho in st.session_state.hechos_individual:
-                        id_hecho = obtener_siguiente_id(hoja_hechos)
                         hoja_hechos.append_row([
-                            id_hecho, id_caso, ot_te.strip(),
+                            obtener_siguiente_id(hoja_hechos), id_caso, ot_te.strip(),
                             hecho["tipo"], hecho["fecha"], hecho["lugar"],
                             hecho["autor"], hecho["descripcion"],
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         hechos_guardados += 1
+
+                    # Guardar antecedentes
+                    for ant in st.session_state.antecedentes_individual:
+                        hoja_antecedentes.append_row([
+                            obtener_siguiente_id(hoja_antecedentes), id_caso, ot_te.strip(),
+                            ant["registra_ot"], ant["registra_resoluciones"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
+                    # Guardar perfiles
+                    for perf in st.session_state.perfil_antiguo_individual:
+                        hoja_perfil.append_row([
+                            obtener_siguiente_id(hoja_perfil), id_caso, ot_te.strip(),
+                            perf["modo_participacion"], perf["lugar_acreditacion"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
+                    # Guardar desplazamientos
+                    for desp in st.session_state.desplazamientos_individual:
+                        hoja_desplazamientos.append_row([
+                            obtener_siguiente_id(hoja_desplazamientos), id_caso, ot_te.strip(),
+                            desp["motivo"], desp["medio"],
+                            desp["depto_origen"], desp["depto_destino"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
+                    # Guardar verificaciones
+                    for ver in st.session_state.verificaciones_individual:
+                        hoja_verificaciones.append_row([
+                            obtener_siguiente_id(hoja_verificaciones), id_caso, ot_te.strip(),
+                            ver["fuente"], ver["nombre_fuente"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
                     eliminar_borrador("individual")
-                    st.session_state.hechos_individual = []
+                    st.session_state.hechos_individual         = []
+                    st.session_state.antecedentes_individual   = []
+                    st.session_state.perfil_antiguo_individual = []
+                    st.session_state.desplazamientos_individual= []
+                    st.session_state.verificaciones_individual = []
                     st.session_state.pop("_borrador_ind_revisado", None)
+
                     st.success(f"✅ Caso **{ot_te}** registrado como Individual!")
                     if hechos_guardados > 0:
                         st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
@@ -713,6 +1044,7 @@ def formulario_individual():
                     - **Nivel de Riesgo:** {nivel_riesgo}
                     - **Tipo de Estudio:** {tipo_estudio}
                     - **Hechos registrados:** {hechos_guardados}
+                    - **Antecedentes:** {len(st.session_state.get('antecedentes_individual', []))}
                     - **Registrado por:** {st.session_state.nombre_completo}
                     - **Fecha:** {timestamp}
                     """)
@@ -720,7 +1052,7 @@ def formulario_individual():
                 st.error(f"❌ Error al guardar: {e}")
 
     st.markdown("---")
-    st.caption("🔒 Los datos se guardan en la hoja 'Individual' de Google Sheets")
+    st.caption("🔒 Los datos se guardan en Google Sheets")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -728,34 +1060,26 @@ def formulario_individual():
 # ══════════════════════════════════════════════════════════════════════════════
 
 SECTORES_COLECTIVO = [
-    "Seleccione...",
-    "Comunidad campesina",
-    "Comunidad indígena",
-    "Comunidad afrodescendiente",
-    "Organización social",
-    "Organización sindical",
-    "Organización de mujeres",
-    "Organización de jóvenes",
-    "Organización LGBTIQ+",
-    "Defensores de DDHH",
-    "Líderes sociales",
-    "Otro",
+    "Seleccione...", "Comunidad campesina", "Comunidad indígena",
+    "Comunidad afrodescendiente", "Organización social", "Organización sindical",
+    "Organización de mujeres", "Organización de jóvenes", "Organización LGBTIQ+",
+    "Defensores de DDHH", "Líderes sociales", "Otro",
 ]
 
 def formulario_colectivo():
-    hoja_casos, hoja_hechos, sheet_url = conectar_sheets_colectivo()
+    resultado = conectar_sheets_colectivo()
+    hoja_casos, hoja_hechos, hoja_antecedentes, hoja_perfil, hoja_desplazamientos, hoja_verificaciones, sheet_url = resultado
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets")
         return
 
-    # ── Cargar borrador si existe (solo la primera vez en esta sesión) ─────────
+    # ── Cargar borrador ───────────────────────────────────────────────────────
     if not st.session_state.get("_borrador_col_revisado"):
         campos_b, hechos_b, ts_b = cargar_borrador("colectivo")
         if campos_b:
             st.session_state["_borrador_col_pendiente"] = (campos_b, hechos_b, ts_b)
         st.session_state["_borrador_col_revisado"] = True
 
-    # ── Aviso de borrador pendiente ───────────────────────────────────────────
     if st.session_state.get("_borrador_col_pendiente"):
         campos_b, hechos_b, ts_b = st.session_state["_borrador_col_pendiente"]
         st.warning(f"📂 Tienes un borrador guardado del **{ts_b}**. ¿Deseas retomarlo?")
@@ -780,6 +1104,10 @@ def formulario_colectivo():
         if st.button("← Volver", type="secondary"):
             st.session_state.vista            = None
             st.session_state.hechos_colectivo = []
+            st.session_state.antecedentes_colectivo   = []
+            st.session_state.perfil_antiguo_colectivo = []
+            st.session_state.desplazamientos_colectivo= []
+            st.session_state.verificaciones_colectivo = []
             st.session_state.pop("_borrador_col_revisado", None)
             st.rerun()
     with col_title:
@@ -804,16 +1132,21 @@ def formulario_colectivo():
 
     col1, col2 = st.columns(2)
     with col1:
-        nombre_colectivo = st.text_input(
-            "Nombre del Colectivo *",
-            placeholder="Nombre del grupo u organización",
-            key="col_nombre"
-        )
-        fecha_creacion = st.date_input("Fecha de Creación del Colectivo *", key="col_fecha")
-        sector = st.selectbox("Sector *", SECTORES_COLECTIVO, key="col_sector")
+        nombre_colectivo = st.text_input("Nombre del Colectivo *", placeholder="Nombre del grupo u organización", key="col_nombre")
+        fecha_creacion   = st.date_input("Fecha de Creación del Colectivo *", key="col_fecha")
+        sector           = st.selectbox("Sector *", SECTORES_COLECTIVO, key="col_sector")
     with col2:
         departamento = st.text_input("Departamento *", placeholder="Ejemplo: Córdoba", key="col_depto")
         municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Montería", key="col_muni")
+
+    # ── Antecedentes ──────────────────────────────────────────────────────────
+    seccion_antecedentes("colectivo")
+
+    # ── Perfil Antiguo ────────────────────────────────────────────────────────
+    seccion_perfil_antiguo("colectivo")
+
+    # ── Desplazamientos ───────────────────────────────────────────────────────
+    seccion_desplazamientos("colectivo")
 
     # ── Hechos de riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -860,22 +1193,17 @@ def formulario_colectivo():
                     for e in err_h: st.error(f"• {e}")
                 else:
                     st.session_state.hechos_colectivo.append({
-                        "tipo": tipo_hecho,
-                        "fecha": str(fecha_hecho),
-                        "lugar": lugar_hecho.strip(),
-                        "autor": autor_hecho.strip(),
+                        "tipo": tipo_hecho, "fecha": str(fecha_hecho),
+                        "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
                         "descripcion": descripcion_hecho.strip()
                     })
-                    # Auto-guardar borrador al agregar hecho
-                    guardar_borrador("colectivo", {
-                        "col_ot": ot_te, "col_nombre": nombre_colectivo,
-                        "col_sector": sector, "col_depto": departamento,
-                        "col_muni": municipio
-                    }, st.session_state.hechos_colectivo)
-                    st.success("✅ Hecho agregado y borrador actualizado")
+                    st.success("✅ Hecho agregado")
                     st.rerun()
 
-    # ── Botones: Guardar borrador y Registrar ─────────────────────────────────
+    # ── Verificaciones ────────────────────────────────────────────────────────
+    seccion_verificaciones("colectivo")
+
+    # ── Botones ───────────────────────────────────────────────────────────────
     st.markdown("---")
     col_draft, col_register = st.columns([1, 2])
     with col_draft:
@@ -886,7 +1214,7 @@ def formulario_colectivo():
                 "col_muni": municipio
             }, st.session_state.hechos_colectivo)
             if ok:
-                st.success("💾 Borrador guardado. Puedes retomarlo luego.")
+                st.success("💾 Borrador guardado.")
     with col_register:
         registrar = st.button("✅ REGISTRAR CASO COLECTIVO", use_container_width=True, type="primary")
 
@@ -915,19 +1243,54 @@ def formulario_colectivo():
                         str(fecha_creacion), sector, departamento.strip(), municipio.strip(),
                         st.session_state.nombre_completo, st.session_state.username, id_caso
                     ])
+
                     hechos_guardados = 0
                     for hecho in st.session_state.hechos_colectivo:
-                        id_hecho = obtener_siguiente_id(hoja_hechos)
                         hoja_hechos.append_row([
-                            id_hecho, id_caso, ot_te.strip(),
+                            obtener_siguiente_id(hoja_hechos), id_caso, ot_te.strip(),
                             hecho["tipo"], hecho["fecha"], hecho["lugar"],
                             hecho["autor"], hecho["descripcion"],
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         hechos_guardados += 1
+
+                    for ant in st.session_state.antecedentes_colectivo:
+                        hoja_antecedentes.append_row([
+                            obtener_siguiente_id(hoja_antecedentes), id_caso, ot_te.strip(),
+                            ant["registra_ot"], ant["registra_resoluciones"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
+                    for perf in st.session_state.perfil_antiguo_colectivo:
+                        hoja_perfil.append_row([
+                            obtener_siguiente_id(hoja_perfil), id_caso, ot_te.strip(),
+                            perf["modo_participacion"], perf["lugar_acreditacion"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
+                    for desp in st.session_state.desplazamientos_colectivo:
+                        hoja_desplazamientos.append_row([
+                            obtener_siguiente_id(hoja_desplazamientos), id_caso, ot_te.strip(),
+                            desp["motivo"], desp["medio"],
+                            desp["depto_origen"], desp["depto_destino"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
+                    for ver in st.session_state.verificaciones_colectivo:
+                        hoja_verificaciones.append_row([
+                            obtener_siguiente_id(hoja_verificaciones), id_caso, ot_te.strip(),
+                            ver["fuente"], ver["nombre_fuente"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+
                     eliminar_borrador("colectivo")
-                    st.session_state.hechos_colectivo = []
+                    st.session_state.hechos_colectivo         = []
+                    st.session_state.antecedentes_colectivo   = []
+                    st.session_state.perfil_antiguo_colectivo = []
+                    st.session_state.desplazamientos_colectivo= []
+                    st.session_state.verificaciones_colectivo = []
                     st.session_state.pop("_borrador_col_revisado", None)
+
                     st.success(f"✅ Caso **{ot_te}** registrado como Colectivo!")
                     if hechos_guardados > 0:
                         st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
@@ -962,13 +1325,17 @@ def panel_visualizacion():
 
     # Tab Individual
     with tab_ind:
-        hoja_casos, hoja_hechos, sheet_url = conectar_sheets_individual()
+        resultado = conectar_sheets_individual()
+        hoja_casos, hoja_hechos, hoja_ant, hoja_perf, hoja_desp, hoja_ver, sheet_url = resultado
         if hoja_casos is None:
             st.error("No se pudo conectar a la hoja Individual")
         else:
             if sheet_url:
                 st.markdown(f"[📝 Abrir en Google Sheets]({sheet_url})")
-            sub1, sub2 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo"])
+            sub1, sub2, sub3, sub4, sub5, sub6 = st.tabs([
+                "📋 Casos", "⚠️ Hechos", "📁 Antecedentes",
+                "🗂️ Perfil Antiguo", "🚗 Desplazamientos", "✅ Verificaciones"
+            ])
 
             with sub1:
                 try:
@@ -993,10 +1360,8 @@ def panel_visualizacion():
                         if analista_f != "Todos" and "Analista"        in df.columns: df_f = df_f[df_f["Analista"]        == analista_f]
                         st.subheader(f"📋 Resultados ({len(df_f)} casos)")
                         st.dataframe(df_f, use_container_width=True, hide_index=True)
-                        csv = df_f.to_csv(index=False, encoding="utf-8-sig")
-                        st.download_button("📥 Descargar CSV", csv,
-                                           f"casos_individual_{datetime.now().strftime('%Y%m%d')}.csv",
-                                           "text/csv", key="dl_casos_ind")
+                        st.download_button("📥 Descargar CSV", df_f.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"casos_individual_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_casos_ind")
                     else:
                         st.info("📭 No hay casos individuales registrados")
                 except Exception as e:
@@ -1008,30 +1373,84 @@ def panel_visualizacion():
                     if datos_h:
                         df_h = pd.DataFrame(datos_h)
                         c1, c2, c3 = st.columns(3)
-                        c1.metric("Total Hechos",    len(df_h))
-                        c2.metric("Tipos distintos",  df_h["Tipo de Hecho"].nunique() if "Tipo de Hecho" in df_h.columns else 0)
-                        c3.metric("Casos con hechos", df_h["ID_Caso"].nunique()       if "ID_Caso"       in df_h.columns else 0)
+                        c1.metric("Total Hechos", len(df_h))
+                        c2.metric("Tipos distintos", df_h["Tipo de Hecho"].nunique() if "Tipo de Hecho" in df_h.columns else 0)
+                        c3.metric("Casos con hechos", df_h["ID_Caso"].nunique() if "ID_Caso" in df_h.columns else 0)
                         tipo_f = st.selectbox("Filtrar por Tipo", ["Todos"] + sorted(df_h["Tipo de Hecho"].unique().tolist()) if "Tipo de Hecho" in df_h.columns else ["Todos"], key="vi_ind_tipo_hecho")
                         df_hf  = df_h[df_h["Tipo de Hecho"] == tipo_f].copy() if tipo_f != "Todos" else df_h.copy()
                         st.dataframe(df_hf, use_container_width=True, hide_index=True)
-                        csv_h = df_hf.to_csv(index=False, encoding="utf-8-sig")
-                        st.download_button("📥 Descargar CSV Hechos", csv_h,
-                                           f"hechos_individual_{datetime.now().strftime('%Y%m%d')}.csv",
-                                           "text/csv", key="dl_hechos_ind")
+                        st.download_button("📥 Descargar CSV", df_hf.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"hechos_individual_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_hechos_ind")
                     else:
                         st.info("📭 No hay hechos individuales registrados")
                 except Exception as e:
-                    st.error(f"Error al cargar hechos individuales: {e}")
+                    st.error(f"Error: {e}")
+
+            with sub3:
+                try:
+                    datos_a = _leer_con_retry(hoja_ant)
+                    if datos_a:
+                        df_a = pd.DataFrame(datos_a)
+                        st.dataframe(df_a, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_a.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"antecedentes_individual_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_ant_ind")
+                    else:
+                        st.info("📭 No hay antecedentes registrados")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+            with sub4:
+                try:
+                    datos_p = _leer_con_retry(hoja_perf)
+                    if datos_p:
+                        df_p = pd.DataFrame(datos_p)
+                        st.dataframe(df_p, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_p.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"perfil_individual_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_perf_ind")
+                    else:
+                        st.info("📭 No hay perfiles registrados")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+            with sub5:
+                try:
+                    datos_d = _leer_con_retry(hoja_desp)
+                    if datos_d:
+                        df_d = pd.DataFrame(datos_d)
+                        st.dataframe(df_d, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_d.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"desplazamientos_individual_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_desp_ind")
+                    else:
+                        st.info("📭 No hay desplazamientos registrados")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+            with sub6:
+                try:
+                    datos_v = _leer_con_retry(hoja_ver)
+                    if datos_v:
+                        df_v = pd.DataFrame(datos_v)
+                        st.dataframe(df_v, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_v.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"verificaciones_individual_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_ver_ind")
+                    else:
+                        st.info("📭 No hay verificaciones registradas")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
     # Tab Colectivo
     with tab_col:
-        hoja_casos, hoja_hechos, sheet_url = conectar_sheets_colectivo()
+        resultado = conectar_sheets_colectivo()
+        hoja_casos, hoja_hechos, hoja_ant, hoja_perf, hoja_desp, hoja_ver, sheet_url = resultado
         if hoja_casos is None:
             st.error("No se pudo conectar a la hoja Colectivo")
         else:
             if sheet_url:
                 st.markdown(f"[📝 Abrir en Google Sheets]({sheet_url})")
-            sub1, sub2 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo"])
+            sub1, sub2, sub3, sub4, sub5, sub6 = st.tabs([
+                "📋 Casos", "⚠️ Hechos", "📁 Antecedentes",
+                "🗂️ Perfil Antiguo", "🚗 Desplazamientos", "✅ Verificaciones"
+            ])
 
             with sub1:
                 try:
@@ -1056,14 +1475,12 @@ def panel_visualizacion():
                         if analista_f != "Todos" and "Analista"     in df.columns: df_f = df_f[df_f["Analista"]     == analista_f]
                         st.subheader(f"📋 Resultados ({len(df_f)} colectivos)")
                         st.dataframe(df_f, use_container_width=True, hide_index=True)
-                        csv = df_f.to_csv(index=False, encoding="utf-8-sig")
-                        st.download_button("📥 Descargar CSV", csv,
-                                           f"casos_colectivo_{datetime.now().strftime('%Y%m%d')}.csv",
-                                           "text/csv", key="dl_casos_col")
+                        st.download_button("📥 Descargar CSV", df_f.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"casos_colectivo_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_casos_col")
                     else:
                         st.info("📭 No hay casos colectivos registrados")
                 except Exception as e:
-                    st.error(f"Error al cargar casos colectivos: {e}")
+                    st.error(f"Error: {e}")
 
             with sub2:
                 try:
@@ -1071,20 +1488,70 @@ def panel_visualizacion():
                     if datos_h:
                         df_h = pd.DataFrame(datos_h)
                         c1, c2, c3 = st.columns(3)
-                        c1.metric("Total Hechos",    len(df_h))
-                        c2.metric("Tipos distintos",  df_h["Tipo de Hecho"].nunique() if "Tipo de Hecho" in df_h.columns else 0)
-                        c3.metric("Casos con hechos", df_h["ID_Caso"].nunique()       if "ID_Caso"       in df_h.columns else 0)
+                        c1.metric("Total Hechos", len(df_h))
+                        c2.metric("Tipos distintos", df_h["Tipo de Hecho"].nunique() if "Tipo de Hecho" in df_h.columns else 0)
+                        c3.metric("Casos con hechos", df_h["ID_Caso"].nunique() if "ID_Caso" in df_h.columns else 0)
                         tipo_f = st.selectbox("Filtrar por Tipo", ["Todos"] + sorted(df_h["Tipo de Hecho"].unique().tolist()) if "Tipo de Hecho" in df_h.columns else ["Todos"], key="vi_col_tipo_hecho")
                         df_hf  = df_h[df_h["Tipo de Hecho"] == tipo_f].copy() if tipo_f != "Todos" else df_h.copy()
                         st.dataframe(df_hf, use_container_width=True, hide_index=True)
-                        csv_h = df_hf.to_csv(index=False, encoding="utf-8-sig")
-                        st.download_button("📥 Descargar CSV Hechos", csv_h,
-                                           f"hechos_colectivo_{datetime.now().strftime('%Y%m%d')}.csv",
-                                           "text/csv", key="dl_hechos_col")
+                        st.download_button("📥 Descargar CSV", df_hf.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"hechos_colectivo_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_hechos_col")
                     else:
                         st.info("📭 No hay hechos colectivos registrados")
                 except Exception as e:
-                    st.error(f"Error al cargar hechos colectivos: {e}")
+                    st.error(f"Error: {e}")
+
+            with sub3:
+                try:
+                    datos_a = _leer_con_retry(hoja_ant)
+                    if datos_a:
+                        df_a = pd.DataFrame(datos_a)
+                        st.dataframe(df_a, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_a.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"antecedentes_colectivo_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_ant_col")
+                    else:
+                        st.info("📭 No hay antecedentes registrados")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+            with sub4:
+                try:
+                    datos_p = _leer_con_retry(hoja_perf)
+                    if datos_p:
+                        df_p = pd.DataFrame(datos_p)
+                        st.dataframe(df_p, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_p.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"perfil_colectivo_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_perf_col")
+                    else:
+                        st.info("📭 No hay perfiles registrados")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+            with sub5:
+                try:
+                    datos_d = _leer_con_retry(hoja_desp)
+                    if datos_d:
+                        df_d = pd.DataFrame(datos_d)
+                        st.dataframe(df_d, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_d.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"desplazamientos_colectivo_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_desp_col")
+                    else:
+                        st.info("📭 No hay desplazamientos registrados")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+            with sub6:
+                try:
+                    datos_v = _leer_con_retry(hoja_ver)
+                    if datos_v:
+                        df_v = pd.DataFrame(datos_v)
+                        st.dataframe(df_v, use_container_width=True, hide_index=True)
+                        st.download_button("📥 Descargar CSV", df_v.to_csv(index=False, encoding="utf-8-sig"),
+                                           f"verificaciones_colectivo_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key="dl_ver_col")
+                    else:
+                        st.info("📭 No hay verificaciones registradas")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1156,29 +1623,24 @@ def main():
         pantalla_cambiar_password()
         return
 
-    # Administrador: sidebar con menú completo
     if st.session_state.es_admin:
         st.sidebar.title("📊 Sistema ISMR")
         st.sidebar.success(f"👤 {st.session_state.nombre_completo}")
         st.sidebar.markdown("---")
         opcion = st.sidebar.radio("Menú", [
-            "🏠 Inicio",
-            "👤 Individual",
-            "👥 Colectivo",
-            "📊 Ver Datos",
-            "👥 Gestionar Usuarios"
+            "🏠 Inicio", "👤 Individual", "👥 Colectivo",
+            "📊 Ver Datos", "👥 Gestionar Usuarios"
         ])
         if st.sidebar.button("🚪 Cerrar Sesión", use_container_width=True):
             logout()
 
-        if   opcion == "🏠 Inicio":             pantalla_selector()
-        elif opcion == "👤 Individual":         formulario_individual()
-        elif opcion == "👥 Colectivo":          formulario_colectivo()
-        elif opcion == "📊 Ver Datos":          panel_visualizacion()
-        else:                                   panel_gestion_usuarios()
+        if   opcion == "🏠 Inicio":           pantalla_selector()
+        elif opcion == "👤 Individual":       formulario_individual()
+        elif opcion == "👥 Colectivo":        formulario_colectivo()
+        elif opcion == "📊 Ver Datos":        panel_visualizacion()
+        else:                                 panel_gestion_usuarios()
         return
 
-    # Analista: flujo por selector
     vista = st.session_state.vista
     if   vista is None:         pantalla_selector()
     elif vista == "individual": formulario_individual()
