@@ -1,9 +1,9 @@
 defaults = {
     "autenticado": False, "username": None, "nombre_completo": None,
-    "debe_cambiar_password": False, "es_admin": False, "vista": None, "hechos": []
+    "debe_cambiar_password": False, "es_admin": False, "vista": None, "hechos": [], "perfiles": []
 }
 
 TAB_NOMBRES = {
-    "individual": {"casos": "Individual",  "hechos": "Hechos_Individual"},
-    "colectivo":  {"casos": "Colectivo",   "hechos": "Hechos_Colectivo"},
+    "individual": {"casos": "Individual",  "hechos": "Hechos_Individual",  "perfiles": "Perfiles_Individual"},
+    "colectivo":  {"casos": "Colectivo",   "hechos": "Hechos_Colectivo",   "perfiles": "Perfiles_Colectivo"},
 }
