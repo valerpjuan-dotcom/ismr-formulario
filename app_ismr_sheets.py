@@ -162,6 +162,50 @@ def listar_usuarios():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# UTILIDADES
+# ══════════════════════════════════════════════════════════════════════════════
+
+def obtener_siguiente_id(hoja):
+    return max(len(hoja.get_all_values()), 1)
+
+def _leer_con_retry(hoja, metodo="get_all_records", max_retries=4):
+    for intento in range(max_retries):
+        try:
+            return getattr(hoja, metodo)()
+        except Exception as e:
+            if "429" in str(e):
+                time.sleep((2 ** intento) + 1)
+            else:
+                raise
+    raise Exception(f"Cuota agotada tras {max_retries} intentos")
+
+def _sincronizar_encabezados(hoja, encabezados_esperados):
+    cache_key = f"_headers_synced_{hoja.title}"
+    if st.session_state.get(cache_key):
+        return
+    for intento in range(4):
+        try:
+            valores = hoja.get_all_values()
+            if not valores:
+                hoja.append_row(encabezados_esperados)
+            else:
+                encabezados_actuales = valores[0]
+                faltantes = [col for col in encabezados_esperados if col not in encabezados_actuales]
+                if faltantes:
+                    col_inicio = len(encabezados_actuales) + 1
+                    for i, nombre_col in enumerate(faltantes):
+                        hoja.update_cell(1, col_inicio + i, nombre_col)
+            st.session_state[cache_key] = True
+            return
+        except Exception as e:
+            if "429" in str(e):
+                time.sleep((2 ** intento) + 1)
+            else:
+                raise
+    st.warning(f"⚠️ No se pudo sincronizar encabezados de '{hoja.title}' por límite de cuota. Reintenta en un momento.")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # GOOGLE SHEETS — INDIVIDUAL
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -174,12 +218,11 @@ def conectar_sheets_individual():
         except gspread.exceptions.WorksheetNotFound:
             hoja_casos = spreadsheet.add_worksheet(title="Individual", rows="1000", cols="20")
         _sincronizar_encabezados(hoja_casos, [
-            "Timestamp", "OT-TE", "Edad", "Sexo",
-            "Departamento", "Municipio", "Solicitante",
-            "Nivel de Riesgo", "Observaciones",
-            "Analista", "Usuario Analista", "ID_Caso",
-            "Tipo de Estudio", "Año OT", "Mes OT"
+            "Timestamp", "OT-TE", "Edad", "Sexo", "Departamento", "Municipio",
+            "Solicitante", "Nivel de Riesgo", "Observaciones",
+            "Analista", "Usuario Analista", "ID_Caso", "Tipo de Estudio", "Año OT", "Mes OT"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_hechos = spreadsheet.worksheet("Hechos_Individual")
@@ -190,6 +233,7 @@ def conectar_sheets_individual():
             "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_antecedentes = spreadsheet.worksheet("Antecedentes_Individual")
@@ -200,6 +244,7 @@ def conectar_sheets_individual():
             "Registra OT Antecedentes", "Registra Resoluciones o Medidas Vigentes",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_perfil = spreadsheet.worksheet("PerfilAntiguo_Individual")
@@ -210,6 +255,7 @@ def conectar_sheets_individual():
             "Modo de Participacion", "Lugar de Acreditacion",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_desplazamientos = spreadsheet.worksheet("Desplazamientos_Individual")
@@ -221,6 +267,7 @@ def conectar_sheets_individual():
             "Departamento Origen", "Departamento Destino",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_verificaciones = spreadsheet.worksheet("Verificaciones_Individual")
@@ -258,6 +305,7 @@ def conectar_sheets_colectivo():
             "Sector", "Departamento", "Municipio",
             "Analista", "Usuario Analista", "ID_Caso"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_hechos = spreadsheet.worksheet("Hechos_Colectivo")
@@ -268,6 +316,7 @@ def conectar_sheets_colectivo():
             "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_antecedentes = spreadsheet.worksheet("Antecedentes_Colectivo")
@@ -278,6 +327,7 @@ def conectar_sheets_colectivo():
             "Registra OT Antecedentes", "Registra Resoluciones o Medidas Vigentes",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_perfil = spreadsheet.worksheet("PerfilAntiguo_Colectivo")
@@ -288,6 +338,7 @@ def conectar_sheets_colectivo():
             "Modo de Participacion", "Lugar de Acreditacion",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_desplazamientos = spreadsheet.worksheet("Desplazamientos_Colectivo")
@@ -299,6 +350,7 @@ def conectar_sheets_colectivo():
             "Departamento Origen", "Departamento Destino",
             "Analista", "Usuario Analista"
         ])
+        time.sleep(0.5)
 
         try:
             hoja_verificaciones = spreadsheet.worksheet("Verificaciones_Colectivo")
@@ -317,41 +369,6 @@ def conectar_sheets_colectivo():
     except Exception as e:
         st.error(f"Error al conectar sheets colectivos: {e}")
         return None, None, None, None, None, None, None
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# UTILIDADES
-# ══════════════════════════════════════════════════════════════════════════════
-
-def obtener_siguiente_id(hoja):
-    return max(len(hoja.get_all_values()), 1)
-
-def _leer_con_retry(hoja, metodo="get_all_records", max_retries=4):
-    for intento in range(max_retries):
-        try:
-            return getattr(hoja, metodo)()
-        except Exception as e:
-            if "429" in str(e):
-                time.sleep((2 ** intento) + 1)
-            else:
-                raise
-    raise Exception(f"Cuota agotada tras {max_retries} intentos")
-
-def _sincronizar_encabezados(hoja, encabezados_esperados):
-    cache_key = f"_headers_synced_{hoja.title}"
-    if st.session_state.get(cache_key):
-        return
-    valores = hoja.get_all_values()
-    if not valores:
-        hoja.append_row(encabezados_esperados)
-    else:
-        encabezados_actuales = valores[0]
-        faltantes = [col for col in encabezados_esperados if col not in encabezados_actuales]
-        if faltantes:
-            col_inicio = len(encabezados_actuales) + 1
-            for i, nombre_col in enumerate(faltantes):
-                hoja.update_cell(1, col_inicio + i, nombre_col)
-    st.session_state[cache_key] = True
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -405,14 +422,13 @@ def cargar_borrador(tipo):
     import json
     hoja = _conectar_hoja_borradores()
     if not hoja:
-        return None, None
+        return None, None, None
     try:
         username = st.session_state.username
         for fila in hoja.get_all_values()[1:]:
             if len(fila) >= 5 and fila[0] == username and fila[1] == tipo:
                 campos = json.loads(fila[3]) if fila[3] else {}
                 listas_raw = json.loads(fila[4]) if fila[4] else {}
-                # Compatibilidad con borradores viejos (donde era lista directa)
                 if isinstance(listas_raw, list):
                     listas = {"hechos": listas_raw}
                 else:
@@ -424,7 +440,6 @@ def cargar_borrador(tipo):
         return None, None, None
 
 def _aplicar_borrador(tipo, listas):
-    """Restaura todas las listas en session_state desde el borrador."""
     st.session_state[f"hechos_{tipo}"]          = listas.get("hechos", [])
     st.session_state[f"antecedentes_{tipo}"]    = listas.get("antecedentes", [])
     st.session_state[f"perfil_antiguo_{tipo}"]  = listas.get("perfil_antiguo", [])
@@ -477,21 +492,16 @@ def seccion_antecedentes(tipo):
         with st.form(f"form_antecedente_{tipo}", clear_on_submit=True):
             st.markdown("**¿Registra OT antecedentes?**")
             registra_ot = st.radio(
-                "Registra OT antecedentes",
-                ["Sí", "No"], horizontal=True,
+                "Registra OT antecedentes", ["Sí", "No"], horizontal=True,
                 key=f"ant_ot_{tipo}", label_visibility="collapsed"
             )
             st.markdown("**¿Registra resoluciones o medidas vigentes?**")
             registra_res = st.radio(
-                "Registra resoluciones o medidas vigentes",
-                ["Sí", "No"], horizontal=True,
+                "Registra resoluciones o medidas vigentes", ["Sí", "No"], horizontal=True,
                 key=f"ant_res_{tipo}", label_visibility="collapsed"
             )
             if st.form_submit_button("➕ Agregar antecedente", use_container_width=True):
-                lista.append({
-                    "registra_ot": registra_ot,
-                    "registra_resoluciones": registra_res
-                })
+                lista.append({"registra_ot": registra_ot, "registra_resoluciones": registra_res})
                 st.success("✅ Antecedente agregado")
                 st.rerun()
 
@@ -849,9 +859,8 @@ def formulario_individual():
 
     st.markdown("---")
     st.subheader("📝 Información del Caso")
-
-    ot_te        = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001", key="ind_ot")
-    col1, col2   = st.columns(2)
+    ot_te = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001", key="ind_ot")
+    col1, col2 = st.columns(2)
     with col1:
         edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key="ind_edad")
         sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key="ind_sexo")
@@ -933,8 +942,7 @@ def formulario_individual():
                 "ind_tipo_estudio": tipo_estudio, "ind_anio": año,
                 "ind_mes": mes, "ind_obs": observaciones
             })
-            if ok:
-                st.success("💾 Borrador guardado.")
+            if ok: st.success("💾 Borrador guardado.")
     with col_register:
         registrar = st.button("✅ REGISTRAR CASO INDIVIDUAL", use_container_width=True, type="primary")
 
@@ -1103,7 +1111,6 @@ def formulario_colectivo():
 
     st.markdown("---")
     st.subheader("📝 Información del Colectivo")
-
     ot_te = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001", key="col_ot")
     col1, col2 = st.columns(2)
     with col1:
@@ -1180,8 +1187,7 @@ def formulario_colectivo():
                 "col_sector": sector, "col_depto": departamento,
                 "col_muni": municipio
             })
-            if ok:
-                st.success("💾 Borrador guardado.")
+            if ok: st.success("💾 Borrador guardado.")
     with col_register:
         registrar = st.button("✅ REGISTRAR CASO COLECTIVO", use_container_width=True, type="primary")
 
