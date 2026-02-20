@@ -106,7 +106,7 @@ def formulario_casos(tipo="individual"):
     titulo            = "Formulario Individual" if es_individual else "Formulario Colectivo"
     nombre_hoja_casos = TAB_NOMBRES[tipo]["casos"]   # FIX: accesible en todo el scope
 
-    hoja_casos, hoja_hechos, sheet_url = conectar_sheet_casos(tipo)
+    hoja_casos, hoja_hechos, hoja_perfiles, sheet_url = conectar_sheet_casos(tipo)
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets"); return
 
@@ -192,7 +192,71 @@ def formulario_casos(tipo="individual"):
                     })
                     st.success("✅ Hecho agregado"); st.rerun()
 
-    # ── Botón Registrar ───────────────────────────────────────────────────────
+    # ── Perfiles ──────────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("🧑‍🤝‍🧑 Perfiles")
+    st.caption("Opcional. Agrega uno o varios perfiles asociados a este caso.")
+
+    if "perfiles" not in st.session_state:
+        st.session_state.perfiles = []
+
+    for i, perfil in enumerate(st.session_state.perfiles):
+        with st.container(border=True):
+            col_tit, col_del = st.columns([5, 1])
+            with col_tit: st.markdown(f"**Perfil #{i+1} — {perfil['tipo_perfil']}**")
+            with col_del:
+                if st.button("🗑️", key=f"del_perfil_{tipo}_{i}"):
+                    st.session_state.perfiles.pop(i); st.rerun()
+            c1, c2 = st.columns(2)
+            with c1:
+                st.write(f"👤 **Género:** {perfil['genero']}")
+                st.write(f"🎂 **Rango de Edad:** {perfil['rango_edad']}")
+                st.write(f"🎓 **Nivel Educativo:** {perfil['nivel_educativo']}")
+                st.write(f"💼 **Ocupación:** {perfil['ocupacion']}")
+            with c2:
+                st.write(f"🏘️ **Zona de Residencia:** {perfil['zona_residencia']}")
+                st.write(f"🌿 **Grupo Étnico:** {perfil['grupo_etnico']}")
+
+    with st.expander("➕ Agregar perfil", expanded=len(st.session_state.perfiles) == 0):
+        with st.form(f"form_perfil_{tipo}", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                tipo_perfil     = st.selectbox("Tipo de Perfil *", [
+                    "Seleccione...", "Víctima", "Testigo", "Familiar", "Representante legal", "Otro"])
+                genero          = st.selectbox("Género *", [
+                    "Seleccione...", "Hombre", "Mujer", "No binario", "No Reporta"])
+                rango_edad      = st.selectbox("Rango de Edad *", [
+                    "Seleccione...", "0-17", "18-28", "29-40", "41-60", "61+", "No Reporta"])
+                nivel_educativo = st.selectbox("Nivel Educativo *", [
+                    "Seleccione...", "Ninguno", "Primaria", "Secundaria", "Técnico", "Universitario", "No Reporta"])
+            with c2:
+                ocupacion       = st.selectbox("Ocupación *", [
+                    "Seleccione...", "Estudiante", "Agricultor", "Comerciante", "Desempleado",
+                    "Líder social", "Servidor público", "Otro", "No Reporta"])
+                zona_residencia = st.selectbox("Zona de Residencia *", [
+                    "Seleccione...", "Urbana", "Rural", "Rural disperso", "No Reporta"])
+                grupo_etnico    = st.selectbox("Grupo Étnico *", [
+                    "Seleccione...", "Mestizo", "Afrocolombiano", "Indígena",
+                    "Rom/Gitano", "Raizal", "Palenquero", "No Reporta"])
+            if st.form_submit_button("➕ Agregar este perfil", use_container_width=True):
+                err_p = []
+                if tipo_perfil     == "Seleccione...": err_p.append("Selecciona el tipo de perfil")
+                if genero          == "Seleccione...": err_p.append("El género es obligatorio")
+                if rango_edad      == "Seleccione...": err_p.append("El rango de edad es obligatorio")
+                if nivel_educativo == "Seleccione...": err_p.append("El nivel educativo es obligatorio")
+                if ocupacion       == "Seleccione...": err_p.append("La ocupación es obligatoria")
+                if zona_residencia == "Seleccione...": err_p.append("La zona de residencia es obligatoria")
+                if grupo_etnico    == "Seleccione...": err_p.append("El grupo étnico es obligatorio")
+                if err_p:
+                    for e in err_p: st.error(f"• {e}")
+                else:
+                    st.session_state.perfiles.append({
+                        "tipo_perfil": tipo_perfil, "genero": genero,
+                        "rango_edad": rango_edad, "nivel_educativo": nivel_educativo,
+                        "ocupacion": ocupacion, "zona_residencia": zona_residencia,
+                        "grupo_etnico": grupo_etnico
+                    })
+                    st.success("✅ Perfil agregado"); st.rerun()
     st.markdown("---")
     if st.button(f"✅ REGISTRAR CASO {label_badge}", use_container_width=True, type="primary"):
         errores = []
@@ -232,9 +296,22 @@ def formulario_casos(tipo="individual"):
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         hechos_guardados += 1
+                    perfiles_guardados = 0
+                    for perfil in st.session_state.perfiles:
+                        id_perfil = obtener_siguiente_id(hoja_perfiles)
+                        hoja_perfiles.append_row([
+                            id_perfil, id_caso, ot_te.strip(),
+                            perfil["tipo_perfil"], perfil["genero"], perfil["rango_edad"],
+                            perfil["nivel_educativo"], perfil["ocupacion"],
+                            perfil["zona_residencia"], perfil["grupo_etnico"],
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+                        perfiles_guardados += 1
                     st.session_state.hechos = []
+                    st.session_state.perfiles = []
                     st.success(f"✅ Caso **{ot_te}** registrado en {label_badge}!")
-                    if hechos_guardados > 0: st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
+                    if hechos_guardados   > 0: st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
+                    if perfiles_guardados > 0: st.info(f"🧑‍🤝‍🧑 {perfiles_guardados} perfil(es) registrados")
                     st.balloons()
                     st.info(f"""
                     **Resumen:**
@@ -258,10 +335,10 @@ def panel_visualizacion():
     tab_ind, tab_col = st.tabs(["👤 Individual", "👥 Colectivo"])
     for tab, tipo in [(tab_ind, "individual"), (tab_col, "colectivo")]:
         with tab:
-            hoja_casos, hoja_hechos, sheet_url = conectar_sheet_casos(tipo)
+            hoja_casos, hoja_hechos, hoja_perfiles, sheet_url = conectar_sheet_casos(tipo)
             if hoja_casos is None: st.error(f"No se pudo conectar a la hoja {tipo}"); continue
             if sheet_url: st.markdown(f"[📝 Abrir en Google Sheets]({sheet_url})")
-            sub1, sub2 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo"])
+            sub1, sub2, sub3 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfiles"])
             with sub1:
                 try:
                     datos = hoja_casos.get_all_records()
@@ -302,6 +379,22 @@ def panel_visualizacion():
                         st.download_button(f"📥 Descargar CSV Hechos", csv_h, f"hechos_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key=f"dl_hechos_{tipo}")
                     else: st.info("📭 No hay hechos de riesgo registrados")
                 except Exception as e: st.error(f"Error al cargar hechos: {str(e)}")
+            with sub3:
+                try:
+                    datos_p = hoja_perfiles.get_all_records()
+                    if datos_p:
+                        df_p = pd.DataFrame(datos_p)
+                        c1,c2,c3 = st.columns(3)
+                        c1.metric("Total Perfiles",     len(df_p))
+                        c2.metric("Tipos distintos",     df_p["Tipo de Perfil"].nunique() if "Tipo de Perfil" in df_p.columns else 0)
+                        c3.metric("Casos con perfiles",  df_p["ID_Caso"].nunique()        if "ID_Caso"        in df_p.columns else 0)
+                        tipo_pf = st.selectbox("Filtrar por Tipo de Perfil", ["Todos"]+sorted(df_p["Tipo de Perfil"].unique().tolist()) if "Tipo de Perfil" in df_p.columns else ["Todos"], key=f"tipo_perfil_{tipo}")
+                        df_pf = df_p[df_p["Tipo de Perfil"] == tipo_pf].copy() if tipo_pf != "Todos" else df_p.copy()
+                        st.dataframe(df_pf, use_container_width=True, hide_index=True)
+                        csv_p = df_pf.to_csv(index=False, encoding="utf-8-sig")
+                        st.download_button(f"📥 Descargar CSV Perfiles", csv_p, f"perfiles_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key=f"dl_perfiles_{tipo}")
+                    else: st.info("📭 No hay perfiles registrados")
+                except Exception as e: st.error(f"Error al cargar perfiles: {str(e)}")
 
 
 def panel_gestion_usuarios():
