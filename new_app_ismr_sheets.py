@@ -13,6 +13,9 @@ from front.pages import (
 
 st.set_page_config(page_title="Sistema ISMR", page_icon="📋", layout="centered")
 
+from front.styles import inyectar_css_selector
+inyectar_css_selector()  # 👈 añade esto
+
 for key, val in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = val
