@@ -9,7 +9,7 @@ _BOGOTA = ZoneInfo("America/Bogota")
 from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS
 
 from configuration.settings import TAB_NOMBRES
-from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios
+from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe
 from data.mongo.casos_repo import conectar_sheet_casos, guardar_borrador, cargar_borrador, eliminar_borrador
 from service.auth_service import verificar_credenciales, logout, obtener_siguiente_id
 from front.styles import inyectar_css_selector
@@ -20,7 +20,7 @@ def login_page():
     st.markdown("---")
     st.info("👋 Identifícate para acceder al sistema")
     with st.form("login_form"):
-        username = st.text_input("Usuario", placeholder="tu.usuario")
+        username = st.text_input("Usuario", placeholder="nombre.apellido")
         password = st.text_input("Contraseña", type="password")
         submit   = st.form_submit_button("🔓 Iniciar Sesión", use_container_width=True, type="primary")
         if submit:
@@ -36,6 +36,15 @@ def login_page():
                     st.rerun()
                 else: st.error("❌ Usuario o contraseña incorrectos")
             else: st.warning("⚠️ Por favor completa todos los campos")
+
+    # ── Link de recuperación ──────────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    _, col_rec = st.columns([3, 2])
+    with col_rec:
+        if st.button("¿Olvidaste tu contraseña?", type="secondary", use_container_width=True):
+            st.session_state.vista_recovery = "solicitar"
+            st.rerun()
+
     st.markdown("---")
     st.caption("🔒 Si tienes problemas, contacta al administrador")
 
@@ -783,3 +792,130 @@ def panel_gestion_usuarios():
                 with st.expander(f"👤 {u.get('nombre_completo','?')} (@{u.get('username','?')})"):
                     st.code(u.get('password_hash','N/A'), language=None)
                     st.caption(f"Debe cambiar: {u.get('debe_cambiar_password','N/A')}")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# RECUPERACIÓN DE CONTRASEÑA
+# ═════════════════════════════════════════════════════════════════════════════
+
+def pantalla_recovery_solicitar():
+    from service.recovery_service import enviar_codigo_recuperacion, username_a_email
+
+    st.title("🔑 Recuperar Contraseña")
+    st.markdown("---")
+    st.info(
+        "Ingresa tu nombre de usuario. Te enviaremos un código de verificación "
+        "a tu correo institucional **@unp.gov.co**."
+    )
+
+    with st.form("recovery_solicitar_form"):
+        username = st.text_input("Usuario", placeholder="nombre.apellido")
+        submit   = st.form_submit_button("📨 Enviar código", use_container_width=True, type="primary")
+
+        if submit:
+            if not username.strip():
+                st.warning("⚠️ Ingresa tu nombre de usuario")
+            elif not usuario_existe(username.strip()):
+                # Mensaje genérico para no revelar si el usuario existe
+                st.warning("⚠️ Si el usuario existe, recibirás un correo en breve.")
+            else:
+                with st.spinner("Enviando código..."):
+                    ok, resultado = enviar_codigo_recuperacion(username.strip())
+                if ok:
+                    email_visible = username_a_email(username.strip())
+                    st.session_state["recovery_username"] = username.strip()
+                    st.session_state.vista_recovery = "verificar"
+                    st.success(f"✅ Código enviado a **{email_visible}**")
+                    st.rerun()
+                else:
+                    st.error(f"❌ No se pudo enviar el correo. Contacta al administrador.\n\n`{resultado}`")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("← Volver al inicio de sesión", type="secondary"):
+        st.session_state.vista_recovery = None
+        st.rerun()
+
+
+def pantalla_recovery_verificar():
+    from service.recovery_service import validar_codigo, username_a_email
+
+    username = st.session_state.get("recovery_username", "")
+    email_visible = username_a_email(username) if username else "tu correo"
+
+    st.title("🔑 Verificar Código")
+    st.markdown("---")
+    st.info(f"Ingresa el código de 6 dígitos enviado a **{email_visible}**. Expira en 15 minutos.")
+
+    with st.form("recovery_verificar_form"):
+        codigo = st.text_input("Código de verificación", placeholder="000000", max_chars=6)
+        submit = st.form_submit_button("✅ Verificar código", use_container_width=True, type="primary")
+
+        if submit:
+            if not codigo.strip():
+                st.warning("⚠️ Ingresa el código")
+            elif not validar_codigo(username, codigo.strip()):
+                st.error("❌ Código incorrecto o expirado. Solicita uno nuevo.")
+            else:
+                st.session_state["recovery_codigo_ok"] = True
+                st.session_state.vista_recovery = "nueva_password"
+                st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button("← Solicitar nuevo código", use_container_width=True, type="secondary"):
+            st.session_state.vista_recovery = "solicitar"
+            st.rerun()
+    with col_b:
+        if st.button("✖ Cancelar", use_container_width=True, type="secondary"):
+            st.session_state.vista_recovery = None
+            st.session_state.pop("recovery_username", None)
+            st.rerun()
+
+
+def pantalla_recovery_nueva_password():
+    from service.recovery_service import limpiar_codigo
+
+    username = st.session_state.get("recovery_username", "")
+
+    # Guardia: si llegaron sin pasar por verificación, redirigir
+    if not st.session_state.get("recovery_codigo_ok"):
+        st.session_state.vista_recovery = "solicitar"
+        st.rerun()
+
+    st.title("🔑 Nueva Contraseña")
+    st.markdown("---")
+    st.success(f"✅ Identidad verificada para **{username}**")
+
+    with st.form("recovery_nueva_password_form"):
+        nueva     = st.text_input("Nueva contraseña", type="password", help="Mínimo 8 caracteres")
+        confirmar = st.text_input("Confirmar contraseña", type="password")
+        submit    = st.form_submit_button("💾 Guardar contraseña", use_container_width=True, type="primary")
+
+        if submit:
+            errores = []
+            if not nueva:          errores.append("La contraseña no puede estar vacía")
+            elif len(nueva) < 8:   errores.append("Mínimo 8 caracteres")
+            if nueva != confirmar: errores.append("Las contraseñas no coinciden")
+
+            if errores:
+                for e in errores: st.error(f"❌ {e}")
+            else:
+                nuevo_hash = hashlib.sha256(nueva.encode()).hexdigest()
+                if actualizar_password(username, nuevo_hash, False):
+                    limpiar_codigo(username)
+                    st.session_state.vista_recovery        = None
+                    st.session_state["recovery_username"]  = None
+                    st.session_state["recovery_codigo_ok"] = False
+                    st.success("✅ ¡Contraseña actualizada! Ya puedes iniciar sesión.")
+                    time.sleep(2)
+                    st.rerun()
+                else:
+                    st.error("❌ No se pudo actualizar la contraseña. Intenta de nuevo.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("✖ Cancelar", type="secondary"):
+        st.session_state.vista_recovery        = None
+        st.session_state["recovery_username"]  = None
+        st.session_state["recovery_codigo_ok"] = False
+        st.rerun()
