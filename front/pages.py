@@ -194,7 +194,7 @@ def formulario_casos(tipo="individual"):
 
     # ── Perfil Antiguo ────────────────────────────────────────────────────────
     st.markdown("---")
-    st.subheader("🪖 Perfil Antiguo")
+    st.subheader("Perfil Antiguo")
     st.caption("Opcional. Agrega uno o varios perfiles FARC-EP asociados a este caso.")
 
     if "perfiles" not in st.session_state:
@@ -211,7 +211,14 @@ def formulario_casos(tipo="individual"):
             c1, c2 = st.columns(2)
             with c1:
                 st.write(f"📋 **Modo de Participación:** {perfil.get('modo_participacion','')}")
-                st.write(f"📅 **Año Ingreso/Traslado/Captura:** {perfil.get('anio_ingreso','')}")
+    
+                anio_ingreso = st.number_input(
+                    "Año Ingreso/Traslado/Captura *",
+                    min_value=1950,
+                    max_value=2026,
+                    step=1
+                    )
+
                 st.write(f"🗺️ **Bloque:** {perfil.get('bloque','')}")
                 st.write(f"🏗️ **Estructura:** {perfil.get('estructura','')}")
                 st.write(f"📍 **Lugar de Acreditación:** {perfil.get('lugar_acreditacion','')}")
