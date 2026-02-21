@@ -531,70 +531,85 @@ def formulario_casos(tipo="individual"):
 
 
 def panel_visualizacion():
+    import io
     st.title("📊 Casos Registrados"); st.markdown("---")
     tab_ind, tab_col = st.tabs(["👤 Individual", "👥 Colectivo"])
     for tab, tipo in [(tab_ind, "individual"), (tab_col, "colectivo")]:
         with tab:
             hoja_casos, hoja_hechos, hoja_perfiles, sheet_url = conectar_sheet_casos(tipo)
             if hoja_casos is None: st.error(f"No se pudo conectar a la hoja {tipo}"); continue
-            if sheet_url: st.markdown(f"[📝 Abrir en Google Sheets]({sheet_url})")
+
             sub1, sub2, sub3 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfiles"])
+
+            # ── Cargar datos una sola vez por tab ─────────────────────────────
+            try: datos   = hoja_casos.get_all_records()
+            except: datos = []
+            try: datos_h = hoja_hechos.get_all_records()
+            except: datos_h = []
+            try: datos_p = hoja_perfiles.get_all_records()
+            except: datos_p = []
+
+            df   = pd.DataFrame(datos)   if datos   else pd.DataFrame()
+            df_h = pd.DataFrame(datos_h) if datos_h else pd.DataFrame()
+            df_p = pd.DataFrame(datos_p) if datos_p else pd.DataFrame()
+
             with sub1:
-                try:
-                    datos = hoja_casos.get_all_records()
-                    if datos:
-                        df = pd.DataFrame(datos)
-                        c1,c2,c3,c4 = st.columns(4)
-                        c1.metric("Total Casos",   len(df))
-                        c2.metric("Departamentos", df["Departamento"].nunique() if "Departamento" in df.columns else 0)
-                        c3.metric("Municipios",    df["Municipio"].nunique()    if "Municipio"    in df.columns else 0)
-                        c4.metric("Riesgo Alto",   df["Nivel de Riesgo"].isin(["EXTREMO","EXTRAORDINARIO"]).sum() if "Nivel de Riesgo" in df.columns else 0)
-                        col1,col2,col3 = st.columns(3)
-                        with col1: depto      = st.selectbox("Departamento",  ["Todos"]+sorted(df["Departamento"].unique().tolist())  if "Departamento"  in df.columns else ["Todos"], key=f"depto_{tipo}")
-                        with col2: riesgo     = st.selectbox("Nivel de Riesgo",["Todos"]+sorted(df["Nivel de Riesgo"].unique().tolist()) if "Nivel de Riesgo" in df.columns else ["Todos"], key=f"riesgo_{tipo}")
-                        with col3: analista_f = st.selectbox("Analista",       ["Todos"]+sorted(df["Analista"].unique().tolist())      if "Analista"      in df.columns else ["Todos"], key=f"analista_{tipo}")
-                        df_f = df.copy()
-                        if depto      != "Todos" and "Departamento"    in df.columns: df_f = df_f[df_f["Departamento"]    == depto]
-                        if riesgo     != "Todos" and "Nivel de Riesgo" in df.columns: df_f = df_f[df_f["Nivel de Riesgo"] == riesgo]
-                        if analista_f != "Todos" and "Analista"        in df.columns: df_f = df_f[df_f["Analista"]        == analista_f]
-                        st.subheader(f"📋 Resultados ({len(df_f)} casos)")
-                        st.dataframe(df_f, use_container_width=True, hide_index=True)
-                        csv = df_f.to_csv(index=False, encoding="utf-8-sig")
-                        st.download_button(f"📥 Descargar CSV", csv, f"casos_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key=f"dl_casos_{tipo}")
-                    else: st.info(f"📭 No hay casos {tipo}s registrados")
-                except Exception as e: st.error(f"Error al cargar casos: {str(e)}")
+                if not df.empty:
+                    c1,c2,c3,c4 = st.columns(4)
+                    c1.metric("Total Casos",   len(df))
+                    c2.metric("Departamentos", df["Departamento"].nunique() if "Departamento" in df.columns else 0)
+                    c3.metric("Municipios",    df["Municipio"].nunique()    if "Municipio"    in df.columns else 0)
+                    c4.metric("Riesgo Alto",   df["Nivel de Riesgo"].isin(["EXTREMO","EXTRAORDINARIO"]).sum() if "Nivel de Riesgo" in df.columns else 0)
+                    col1,col2,col3 = st.columns(3)
+                    with col1: depto      = st.selectbox("Departamento",    ["Todos"]+sorted(df["Departamento"].unique().tolist())   if "Departamento"  in df.columns else ["Todos"], key=f"depto_{tipo}")
+                    with col2: riesgo     = st.selectbox("Nivel de Riesgo", ["Todos"]+sorted(df["Nivel de Riesgo"].unique().tolist()) if "Nivel de Riesgo" in df.columns else ["Todos"], key=f"riesgo_{tipo}")
+                    with col3: analista_f = st.selectbox("Analista",        ["Todos"]+sorted(df["Analista"].unique().tolist())       if "Analista"      in df.columns else ["Todos"], key=f"analista_{tipo}")
+                    df_f = df.copy()
+                    if depto      != "Todos" and "Departamento"    in df.columns: df_f = df_f[df_f["Departamento"]    == depto]
+                    if riesgo     != "Todos" and "Nivel de Riesgo" in df.columns: df_f = df_f[df_f["Nivel de Riesgo"] == riesgo]
+                    if analista_f != "Todos" and "Analista"        in df.columns: df_f = df_f[df_f["Analista"]        == analista_f]
+                    st.subheader(f"📋 Resultados ({len(df_f)} casos)")
+                    st.dataframe(df_f, use_container_width=True, hide_index=True)
+                else: st.info(f"📭 No hay casos {tipo}s registrados")
+
             with sub2:
-                try:
-                    datos_h = hoja_hechos.get_all_records()
-                    if datos_h:
-                        df_h = pd.DataFrame(datos_h)
-                        c1,c2,c3 = st.columns(3)
-                        c1.metric("Total Hechos",    len(df_h))
-                        c2.metric("Tipos distintos",  df_h["Tipo de Hecho"].nunique() if "Tipo de Hecho" in df_h.columns else 0)
-                        c3.metric("Casos con hechos", df_h["ID_Caso"].nunique()       if "ID_Caso"       in df_h.columns else 0)
-                        tipo_f = st.selectbox("Filtrar por Tipo", ["Todos"]+sorted(df_h["Tipo de Hecho"].unique().tolist()) if "Tipo de Hecho" in df_h.columns else ["Todos"], key=f"tipo_hecho_{tipo}")
-                        df_hf = df_h[df_h["Tipo de Hecho"] == tipo_f].copy() if tipo_f != "Todos" else df_h.copy()
-                        st.dataframe(df_hf, use_container_width=True, hide_index=True)
-                        csv_h = df_hf.to_csv(index=False, encoding="utf-8-sig")
-                        st.download_button(f"📥 Descargar CSV Hechos", csv_h, f"hechos_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key=f"dl_hechos_{tipo}")
-                    else: st.info("📭 No hay hechos de riesgo registrados")
-                except Exception as e: st.error(f"Error al cargar hechos: {str(e)}")
+                if not df_h.empty:
+                    c1,c2,c3 = st.columns(3)
+                    c1.metric("Total Hechos",    len(df_h))
+                    c2.metric("Tipos distintos",  df_h["Tipo de Hecho"].nunique() if "Tipo de Hecho" in df_h.columns else 0)
+                    c3.metric("Casos con hechos", df_h["ID_Caso"].nunique()       if "ID_Caso"       in df_h.columns else 0)
+                    tipo_f = st.selectbox("Filtrar por Tipo", ["Todos"]+sorted(df_h["Tipo de Hecho"].unique().tolist()) if "Tipo de Hecho" in df_h.columns else ["Todos"], key=f"tipo_hecho_{tipo}")
+                    df_hf = df_h[df_h["Tipo de Hecho"] == tipo_f].copy() if tipo_f != "Todos" else df_h.copy()
+                    st.dataframe(df_hf, use_container_width=True, hide_index=True)
+                else: st.info("📭 No hay hechos de riesgo registrados")
+
             with sub3:
-                try:
-                    datos_p = hoja_perfiles.get_all_records()
-                    if datos_p:
-                        df_p = pd.DataFrame(datos_p)
-                        c1,c2,c3 = st.columns(3)
-                        c1.metric("Total Perfiles",     len(df_p))
-                        c2.metric("Tipos distintos",     df_p["Tipo de Perfil"].nunique() if "Tipo de Perfil" in df_p.columns else 0)
-                        c3.metric("Casos con perfiles",  df_p["ID_Caso"].nunique()        if "ID_Caso"        in df_p.columns else 0)
-                        tipo_pf = st.selectbox("Filtrar por Tipo de Perfil", ["Todos"]+sorted(df_p["Tipo de Perfil"].unique().tolist()) if "Tipo de Perfil" in df_p.columns else ["Todos"], key=f"tipo_perfil_{tipo}")
-                        df_pf = df_p[df_p["Tipo de Perfil"] == tipo_pf].copy() if tipo_pf != "Todos" else df_p.copy()
-                        st.dataframe(df_pf, use_container_width=True, hide_index=True)
-                        csv_p = df_pf.to_csv(index=False, encoding="utf-8-sig")
-                        st.download_button(f"📥 Descargar CSV Perfiles", csv_p, f"perfiles_{tipo}_{datetime.now().strftime('%Y%m%d')}.csv", "text/csv", key=f"dl_perfiles_{tipo}")
-                    else: st.info("📭 No hay perfiles registrados")
-                except Exception as e: st.error(f"Error al cargar perfiles: {str(e)}")
+                if not df_p.empty:
+                    c1,c2,c3 = st.columns(3)
+                    c1.metric("Total Perfiles",    len(df_p))
+                    c2.metric("Casos con perfiles", df_p["ID_Caso"].nunique() if "ID_Caso" in df_p.columns else 0)
+                    st.dataframe(df_p, use_container_width=True, hide_index=True)
+                else: st.info("📭 No hay perfiles registrados")
+
+            # ── Botón descarga XLSX unificado (fuera de los subtabs) ──────────
+            st.markdown("---")
+            if not df.empty or not df_h.empty or not df_p.empty:
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+                    (df_f   if not df.empty   else df).to_excel(writer, sheet_name="Casos",           index=False)
+                    (df_hf  if not df_h.empty else df_h).to_excel(writer, sheet_name="Hechos de Riesgo", index=False)
+                    df_p.to_excel(writer, sheet_name="Perfiles",         index=False)
+                buffer.seek(0)
+                nombre_archivo = f"ISMR_{tipo}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                st.download_button(
+                    label="📥 Descargar reporte completo (.xlsx)",
+                    data=buffer,
+                    file_name=nombre_archivo,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"dl_xlsx_{tipo}",
+                    use_container_width=True,
+                    type="primary"
+                )
 
 
 def panel_gestion_usuarios():
