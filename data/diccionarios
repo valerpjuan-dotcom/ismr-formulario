@@ -89,3 +89,13 @@ _LUGAR_ACREDITACION = ["Seleccione...", "Pondores (Fonseca)", "San José de Orie
              "Caracolí (Carmen del Darién)", "Carrizal (Remedios)",
              "Charras (San José del Guaviare)"]
 
+_INSTITUCIONES = ["Seleccione...", "Establecimiento Penitenciario (EP)",
+                  "Establecimiento Carcelario (EC)",
+                  "Complejo Carcelario (CO)",
+                  "Centro de Reclusión Militar (CRM)",
+                  "Otro"]
+
+_PARTICIPACION = ["Seleccione...", "Combatiente", "Miliciano/a", "Colaborador/a",
+             "Privado de la libertad", "Otro"]
+
+
