@@ -216,20 +216,72 @@ def formulario_casos(tipo="individual"):
     st.subheader("⚠️ Hechos de Riesgo")
     st.caption("Opcional. Agrega uno o varios hechos de riesgo asociados a este caso.")
 
+    _edit_hecho_key = f"editando_hecho_{tipo}"
+    _TIPOS_HECHO = ["Seleccione...", "Amenaza", "Atentado", "Desplazamiento forzado",
+                    "Homicidio", "Secuestro", "Extorsión", "Reclutamiento forzado",
+                    "Violencia sexual", "Confinamiento", "Otro"]
+
     for i, hecho in enumerate(st.session_state.hechos):
         with st.container(border=True):
-            col_tit, col_del = st.columns([5, 1])
-            with col_tit: st.markdown(f"**Hecho #{i+1} — {hecho['tipo']}**")
-            with col_del:
-                if st.button("🗑️", key=f"del_{tipo}_{i}"):
-                    st.session_state.hechos.pop(i); st.rerun()
-            c1, c2 = st.columns(2)
-            with c1:
-                st.write(f"📅 **Fecha:** {hecho['fecha']}")
-                st.write(f"📍 **Lugar:** {hecho['lugar']}")
-            with c2:
-                st.write(f"👤 **Autor:** {hecho['autor']}")
-            st.write(f"📄 **Descripción:** {hecho['descripcion']}")
+            if st.session_state.get(_edit_hecho_key) == i:
+                # ── Modo edición ──────────────────────────────────────────────
+                st.markdown(f"**✏️ Editando Hecho #{i+1}**")
+                ec1, ec2 = st.columns(2)
+                with ec1:
+                    eh_tipo  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
+                        index=_TIPOS_HECHO.index(hecho["tipo"]) if hecho["tipo"] in _TIPOS_HECHO else 0,
+                        key=f"eh_tipo_{tipo}_{i}")
+                    try:
+                        _fecha_val = datetime.strptime(hecho["fecha"], "%Y-%m-%d").date()
+                    except Exception:
+                        _fecha_val = None
+                    eh_fecha = st.date_input("Fecha del Hecho *", value=_fecha_val, key=f"eh_fecha_{tipo}_{i}")
+                    eh_lugar = st.text_input("Lugar donde ocurrió *", value=hecho["lugar"], key=f"eh_lugar_{tipo}_{i}")
+                with ec2:
+                    eh_autor = st.text_input("Autor *", value=hecho["autor"], key=f"eh_autor_{tipo}_{i}")
+                    eh_desc  = st.text_area("Descripción *", value=hecho["descripcion"], height=122, key=f"eh_desc_{tipo}_{i}")
+                col_save, col_cancel = st.columns(2)
+                with col_save:
+                    if st.button("💾 Guardar cambios", key=f"eh_save_{tipo}_{i}", type="primary", use_container_width=True):
+                        err_e = []
+                        if eh_tipo == "Seleccione...": err_e.append("Selecciona el tipo de hecho")
+                        if not eh_lugar.strip():       err_e.append("El lugar es obligatorio")
+                        if not eh_autor.strip():       err_e.append("El autor es obligatorio")
+                        if not eh_desc.strip():        err_e.append("La descripción es obligatoria")
+                        if err_e:
+                            for e in err_e: st.error(f"• {e}")
+                        else:
+                            st.session_state.hechos[i] = {
+                                "tipo": eh_tipo, "fecha": str(eh_fecha),
+                                "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
+                                "descripcion": eh_desc.strip()
+                            }
+                            st.session_state[_edit_hecho_key] = None
+                            st.rerun()
+                with col_cancel:
+                    if st.button("✖ Cancelar", key=f"eh_cancel_{tipo}_{i}", type="secondary", use_container_width=True):
+                        st.session_state[_edit_hecho_key] = None
+                        st.rerun()
+            else:
+                # ── Modo lectura ──────────────────────────────────────────────
+                col_tit, col_edit, col_del = st.columns([4, 1, 1])
+                with col_tit: st.markdown(f"**Hecho #{i+1} — {hecho['tipo']}**")
+                with col_edit:
+                    if st.button("✏️", key=f"edit_h_{tipo}_{i}", help="Editar este hecho"):
+                        st.session_state[_edit_hecho_key] = i
+                        st.rerun()
+                with col_del:
+                    if st.button("🗑️", key=f"del_{tipo}_{i}", help="Eliminar este hecho"):
+                        st.session_state.hechos.pop(i)
+                        st.session_state[_edit_hecho_key] = None
+                        st.rerun()
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.write(f"📅 **Fecha:** {hecho['fecha']}")
+                    st.write(f"📍 **Lugar:** {hecho['lugar']}")
+                with c2:
+                    st.write(f"👤 **Autor:** {hecho['autor']}")
+                st.write(f"📄 **Descripción:** {hecho['descripcion']}")
 
     with st.expander("➕ Agregar hecho de riesgo", expanded=len(st.session_state.hechos) == 0):
         with st.form(f"form_hecho_{tipo}", clear_on_submit=True):
