@@ -275,7 +275,22 @@ def formulario_casos(tipo="individual"):
             "Frente 38 Ciro Trujillo Castaño", "Compañía Móvil Yerminson Ruíz",
             "Compañía Móvil Xiomara Marín", "Compañía Móvil Urias Rondón",
             "Compañía Móvil Quino Méndez", "Compañía Móvil Octavio Suárez Briceño",
-            "Compañía Móvil Martín Martínez"],
+            "Compañía Móvil Martín Martínez","Compañía Móvil Marguetalia", "Compañía Móvil Marco Aurelio Buendía",
+            "Compañía Móvil Judith Rondón", "Compañía Móvil Fuerzas Especiales",
+            "Compañía Móvil Edwin Suárez", "Compañía Móvil Darío Bonilla",
+            "Compañía Móvil Central", "Columna Móvil Urias Rondón",
+            "Columna Móvil Reinel Mendez","Columna Móvil Luis Pardo","Columna Móvil Alfonso Castellanos",
+            "Frente 62. Héroes del Yari", "Frente 56. Combatientes de Cusiana", "Frente 55. Teófilo Forero", 
+            "Frente 54. Miguel Ángel Bonilla", "Frente 53. José Antonio Anzoátegui", "Frente 52. Juan de la Cruz Varela",
+            "Frente 51. Jaime Pardo Leal", "Frente 45. Atanasio Girardot", "Frente 44. Antonio Ricaurte",
+            "Frente 43. Joselo Lozada", "Columna Móvil Reinel Mendez", "Frente Vaupés",
+            "Frente Policarpa Salavarrieta", "Frente Manuela Beltrán", "Frente Camilo Torres",
+            "Frente 7.Jacobo Prías Alape", "Frente 31. Pedro Nel Jiménez Obando", "Frente 28. José María Carbonell",
+            "Frente 27. Isaías Pardo", "Frente 26. Hermógenes Maza", "Frente 25. Armando Rios",
+            "Frente 22. Simón Bolívar", "Frente 10. Guadalupe Salcedo", "Frente 1. Armando Ríos",
+            "Compañía Móvil Julián Ramírez", "Compañía Móvil Juan Jose Rondon", "Compañía Móvil Héctor Ramírez",
+            "Compañía Móvil Alfonso Castellanos"     
+        ],
         "Bloque Sur": [
             "Seleccione...", "Unidad José Antonio Galán", "Guardia de Bloque Joaquín Gómez",
             "Guardia de Bloque Fabián Ramírez", "Frente 66 Joselo Losada", "Frente 64",
@@ -288,15 +303,7 @@ def formulario_casos(tipo="individual"):
             "Columna Móvil Yesid Ortiz", "Columna Móvil Teófilo Forero"],
         "No aplica": [
             "Seleccione...", "Secretariado Nacional", "Estado Mayor Central",
-            "Comisión Internacional", "Pondores (Fonseca)", "San José de Oriente (La Paz)",
-            "Caño Indio (Tibú)", "Filipinas (Arauquita)", "Las Brisas de Tamarindo (Vidrí)",
-            "Agua Bonita (La Montañita)", "Monterredondo (Miranda)", "Llanogrande (Dabeiba)",
-            "La Fila (Icononzo)", "El Estrecho (Patía)", "Las Colinas (San José del Guaviare)",
-            "La Guajira (Mesetas)", "La Plancha (Anorí)", "El Oso (Planadas)",
-            "La Reforma (Vistahermosa)", "Miravalle (San Vicente del Caguán)",
-            "La Variante (Tumaco)", "Los Monos (Caldono)", "El Ceral (Buenos Aires)",
-            "Caracolí (Carmen del Darién)", "Carrizal (Remedios)",
-            "Charras (San José del Guaviare)"],
+            "Comisión Internacional"],
     }
 
     with st.expander("➕ Agregar Perfil Antiguo", expanded=len(st.session_state.perfiles) == 0):
@@ -328,21 +335,49 @@ def formulario_casos(tipo="individual"):
 
         # ── Campos 5 y 6: siempre visibles tras bloque ────────────────────────
         p_lugar_acreditacion = st.selectbox("LUGAR DE ACREDITACIÓN *",
-            ["Seleccione...", "Pondores (Fonseca)", "San José de Oriente (La Paz)",
-             "Caño Indio (Tibú)", "Filipinas (Arauquita)", "Las Brisas de Tamarindo (Vidrí)",
-             "Agua Bonita (La Montañita)", "Monterredondo (Miranda)", "Llanogrande (Dabeiba)",
-             "La Fila (Icononzo)", "El Estrecho (Patía)", "Las Colinas (San José del Guaviare)",
-             "La Guajira (Mesetas)", "La Plancha (Anorí)", "El Oso (Planadas)",
-             "La Reforma (Vistahermosa)", "Miravalle (San Vicente del Caguán)",
-             "La Variante (Tumaco)", "Los Monos (Caldono)", "El Ceral (Buenos Aires)",
-             "Caracolí (Carmen del Darién)", "Carrizal (Remedios)",
-             "Charras (San José del Guaviare)"],
+            ["Seleccione...", "PONDORES, FONSECA",
+            "SAN JOSÉ DE ORIENTE, LA PAZ",
+            "CAÑO INDIO, TIBÚ",
+            "FILIPINAS, ARAUQUITA",
+            "LAS BRISAS DE TAMARINDO, VIDRÍ",
+            "AGUA BONITA, LA MONTAÑITA",
+            "MONTERREDONDO, MIRANDA",
+            "LLANOGRANDE, DABEIBA",
+            "LA FILA, ICONONZO",
+            "EL ESTRECHO, PATÍA",
+            "LAS COLINAS, SAN JOSÉ DEL GUAVIARE",
+            "LA GUAJIRA, MESETAS",
+            "LA PLANCHA, ANORÍ",
+            "EL OSO, PLANADAS",
+            "LA REFORMA, VISTAHERMOSA",
+            "MIRAVALLE, SAN VICENTE DEL CAGUÁN",
+            "LA VARIANTE, TUMACO",
+            "LOS MONOS, CALDONO",
+            "EL CERAL, BUENOS AIRES",
+            "CARACOLÍ, CARMEN DEL DARIÉN",
+            "CARRIZAL, REMEDIOS",
+            "CHARRAS, SAN JOSÉ DEL GUAVIARE",
+            "PLAYA RICA, LA MACARENA",
+            "SANTA LUCIA, ITUANGO",
+             "LA PRADERA, PUERTO ASÍS",
+             "LA PALOMA, POLICARPA",
+             "VAGAEZ, VIGÍA DEL FUERTE",
+             "LAS BRISAS, RIOSUCIO",
+             "GALLO, TIERRALTA",
+             "INSTITUCIÓN PENITENCIARIA",
+             "ACREDITADO POR LA JEP",
+             "PLANADAS, TOLIMA",
+             "OTRO",
+             "NO REPORTA",            
+            ],
             key=f"p_lugar_{tipo}")
 
-        _ROLES = ["Seleccione...", "Combatiente", "Mando Medio", "Comandante",
-                  "Miliciano/a", "Colaborador/a", "Finanzas", "Inteligencia",
-                  "Comunicaciones", "Sanidad", "Logística", "Político",
-                  "Jurídico", "Minería/Economía", "Otro"]
+        _ROLES = ["Seleccione...", "Base", "Radista", "Caletero/a",
+                  "Enfermero/a", "Finanzas", "Organización de masas", "Comunicación propaganda",
+                  "Inteligencia", "Logística", "Instrucción/Educación", "Correo Humano",
+                  "Ayudante", "Explosivista", "Fuerzas especiales", "Francotirador", "Ametralladora"
+                 "Artillería", "Comandante", "Reemplazante", "Mecanismo monitoreo y verificación"
+                  "Delegación de paz La Habana", "Relaciones internacionales", "Otro"]
         p_rol = st.selectbox("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES, key=f"p_rol_{tipo}")
 
         # ── Campo 7: texto libre si el rol requiere especificación ─────────────
@@ -364,17 +399,23 @@ def formulario_casos(tipo="individual"):
         if mostrar_libertad:
             p_meses_privado = st.number_input("NO. MESES PRIVADO DE LA LIBERTAD",
                 min_value=0, max_value=600, step=1, key=f"p_meses_{tipo}")
-            _INSTITUCIONES = ["Seleccione...", "Establecimiento Penitenciario (EP)",
-                              "Establecimiento Carcelario (EC)",
-                              "Complejo Carcelario (CO)",
-                              "Centro de Reclusión Militar (CRM)",
-                              "Otro"]
+            _INSTITUCIONES = ["Seleccione...", 
+                              "EPC - ESTABLECIMIENTO PENITENCIARIO Y CARCELARÍO",
+                              "RM - RECLUSIÓN DE MUJERES",
+                              "EPMS - ESTABLECIMIENTO PENITENCIARIO DE MEDIANA SEGURIDAD",
+                              "CPMS - CÁRCEL Y PENITENCIARIA DE MEDIANA SEGURIDAD",
+                              "CMS - CÁRCEL DE MEDIANA SEGURIDAD",
+                              "EPAMS - ESTABLECIMIENTO PENITENCIARIO DE MEDIANA Y ALTA SEGURIDAD",
+                              "CPAMS - CÁRCEL Y PENITENCIARIA DE ALTA Y MEDIANA SEGURIDAD",
+                              "ERE - ESTABLECIMIENTO DE RECLUSIÓN ESPECIAL",
+                              "CO -COMPLEJO CARCELARÍO",
+                              "PRISIÓN DOMICILIARIA"]
             p_tipo_institucion = st.selectbox("TIPO DE INSTITUCIÓN PENITENCIARIA",
                 _INSTITUCIONES, key=f"p_inst_{tipo}")
 
         # ── Campo 11: pabellón alta seguridad (solo si CO) ────────────────────
         p_pabellon = ""
-        if mostrar_libertad and p_tipo_institucion == "Complejo Carcelario (CO)":
+        if mostrar_libertad and p_tipo_institucion == "CO -COMPLEJO CARCELARÍO":
             p_pabellon = st.selectbox("PABELLÓN DE ALTA SEGURIDAD",
                 ["Seleccione...", "Sí", "No"], key=f"p_pabellon_{tipo}")
 
