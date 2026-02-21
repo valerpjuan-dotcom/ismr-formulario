@@ -6,9 +6,14 @@ def inyectar_css_selector():
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
         .stApp { background: #0A0A0F; }
         #MainMenu, footer, header { visibility: hidden; }
-        [data-testid="manage-app-button"] { display: none !important; }
-        ._terminalButton_rix23_138 { display: none !important; }
-        .stAppDeployButton { display: none !important; }
+        ._terminalButton_rix23_138,
+        button[data-testid="manage-app-button"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            position: absolute !important;
+            pointer-events: none !important;
+        }
         .btn-individual > button, .btn-colectivo > button {
             width: 100% !important; min-height: 340px !important;
             border-radius: 4px !important; border: 1px solid !important;
@@ -36,4 +41,14 @@ def inyectar_css_selector():
             background: transparent !important; border: 1px solid #333 !important; color: #666 !important;
         }
     </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <script>
+            const observer = new MutationObserver(() => {
+                const btn = document.querySelector('[data-testid="manage-app-button"]');
+                if (btn) btn.style.display = 'none';
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        </script>
     """, unsafe_allow_html=True)
