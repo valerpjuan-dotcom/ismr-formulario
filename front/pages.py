@@ -116,7 +116,7 @@ def formulario_casos(tipo="individual"):
     icono             = "👤"      if es_individual else "👥"
     label_badge       = "INDIVIDUAL" if es_individual else "COLECTIVO"
     titulo            = "Formulario Individual" if es_individual else "Formulario Colectivo"
-    nombre_hoja_casos = TAB_NOMBRES[tipo]["casos"]   # FIX: accesible en todo el scope
+    nombre_hoja_casos = TAB_NOMBRES[tipo]["casos"]
 
     hoja_casos, hoja_hechos, hoja_perfiles, sheet_url = conectar_sheet_casos(tipo)
     if hoja_casos is None:
@@ -188,6 +188,8 @@ def formulario_casos(tipo="individual"):
 
     st.markdown("---")
     st.subheader("📝 Información del Caso")
+
+    # Fila 1: Año OT | Número OT
     col_anio, col_num = st.columns(2)
     with col_anio:
         ot_anio   = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None,
@@ -195,20 +197,35 @@ def formulario_casos(tipo="individual"):
     with col_num:
         ot_numero = st.number_input("Número OT *", min_value=0, max_value=9999, value=None,
                                     step=1, key=f"caso_ot_numero_{tipo}")
+
     ot_te = f"OT-{int(ot_anio)}-{str(int(ot_numero)).zfill(3)}" if (ot_anio is not None and ot_numero is not None) else ""
-    col1, col2 = st.columns(2)
-    with col1:
-        edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
-        sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key=f"caso_sexo_{tipo}")
+
+    # Fila 2: Edad | Sexo
+    col_edad, col_sexo = st.columns(2)
+    with col_edad:
+        edad = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
+    with col_sexo:
+        sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key=f"caso_sexo_{tipo}")
+
+    # Fila 3: Departamento | Municipio
+    col_dep, col_mun = st.columns(2)
+    with col_dep:
         departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
                          ["Seleccione..."] + list(_MUNICIPIOS.keys()),
                          key=f"p_departamento_{tipo}")
-    with col2:
-        municipio    = st.selectbox("SELECCIONE EL MUNICIPIO *",
+    with col_mun:
+        municipio = st.selectbox("SELECCIONE EL MUNICIPIO *",
                          _MUNICIPIOS.get(departamento, ["Seleccione..."]),
                          key=f"p_municipio_{tipo}")
+
+    # Fila 4: Entidad Solicitante | Nivel de Riesgo
+    col_sol, col_riesgo = st.columns(2)
+    with col_sol:
         solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"], key=f"caso_solicitante_{tipo}")
+    with col_riesgo:
         nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"], key=f"caso_nivel_riesgo_{tipo}")
+
+    # Fila 5: Observaciones (ancho completo)
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
 
@@ -322,7 +339,6 @@ def formulario_casos(tipo="individual"):
     if "perfiles" not in st.session_state:
         st.session_state.perfiles = []
 
-    # Mostrar perfiles ya agregados
     _edit_perfil_key = f"editando_perfil_{tipo}"
     _MODOS_PART = ["Seleccione...", "Combatiente", "Miliciano/a", "Colaborador/a",
                    "Privado de la libertad", "Otro"]
@@ -360,7 +376,6 @@ def formulario_casos(tipo="individual"):
                               if perfil.get("lugar_acreditacion","") in _LUGAR_ACREDITACION else 0,
                         key=f"ep_lugar_{tipo}_{i}")
 
-                # Rol — convertir "A | B" de vuelta a lista
                 _rol_actual = [r.strip() for r in perfil.get("rol","").split("|")
                                if r.strip() in _ROLES[1:]]
                 ep_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:],
@@ -372,7 +387,6 @@ def formulario_casos(tipo="individual"):
                     ep_otro_rol = st.text_input("¿QUÉ OTRO ROL?",
                         value=perfil.get("otro_rol",""), key=f"ep_otro_rol_{tipo}_{i}")
 
-                # Campos condicionales: privado de libertad
                 ep_mostrar_libertad = (ep_modo == "Privado de la libertad")
                 ep_meses = ""
                 ep_inst  = "Seleccione..."
@@ -458,7 +472,6 @@ def formulario_casos(tipo="individual"):
 
     with st.expander("➕ Agregar Perfil Antiguo", expanded=len(st.session_state.perfiles) == 0):
 
-        # ── Campos 1, 2, 3: siempre visibles ─────────────────────────────────
         p_modo = st.selectbox("MODO DE PARTICIPACIÓN EN LAS FARC-EP *",
             ["Seleccione...", "Combatiente", "Miliciano/a", "Colaborador/a",
              "Privado de la libertad", "Otro"],
@@ -476,28 +489,24 @@ def formulario_casos(tipo="individual"):
             ["Seleccione..."] + list(_ESTRUCTURAS.keys()),
             key=f"p_bloque_{tipo}")
 
-        # ── Campo 4: estructura condicional según bloque ───────────────────────
         p_estructura = "Seleccione..."
         if p_bloque != "Seleccione...":
             opciones_estructura = _ESTRUCTURAS[p_bloque]
             p_estructura = st.selectbox("ESTRUCTURA *", opciones_estructura,
                 key=f"p_estructura_{tipo}")
 
-        # ── Campos 5 y 6: siempre visibles tras bloque ────────────────────────
         p_lugar_acreditacion = st.selectbox("LUGAR DE ACREDITACIÓN *",
         _LUGAR_ACREDITACION,
             key=f"p_lugar_{tipo}")
 
         p_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:], key=f"p_rol_{tipo}", placeholder="Escoge al menos una opción")
 
-        # ── Campo 7 y 8: texto libre solo si "Otro" está seleccionado ────────────
         p_otro_rol = ""
         p_otro_rol_libre = ""
         if "Otro" in p_rol:
             p_otro_rol = st.text_input("¿QUÉ OTRO ROL?", key=f"p_otro_rol_{tipo}")
             p_otro_rol_libre = p_otro_rol
 
-        # ── Campos 9 y 10: privación de libertad (condicional) ────────────────
         mostrar_libertad = (p_modo == "Privado de la libertad")
 
         p_meses_privado    = ""
@@ -509,13 +518,11 @@ def formulario_casos(tipo="individual"):
             p_tipo_institucion = st.selectbox("TIPO DE INSTITUCIÓN PENITENCIARIA",
                 _INSTITUCIONES, key=f"p_inst_{tipo}")
 
-        # ── Campo 11: pabellón alta seguridad (solo si CO) ────────────────────
         p_pabellon = ""
         if mostrar_libertad and p_tipo_institucion == "CO -COMPLEJO CARCELARÍO":
             p_pabellon = st.selectbox("PABELLÓN DE ALTA SEGURIDAD",
                 ["Seleccione...", "Sí", "No"], key=f"p_pabellon_{tipo}")
 
-        # ── Botón agregar ─────────────────────────────────────────────────────
         st.markdown("")
         if st.button("➕ Agregar este perfil", use_container_width=True,
                      key=f"btn_add_perfil_{tipo}", type="secondary"):
@@ -545,6 +552,7 @@ def formulario_casos(tipo="individual"):
                     "pabellon_alta_seguridad": p_pabellon if p_pabellon != "Seleccione..." else "",
                 })
                 st.success("✅ Perfil Antiguo agregado"); st.rerun()
+
     st.markdown("---")
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
@@ -665,7 +673,6 @@ def panel_visualizacion():
 
             sub1, sub2, sub3 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo"])
 
-            # ── Cargar datos una sola vez por tab ─────────────────────────────
             try: datos   = hoja_casos.get_all_records()
             except: datos = []
             try: datos_h = hoja_hechos.get_all_records()
@@ -715,7 +722,6 @@ def panel_visualizacion():
                     st.dataframe(df_p, use_container_width=True, hide_index=True)
                 else: st.info("📭 No hay perfiles registrados")
 
-            # ── Botón descarga XLSX unificado (fuera de los subtabs) ──────────
             st.markdown("---")
             if not df.empty or not df_h.empty or not df_p.empty:
                 buffer = io.BytesIO()
