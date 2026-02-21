@@ -211,14 +211,7 @@ def formulario_casos(tipo="individual"):
             c1, c2 = st.columns(2)
             with c1:
                 st.write(f"📋 **Modo de Participación:** {perfil.get('modo_participacion','')}")
-    
-                anio_ingreso = st.number_input(
-                    "Año Ingreso/Traslado/Captura *",
-                    min_value=1950,
-                    max_value=2026,
-                    step=1
-                    )
-
+                st.write(f"📅 **Año Ingreso/Traslado/Captura:** {perfil.get('anio_ingreso','')}")
                 st.write(f"🗺️ **Bloque:** {perfil.get('bloque','')}")
                 st.write(f"🏗️ **Estructura:** {perfil.get('estructura','')}")
                 st.write(f"📍 **Lugar de Acreditación:** {perfil.get('lugar_acreditacion','')}")
@@ -314,9 +307,13 @@ def formulario_casos(tipo="individual"):
              "Privado de la libertad", "Otro"],
             key=f"p_modo_{tipo}")
 
-        p_anio = st.selectbox("AÑO DE INGRESO, TRASLADO O CAPTURA *",
-            ["Seleccione..."] + [str(a) for a in range(1960, 2017)],
-            key=f"p_anio_{tipo}")
+        p_anio = st.number_input(
+            "AÑO DE INGRESO, TRASLADO O CAPTURA *",
+            min_value=1950,
+            max_value=2026,
+            step=1,
+            key=f"p_anio_{tipo}"
+            )
 
         p_bloque = st.selectbox("SELECCIONE EL BLOQUE DE OPERACIÓN *",
             ["Seleccione..."] + list(_ESTRUCTURAS.keys()),
@@ -388,7 +385,8 @@ def formulario_casos(tipo="individual"):
                      key=f"btn_add_perfil_{tipo}", type="secondary"):
             err_p = []
             if p_modo        == "Seleccione...": err_p.append("El modo de participación es obligatorio")
-            if p_anio        == "Seleccione...": err_p.append("El año de ingreso es obligatorio")
+            if not p_anio:
+                err_p.append("El año de ingreso es obligatorio")
             if p_bloque      == "Seleccione...": err_p.append("El bloque de operación es obligatorio")
             if p_estructura  == "Seleccione...": err_p.append("La estructura es obligatoria")
             if p_lugar_acreditacion == "Seleccione...": err_p.append("El lugar de acreditación es obligatorio")
