@@ -4,11 +4,7 @@ from pymongo import MongoClient
 
 @st.cache_resource
 def _get_client():
-    """
-    Cliente MongoDB singleton — reutiliza la conexión en todos los reruns
-    de Streamlit gracias a cache_resource.
-    """
-    uri = st.secrets["mongodb"]["uri"].split("?")[0]  # elimina query params del URI
+    uri = st.secrets["mongodb"]["uri"].split("?")[0]
     return MongoClient(
         uri,
         tls=True,
@@ -22,12 +18,10 @@ def _get_client():
 
 
 def _conectar_coleccion_usuarios():
-    """Retorna la colección MongoDB de usuarios, o None si falla."""
     try:
         db_name = st.secrets["mongodb"].get("db_name", "ismr")
         db = _get_client()[db_name]
         coleccion = db["usuarios"]
-        # Crea índice único en username si no existe (idempotente)
         coleccion.create_index("username", unique=True, background=True)
         return coleccion
     except Exception as e:
@@ -36,21 +30,10 @@ def _conectar_coleccion_usuarios():
 
 
 def conectar_sheet_usuarios():
-    """
-    Equivalente a conectar_sheet_usuarios() de Google Sheets.
-    Retorna la colección si la conexión es exitosa, None si falla.
-    """
     return _conectar_coleccion_usuarios()
 
 
 def obtener_usuario(username):
-    """
-    Retorna el documento del usuario como dict con las mismas keys que
-    Google Sheets: username, password_hash, nombre_completo, es_admin,
-    debe_cambiar_password.
-    Los valores booleanos se normalizan a strings 'TRUE'/'FALSE' para
-    mantener compatibilidad con service/auth_service.py.
-    """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
         return None
@@ -64,10 +47,6 @@ def obtener_usuario(username):
 
 
 def actualizar_password(username, nuevo_hash, debe_cambiar=False):
-    """
-    Actualiza password_hash y debe_cambiar_password del usuario.
-    Retorna True si se actualizó al menos un documento, False si no.
-    """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
         return False
@@ -85,10 +64,10 @@ def actualizar_password(username, nuevo_hash, debe_cambiar=False):
         return False
 
 
-def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe_cambiar=True):
+def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe_cambiar=True, email=None):
     """
-    Inserta un nuevo usuario. Retorna False si el usuario ya existe.
-    Los booleanos se almacenan como strings 'TRUE'/'FALSE'.
+    Inserta un nuevo usuario.
+    El email se infiere automáticamente del username si no se provee explícitamente.
     """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
@@ -96,12 +75,15 @@ def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe
     try:
         if obtener_usuario(username):
             return False
+        # Email institucional inferido del username si no se provee
+        email_final = email or f"{username.strip().lower()}@unp.gov.co"
         coleccion.insert_one({
             "username": username,
             "password_hash": password_hash,
             "nombre_completo": nombre_completo,
             "es_admin": "TRUE" if es_admin else "FALSE",
-            "debe_cambiar_password": "TRUE" if debe_cambiar else "FALSE"
+            "debe_cambiar_password": "TRUE" if debe_cambiar else "FALSE",
+            "email": email_final,
         })
         return True
     except Exception as e:
@@ -110,10 +92,6 @@ def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe
 
 
 def listar_usuarios():
-    """
-    Retorna una lista de dicts con los mismos campos que Google Sheets,
-    excluyendo el _id de MongoDB.
-    """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
         return []
@@ -123,13 +101,14 @@ def listar_usuarios():
         return []
 
 
+def usuario_existe(username: str) -> bool:
+    """Retorna True si el username existe en la base de datos."""
+    return obtener_usuario(username) is not None
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _normalizar_usuario(doc):
-    """
-    Normaliza es_admin y debe_cambiar_password a strings 'TRUE'/'FALSE'
-    sin importar cómo estén almacenados en MongoDB (bool, string, etc.).
-    """
     for campo in ("es_admin", "debe_cambiar_password"):
         valor = doc.get(campo, False)
         if isinstance(valor, bool):
@@ -138,4 +117,7 @@ def _normalizar_usuario(doc):
             doc[campo] = "TRUE" if valor.strip().upper() == "TRUE" else "FALSE"
         else:
             doc[campo] = "FALSE"
+    # Asegurar que email siempre esté presente (retrocompatibilidad con docs viejos)
+    if "email" not in doc or not doc["email"]:
+        doc["email"] = f"{doc.get('username','').strip().lower()}@unp.gov.co"
     return doc
