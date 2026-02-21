@@ -260,7 +260,7 @@ def formulario_casos(tipo="individual"):
         _LUGAR_ACREDITACION,
             key=f"p_lugar_{tipo}")
 
-        p_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:], key=f"p_rol_{tipo}")
+        p_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:], key=f"p_rol_{tipo}", placeholder="Escoge al menos una opción")
 
         # ── Campo 7 y 8: texto libre solo si "Otro" está seleccionado ────────────
         p_otro_rol = ""
