@@ -3,7 +3,7 @@ import hashlib
 import time
 import pandas as pd
 from datetime import datetime
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios
@@ -136,9 +136,13 @@ def formulario_casos(tipo="individual"):
     with col1:
         edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None)
         sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"])
-        departamento = st.text_input("Departamento *", placeholder="Ejemplo: Antioquia")
+        departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
+                         ["Seleccione..."] + list(_MUNICIPIOS.keys()),
+                         key=f"p_departamento_{tipo}")
     with col2:
-        municipio    = st.text_input("Municipio *", placeholder="Ejemplo: Medellín")
+        municipio    = st.selectbox("SELECCIONE EL MUNICIPIO *",
+                         _MUNICIPIOS.get(departamento, ["Seleccione..."]),
+                         key=f"p_municipio_{tipo}")
         solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"])
         nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"])
     observaciones = st.text_area("Observaciones (Opcional)", height=80)
@@ -335,8 +339,8 @@ def formulario_casos(tipo="individual"):
         if not ot_te or ot_te.strip() == "":            errores.append("El campo OT-TE es obligatorio")
         if edad is None or edad == 0:                   errores.append("La edad es obligatoria")
         if sexo == "Seleccione...":                     errores.append("Debe seleccionar un sexo")
-        if not departamento or departamento.strip() == "": errores.append("El departamento es obligatorio")
-        if not municipio or municipio.strip() == "":    errores.append("El municipio es obligatorio")
+        if departamento == "Seleccione...":              errores.append("Debe seleccionar un departamento")
+        if municipio == "Seleccione...":                 errores.append("Debe seleccionar un municipio")
         if solicitante == "Seleccione...":              errores.append("Debe seleccionar una entidad solicitante")
         if nivel_riesgo == "Seleccione...":             errores.append("Debe seleccionar un nivel de riesgo")
 
