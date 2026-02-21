@@ -322,27 +322,138 @@ def formulario_casos(tipo="individual"):
         st.session_state.perfiles = []
 
     # Mostrar perfiles ya agregados
+    _edit_perfil_key = f"editando_perfil_{tipo}"
+    _MODOS_PART = ["Seleccione...", "Combatiente", "Miliciano/a", "Colaborador/a",
+                   "Privado de la libertad", "Otro"]
+
     for i, perfil in enumerate(st.session_state.perfiles):
         with st.container(border=True):
-            col_tit, col_del = st.columns([5, 1])
-            with col_tit: st.markdown(f"**Perfil #{i+1} — {perfil.get('modo_participacion', '')}**")
-            with col_del:
-                if st.button("🗑️", key=f"del_perfil_{tipo}_{i}"):
-                    st.session_state.perfiles.pop(i); st.rerun()
-            c1, c2 = st.columns(2)
-            with c1:
-                st.write(f"📋 **Modo de Participación:** {perfil.get('modo_participacion','')}")
-                st.write(f"📅 **Año Ingreso/Traslado/Captura:** {perfil.get('anio_ingreso','')}")
-                st.write(f"🗺️ **Bloque:** {perfil.get('bloque','')}")
-                st.write(f"🏗️ **Estructura:** {perfil.get('estructura','')}")
-                st.write(f"📍 **Lugar de Acreditación:** {perfil.get('lugar_acreditacion','')}")
-            with c2:
-                st.write(f"🎭 **Rol/Actividades:** {perfil.get('rol','')}")
-                if perfil.get('otro_rol'): st.write(f"❓ **Otro Rol:** {perfil.get('otro_rol','')}")
-                if perfil.get('subpoblacion'): st.write(f"👥 **Subpoblación (Índice 1):** {perfil.get('subpoblacion','')}")
-                if perfil.get('meses_privado'): st.write(f"⛓️ **Meses Privado de Libertad:** {perfil.get('meses_privado','')}")
-                if perfil.get('tipo_institucion'): st.write(f"🏛️ **Tipo Institución:** {perfil.get('tipo_institucion','')}")
-                if perfil.get('pabellon_alta_seguridad'): st.write(f"🔒 **Pabellón Alta Seguridad:** {perfil.get('pabellon_alta_seguridad','')}")
+            if st.session_state.get(_edit_perfil_key) == i:
+                # ── Modo edición ──────────────────────────────────────────────
+                st.markdown(f"**✏️ Editando Perfil #{i+1}**")
+                pc1, pc2 = st.columns(2)
+                with pc1:
+                    ep_modo = st.selectbox("MODO DE PARTICIPACIÓN EN LAS FARC-EP *", _MODOS_PART,
+                        index=_MODOS_PART.index(perfil.get("modo_participacion","Seleccione..."))
+                              if perfil.get("modo_participacion","") in _MODOS_PART else 0,
+                        key=f"ep_modo_{tipo}_{i}")
+                    ep_anio = st.number_input("AÑO DE INGRESO, TRASLADO O CAPTURA *",
+                        min_value=1950, max_value=2026, step=1,
+                        value=int(perfil["anio_ingreso"]) if str(perfil.get("anio_ingreso","")).isdigit() else 2000,
+                        key=f"ep_anio_{tipo}_{i}")
+                    _bloques = ["Seleccione..."] + list(_ESTRUCTURAS.keys())
+                    ep_bloque = st.selectbox("SELECCIONE EL BLOQUE DE OPERACIÓN *", _bloques,
+                        index=_bloques.index(perfil.get("bloque","Seleccione..."))
+                              if perfil.get("bloque","") in _bloques else 0,
+                        key=f"ep_bloque_{tipo}_{i}")
+                with pc2:
+                    ep_estructura = "Seleccione..."
+                    if ep_bloque != "Seleccione...":
+                        _ops_est = _ESTRUCTURAS[ep_bloque]
+                        ep_estructura = st.selectbox("ESTRUCTURA *", _ops_est,
+                            index=_ops_est.index(perfil.get("estructura",""))
+                                  if perfil.get("estructura","") in _ops_est else 0,
+                            key=f"ep_estructura_{tipo}_{i}")
+                    ep_lugar = st.selectbox("LUGAR DE ACREDITACIÓN *", _LUGAR_ACREDITACION,
+                        index=_LUGAR_ACREDITACION.index(perfil.get("lugar_acreditacion","Seleccione..."))
+                              if perfil.get("lugar_acreditacion","") in _LUGAR_ACREDITACION else 0,
+                        key=f"ep_lugar_{tipo}_{i}")
+
+                # Rol — convertir "A | B" de vuelta a lista
+                _rol_actual = [r.strip() for r in perfil.get("rol","").split("|")
+                               if r.strip() in _ROLES[1:]]
+                ep_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:],
+                    default=_rol_actual, key=f"ep_rol_{tipo}_{i}",
+                    placeholder="Escoge al menos una opción")
+
+                ep_otro_rol = ""
+                if "Otro" in ep_rol:
+                    ep_otro_rol = st.text_input("¿QUÉ OTRO ROL?",
+                        value=perfil.get("otro_rol",""), key=f"ep_otro_rol_{tipo}_{i}")
+
+                # Campos condicionales: privado de libertad
+                ep_mostrar_libertad = (ep_modo == "Privado de la libertad")
+                ep_meses = ""
+                ep_inst  = "Seleccione..."
+                if ep_mostrar_libertad:
+                    ep_meses = st.number_input("NO. MESES PRIVADO DE LA LIBERTAD",
+                        min_value=0, max_value=600, step=1,
+                        value=int(perfil["meses_privado"]) if str(perfil.get("meses_privado","")).isdigit() else 0,
+                        key=f"ep_meses_{tipo}_{i}")
+                    ep_inst = st.selectbox("TIPO DE INSTITUCIÓN PENITENCIARIA", _INSTITUCIONES,
+                        index=_INSTITUCIONES.index(perfil.get("tipo_institucion","Seleccione..."))
+                              if perfil.get("tipo_institucion","") in _INSTITUCIONES else 0,
+                        key=f"ep_inst_{tipo}_{i}")
+
+                ep_pabellon = ""
+                if ep_mostrar_libertad and ep_inst == "CO -COMPLEJO CARCELARÍO":
+                    _pab = ["Seleccione...", "Sí", "No"]
+                    ep_pabellon = st.selectbox("PABELLÓN DE ALTA SEGURIDAD", _pab,
+                        index=_pab.index(perfil.get("pabellon_alta_seguridad","Seleccione..."))
+                              if perfil.get("pabellon_alta_seguridad","") in _pab else 0,
+                        key=f"ep_pabellon_{tipo}_{i}")
+
+                col_save, col_cancel = st.columns(2)
+                with col_save:
+                    if st.button("💾 Guardar cambios", key=f"ep_save_{tipo}_{i}",
+                                 type="primary", use_container_width=True):
+                        err_ep = []
+                        if ep_modo      == "Seleccione...": err_ep.append("El modo de participación es obligatorio")
+                        if ep_bloque    == "Seleccione...": err_ep.append("El bloque es obligatorio")
+                        if ep_estructura== "Seleccione...": err_ep.append("La estructura es obligatoria")
+                        if ep_lugar     == "Seleccione...": err_ep.append("El lugar de acreditación es obligatorio")
+                        if len(ep_rol)  == 0:               err_ep.append("El rol es obligatorio")
+                        if "Otro" in ep_rol and not ep_otro_rol.strip(): err_ep.append("Especifica el otro rol")
+                        if err_ep:
+                            for e in err_ep: st.error(f"• {e}")
+                        else:
+                            st.session_state.perfiles[i] = {
+                                "modo_participacion": ep_modo,
+                                "anio_ingreso":       ep_anio,
+                                "bloque":             ep_bloque,
+                                "estructura":         ep_estructura,
+                                "lugar_acreditacion": ep_lugar,
+                                "rol":                " | ".join(ep_rol),
+                                "otro_rol":           ep_otro_rol.strip(),
+                                "subpoblacion":       ep_otro_rol.strip(),
+                                "meses_privado":      str(ep_meses) if ep_mostrar_libertad else "",
+                                "tipo_institucion":   ep_inst if ep_inst != "Seleccione..." else "",
+                                "pabellon_alta_seguridad": ep_pabellon if ep_pabellon != "Seleccione..." else "",
+                            }
+                            st.session_state[_edit_perfil_key] = None
+                            st.rerun()
+                with col_cancel:
+                    if st.button("✖ Cancelar", key=f"ep_cancel_{tipo}_{i}",
+                                 type="secondary", use_container_width=True):
+                        st.session_state[_edit_perfil_key] = None
+                        st.rerun()
+            else:
+                # ── Modo lectura ──────────────────────────────────────────────
+                col_tit, col_edit, col_del = st.columns([4, 1, 1])
+                with col_tit: st.markdown(f"**Perfil #{i+1} — {perfil.get('modo_participacion', '')}**")
+                with col_edit:
+                    if st.button("✏️", key=f"edit_p_{tipo}_{i}", help="Editar este perfil"):
+                        st.session_state[_edit_perfil_key] = i
+                        st.rerun()
+                with col_del:
+                    if st.button("🗑️", key=f"del_perfil_{tipo}_{i}", help="Eliminar este perfil"):
+                        st.session_state.perfiles.pop(i)
+                        st.session_state[_edit_perfil_key] = None
+                        st.rerun()
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.write(f"📋 **Modo de Participación:** {perfil.get('modo_participacion','')}")
+                    st.write(f"📅 **Año Ingreso/Traslado/Captura:** {perfil.get('anio_ingreso','')}")
+                    st.write(f"🗺️ **Bloque:** {perfil.get('bloque','')}")
+                    st.write(f"🏗️ **Estructura:** {perfil.get('estructura','')}")
+                    st.write(f"📍 **Lugar de Acreditación:** {perfil.get('lugar_acreditacion','')}")
+                with c2:
+                    st.write(f"🎭 **Rol/Actividades:** {perfil.get('rol','')}")
+                    if perfil.get('otro_rol'): st.write(f"❓ **Otro Rol:** {perfil.get('otro_rol','')}")
+                    if perfil.get('subpoblacion'): st.write(f"👥 **Subpoblación (Índice 1):** {perfil.get('subpoblacion','')}")
+                    if perfil.get('meses_privado'): st.write(f"⛓️ **Meses Privado de Libertad:** {perfil.get('meses_privado','')}")
+                    if perfil.get('tipo_institucion'): st.write(f"🏛️ **Tipo Institución:** {perfil.get('tipo_institucion','')}")
+                    if perfil.get('pabellon_alta_seguridad'): st.write(f"🔒 **Pabellón Alta Seguridad:** {perfil.get('pabellon_alta_seguridad','')}")
 
     with st.expander("➕ Agregar Perfil Antiguo", expanded=len(st.session_state.perfiles) == 0):
 
