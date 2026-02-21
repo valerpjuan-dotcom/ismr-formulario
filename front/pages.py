@@ -132,7 +132,8 @@ def formulario_casos(tipo="individual"):
             with col_ret:
                 if st.button("↩️ Retomar borrador", use_container_width=True, type="primary", key=f"btn_retomar_{tipo}"):
                     for campo in [
-                        f"caso_ot_te_{tipo}", f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
+                        f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
+                        f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
                         f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
                         f"caso_observaciones_{tipo}",
@@ -147,7 +148,8 @@ def formulario_casos(tipo="individual"):
                 if st.button("🗑️ Descartar borrador", use_container_width=True, type="secondary", key=f"btn_descartar_{tipo}"):
                     eliminar_borrador(st.session_state.username, tipo)
                     for _campo in [
-                        f"caso_ot_te_{tipo}", f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
+                        f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
+                        f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
                         f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
                         f"caso_observaciones_{tipo}",
@@ -183,7 +185,14 @@ def formulario_casos(tipo="individual"):
 
     st.markdown("---")
     st.subheader("📝 Información del Caso")
-    ot_te = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001", key=f"caso_ot_te_{tipo}")
+    col_anio, col_num = st.columns(2)
+    with col_anio:
+        ot_anio   = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None,
+                                    step=1, key=f"caso_ot_anio_{tipo}")
+    with col_num:
+        ot_numero = st.number_input("Número OT *", min_value=0, max_value=9999, value=None,
+                                    step=1, key=f"caso_ot_numero_{tipo}")
+    ot_te = f"OT-{int(ot_anio)}-{str(int(ot_numero)).zfill(3)}" if (ot_anio is not None and ot_numero is not None) else ""
     col1, col2 = st.columns(2)
     with col1:
         edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
@@ -375,7 +384,8 @@ def formulario_casos(tipo="individual"):
     with col_borrador:
         if st.button("💾 Guardar borrador", use_container_width=True, type="secondary", key=f"btn_guardar_borrador_{tipo}"):
             datos_borrador = {
-                f"caso_ot_te_{tipo}":         st.session_state.get(f"caso_ot_te_{tipo}", ""),
+                f"caso_ot_anio_{tipo}":       st.session_state.get(f"caso_ot_anio_{tipo}", None),
+                f"caso_ot_numero_{tipo}":     st.session_state.get(f"caso_ot_numero_{tipo}", None),
                 f"caso_edad_{tipo}":          st.session_state.get(f"caso_edad_{tipo}", None),
                 f"caso_sexo_{tipo}":          st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
                 f"p_departamento_{tipo}":     st.session_state.get(f"p_departamento_{tipo}", "Seleccione..."),
@@ -396,7 +406,8 @@ def formulario_casos(tipo="individual"):
 
     if registrar:
         errores = []
-        if not ot_te or ot_te.strip() == "":            errores.append("El campo OT-TE es obligatorio")
+        if ot_anio is None:                              errores.append("El año de la OT es obligatorio")
+        if ot_numero is None:                            errores.append("El número de la OT es obligatorio")
         if edad is None or edad == 0:                   errores.append("La edad es obligatoria")
         if sexo == "Seleccione...":                     errores.append("Debe seleccionar un sexo")
         if departamento == "Seleccione...":              errores.append("Debe seleccionar un departamento")
