@@ -9,23 +9,46 @@ from front.pages import (
     formulario_casos,
     panel_visualizacion,
     panel_gestion_usuarios,
+    pantalla_recovery_solicitar,
+    pantalla_recovery_verificar,
+    pantalla_recovery_nueva_password,
 )
 
 st.set_page_config(page_title="Sistema ISMR", page_icon="📋", layout="centered")
 
 from front.styles import inyectar_css_selector
-inyectar_css_selector()  # 👈 añade esto
+inyectar_css_selector()
 
 for key, val in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
+# Inicializar estado de recuperación si no existe
+if "vista_recovery" not in st.session_state:
+    st.session_state.vista_recovery = None
+if "recovery_username" not in st.session_state:
+    st.session_state.recovery_username = None
+if "recovery_codigo_ok" not in st.session_state:
+    st.session_state.recovery_codigo_ok = False
+
 
 def main():
+    # ── Flujo de recuperación (tiene prioridad sobre login) ───────────────────
+    vista_rec = st.session_state.get("vista_recovery")
+    if vista_rec == "solicitar":
+        pantalla_recovery_solicitar(); return
+    if vista_rec == "verificar":
+        pantalla_recovery_verificar(); return
+    if vista_rec == "nueva_password":
+        pantalla_recovery_nueva_password(); return
+
+    # ── Flujo normal ──────────────────────────────────────────────────────────
     if not st.session_state.autenticado:
         login_page(); return
+
     if st.session_state.debe_cambiar_password:
         pantalla_cambiar_password(); return
+
     if st.session_state.es_admin:
         st.sidebar.title("📊 Sistema ISMR")
         st.sidebar.success(f"👤 {st.session_state.nombre_completo}")
@@ -39,6 +62,7 @@ def main():
         elif opcion == "📊 Ver Datos":       panel_visualizacion()
         else:                                panel_gestion_usuarios()
         return
+
     vista = st.session_state.vista
     if   vista is None:         pantalla_selector()
     elif vista == "individual": formulario_casos("individual")
@@ -47,4 +71,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
