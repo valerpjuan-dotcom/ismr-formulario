@@ -35,6 +35,60 @@ def _conectar_db():
         return None
 
 
+# ── Borradores ────────────────────────────────────────────────────────────────
+
+def guardar_borrador(username: str, tipo: str, datos: dict) -> bool:
+    """
+    Upsert de un borrador asociado a username + tipo de formulario.
+    Sobreescribe el borrador anterior si existe.
+    """
+    db = _conectar_db()
+    if db is None:
+        return False
+    try:
+        from datetime import datetime
+        datos["_guardado_en"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        db["borradores"].update_one(
+            {"_username": username, "_tipo": tipo},
+            {"$set": {**datos, "_username": username, "_tipo": tipo}},
+            upsert=True,
+        )
+        return True
+    except Exception as e:
+        st.error(f"Error al guardar borrador: {str(e)}")
+        return False
+
+
+def cargar_borrador(username: str, tipo: str) -> dict | None:
+    """
+    Devuelve el borrador del usuario para el tipo dado, o None si no existe.
+    """
+    db = _conectar_db()
+    if db is None:
+        return None
+    try:
+        doc = db["borradores"].find_one(
+            {"_username": username, "_tipo": tipo}, {"_id": 0}
+        )
+        return doc or None
+    except Exception as e:
+        st.error(f"Error al cargar borrador: {str(e)}")
+        return None
+
+
+def eliminar_borrador(username: str, tipo: str) -> None:
+    """
+    Elimina el borrador del usuario tras un envío definitivo exitoso.
+    """
+    db = _conectar_db()
+    if db is None:
+        return
+    try:
+        db["borradores"].delete_one({"_username": username, "_tipo": tipo})
+    except Exception as e:
+        st.error(f"Error al eliminar borrador: {str(e)}")
+
+
 def conectar_sheet_casos(tipo="individual"):
     """
     Equivalente a conectar_sheet_casos() de Google Sheets.

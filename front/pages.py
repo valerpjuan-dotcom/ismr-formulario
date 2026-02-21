@@ -7,7 +7,7 @@ from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTIT
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios
-from data.mongo.casos_repo import conectar_sheet_casos
+from data.mongo.casos_repo import conectar_sheet_casos, guardar_borrador, cargar_borrador, eliminar_borrador
 from service.auth_service import verificar_credenciales, logout, obtener_siguiente_id
 from front.styles import inyectar_css_selector
 
@@ -81,7 +81,11 @@ def pantalla_selector():
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👤</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-individual">', unsafe_allow_html=True)
         if st.button("FORMULARIO\nINDIVIDUAL", key="btn_individual", use_container_width=True):
-            st.session_state.vista = "individual"; st.session_state.hechos = []; st.rerun()
+            st.session_state.vista = "individual"
+            st.session_state.hechos = []
+            st.session_state.perfiles = []
+            st.session_state["borrador_cargado_individual"] = False
+            st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Un caso por registro</p>', unsafe_allow_html=True)
 
@@ -89,7 +93,11 @@ def pantalla_selector():
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👥</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-colectivo">', unsafe_allow_html=True)
         if st.button("FORMULARIO\nCOLECTIVO", key="btn_colectivo", use_container_width=True):
-            st.session_state.vista = "colectivo"; st.session_state.hechos = []; st.rerun()
+            st.session_state.vista = "colectivo"
+            st.session_state.hechos = []
+            st.session_state.perfiles = []
+            st.session_state["borrador_cargado_colectivo"] = False
+            st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Múltiples personas afectadas</p>', unsafe_allow_html=True)
 
@@ -111,10 +119,54 @@ def formulario_casos(tipo="individual"):
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets"); return
 
+    # ── Retomar borrador ──────────────────────────────────────────────────────
+    _borrador_key = f"borrador_cargado_{tipo}"
+    if not st.session_state.get(_borrador_key):
+        borrador = cargar_borrador(st.session_state.username, tipo)
+        if borrador:
+            st.warning(
+                f"📝 Tienes un borrador guardado el **{borrador.get('_guardado_en', '—')}**. "
+                "¿Deseas retomarlo?"
+            )
+            col_ret, col_des = st.columns(2)
+            with col_ret:
+                if st.button("↩️ Retomar borrador", use_container_width=True, type="primary", key=f"btn_retomar_{tipo}"):
+                    for campo in [
+                        f"caso_ot_te_{tipo}", f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
+                        f"p_departamento_{tipo}", f"p_municipio_{tipo}",
+                        f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
+                        f"caso_observaciones_{tipo}",
+                    ]:
+                        if campo in borrador:
+                            st.session_state[campo] = borrador[campo]
+                    st.session_state.hechos   = borrador.get("hechos", [])
+                    st.session_state.perfiles = borrador.get("perfiles", [])
+                    st.session_state[_borrador_key] = True
+                    st.rerun()
+            with col_des:
+                if st.button("🗑️ Descartar borrador", use_container_width=True, type="secondary", key=f"btn_descartar_{tipo}"):
+                    eliminar_borrador(st.session_state.username, tipo)
+                    for _campo in [
+                        f"caso_ot_te_{tipo}", f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
+                        f"p_departamento_{tipo}", f"p_municipio_{tipo}",
+                        f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
+                        f"caso_observaciones_{tipo}",
+                    ]:
+                        st.session_state.pop(_campo, None)
+                    st.session_state.hechos = []
+                    st.session_state.perfiles = []
+                    st.session_state[_borrador_key] = True
+                    st.rerun()
+            st.stop()
+
     col_back, col_title = st.columns([1, 4])
     with col_back:
         if st.button("← Volver", type="secondary"):
-            st.session_state.vista = None; st.session_state.hechos = []; st.rerun()
+            st.session_state.vista = None
+            st.session_state.hechos = []
+            st.session_state.perfiles = []
+            st.session_state[f"borrador_cargado_{tipo}"] = False
+            st.rerun()
     with col_title:
         rgb = "79,139,255" if es_individual else "74,222,128"
         st.markdown(f"""
@@ -131,11 +183,11 @@ def formulario_casos(tipo="individual"):
 
     st.markdown("---")
     st.subheader("📝 Información del Caso")
-    ot_te = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001")
+    ot_te = st.text_input("OT-TE *", placeholder="Ejemplo: OT-2024-001", key=f"caso_ot_te_{tipo}")
     col1, col2 = st.columns(2)
     with col1:
-        edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None)
-        sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"])
+        edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
+        sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key=f"caso_sexo_{tipo}")
         departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
                          ["Seleccione..."] + list(_MUNICIPIOS.keys()),
                          key=f"p_departamento_{tipo}")
@@ -143,9 +195,9 @@ def formulario_casos(tipo="individual"):
         municipio    = st.selectbox("SELECCIONE EL MUNICIPIO *",
                          _MUNICIPIOS.get(departamento, ["Seleccione..."]),
                          key=f"p_municipio_{tipo}")
-        solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"])
-        nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"])
-    observaciones = st.text_area("Observaciones (Opcional)", height=80)
+        solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"], key=f"caso_solicitante_{tipo}")
+        nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"], key=f"caso_nivel_riesgo_{tipo}")
+    observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -318,7 +370,31 @@ def formulario_casos(tipo="individual"):
                 })
                 st.success("✅ Perfil Antiguo agregado"); st.rerun()
     st.markdown("---")
-    if st.button(f"✅ REGISTRAR CASO {label_badge}", use_container_width=True, type="primary"):
+    # ── Guardar borrador ──────────────────────────────────────────────────────
+    col_borrador, col_registrar = st.columns([1, 2])
+    with col_borrador:
+        if st.button("💾 Guardar borrador", use_container_width=True, type="secondary", key=f"btn_guardar_borrador_{tipo}"):
+            datos_borrador = {
+                f"caso_ot_te_{tipo}":         st.session_state.get(f"caso_ot_te_{tipo}", ""),
+                f"caso_edad_{tipo}":          st.session_state.get(f"caso_edad_{tipo}", None),
+                f"caso_sexo_{tipo}":          st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
+                f"p_departamento_{tipo}":     st.session_state.get(f"p_departamento_{tipo}", "Seleccione..."),
+                f"p_municipio_{tipo}":        st.session_state.get(f"p_municipio_{tipo}", "Seleccione..."),
+                f"caso_solicitante_{tipo}":   st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
+                f"caso_nivel_riesgo_{tipo}":  st.session_state.get(f"caso_nivel_riesgo_{tipo}", "Seleccione..."),
+                f"caso_observaciones_{tipo}": st.session_state.get(f"caso_observaciones_{tipo}", ""),
+                "hechos":                     st.session_state.get("hechos", []),
+                "perfiles":                   st.session_state.get("perfiles", []),
+            }
+            if guardar_borrador(st.session_state.username, tipo, datos_borrador):
+                st.success("✅ Borrador guardado. Puedes retomarlo más tarde.")
+            else:
+                st.error("❌ No se pudo guardar el borrador.")
+
+    with col_registrar:
+        registrar = st.button(f"✅ REGISTRAR CASO {label_badge}", use_container_width=True, type="primary", key=f"btn_registrar_{tipo}")
+
+    if registrar:
         errores = []
         if not ot_te or ot_te.strip() == "":            errores.append("El campo OT-TE es obligatorio")
         if edad is None or edad == 0:                   errores.append("La edad es obligatoria")
@@ -377,6 +453,8 @@ def formulario_casos(tipo="individual"):
                         perfiles_guardados += 1
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
+                    eliminar_borrador(st.session_state.username, tipo)
+                    st.session_state[f"borrador_cargado_{tipo}"] = False
                     st.success(f"✅ Caso **{ot_te}** registrado en {label_badge}!")
                     if hechos_guardados   > 0: st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
                     if perfiles_guardados > 0: st.info(f"🧑‍🤝‍🧑 {perfiles_guardados} perfil(es) registrados")
