@@ -3,6 +3,9 @@ import hashlib
 import time
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+_BOGOTA = ZoneInfo("America/Bogota")
 from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS
 
 from configuration.settings import TAB_NOMBRES
@@ -425,7 +428,7 @@ def formulario_casos(tipo="individual"):
                 if ot_te.strip() in ot_existentes:
                     st.error(f"❌ El caso '{ot_te}' ya existe en esta hoja")
                 else:
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    timestamp = datetime.now(tz=_BOGOTA).strftime("%Y-%m-%d %H:%M:%S")
                     id_caso   = obtener_siguiente_id(hoja_casos)
                     hoja_casos.append_row([
                         id_caso, timestamp, ot_te.strip(), edad, sexo,
@@ -557,7 +560,7 @@ def panel_visualizacion():
                     (df_hf  if not df_h.empty else df_h).to_excel(writer, sheet_name="Hechos de Riesgo", index=False)
                     df_p.to_excel(writer, sheet_name="Perfiles",         index=False)
                 buffer.seek(0)
-                nombre_archivo = f"ISMR_{tipo}_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+                nombre_archivo = f"ISMR_{tipo}_{datetime.now(tz=_BOGOTA).strftime('%Y%m%d_%H%M')}.xlsx"
                 st.download_button(
                     label="📥 Descargar reporte completo (.xlsx)",
                     data=buffer,

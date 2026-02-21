@@ -47,7 +47,8 @@ def guardar_borrador(username: str, tipo: str, datos: dict) -> bool:
         return False
     try:
         from datetime import datetime
-        datos["_guardado_en"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        from zoneinfo import ZoneInfo
+        datos["_guardado_en"] = datetime.now(tz=ZoneInfo("America/Bogota")).strftime("%Y-%m-%d %H:%M:%S")
         db["borradores"].update_one(
             {"_username": username, "_tipo": tipo},
             {"$set": {**datos, "_username": username, "_tipo": tipo}},
