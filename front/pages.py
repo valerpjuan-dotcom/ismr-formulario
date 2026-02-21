@@ -3,6 +3,7 @@ import hashlib
 import time
 import pandas as pd
 from datetime import datetime
+from diccionarios import ESTRUCTURAS, ROLES, INSTITUCIONES
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios
