@@ -1,5 +1,4 @@
 import streamlit as st
-
 def inyectar_css_selector():
     st.markdown("""
     <style>
@@ -40,9 +39,12 @@ def inyectar_css_selector():
         .stButton > button[kind="secondary"] {
             background: transparent !important; border: 1px solid #333 !important; color: #666 !important;
         }
+        .block-container {
+            padding-top: 15px !important;
+            padding-bottom: 15px !important;
+        }
     </style>
     """, unsafe_allow_html=True)
-
     st.markdown("""
         <script>
             const observer = new MutationObserver(() => {
