@@ -187,44 +187,30 @@ def formulario_casos(tipo="individual"):
         """, unsafe_allow_html=True)
 
     st.markdown("---")
-st.subheader("📝 Información del Caso")
+    st.subheader("📝 Información del Caso")
+    col_anio, col_num = st.columns(2)
+    with col_anio:
+        ot_anio   = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None,
+                                    step=1, key=f"caso_ot_anio_{tipo}")
+    with col_num:
+        ot_numero = st.number_input("Número OT *", min_value=0, max_value=9999, value=None,
+                                    step=1, key=f"caso_ot_numero_{tipo}")
+    ot_te = f"OT-{int(ot_anio)}-{str(int(ot_numero)).zfill(3)}" if (ot_anio is not None and ot_numero is not None) else ""
+    col1, col2 = st.columns(2)
+    with col1:
+        edad         = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
+        sexo         = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key=f"caso_sexo_{tipo}")
+        departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
+                         ["Seleccione..."] + list(_MUNICIPIOS.keys()),
+                         key=f"p_departamento_{tipo}")
+    with col2:
+        municipio    = st.selectbox("SELECCIONE EL MUNICIPIO *",
+                         _MUNICIPIOS.get(departamento, ["Seleccione..."]),
+                         key=f"p_municipio_{tipo}")
+        solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"], key=f"caso_solicitante_{tipo}")
+        nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"], key=f"caso_nivel_riesgo_{tipo}")
+    observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
-col_anio, col_num = st.columns(2)
-with col_anio:
-    ot_anio   = st.number_input("Año OT *", min_value=2000, max_value=2026, value=None,
-                                step=1, key=f"caso_ot_anio_{tipo}")
-with col_num:
-    ot_numero = st.number_input("Número OT *", min_value=0, max_value=9999, value=None,
-                                step=1, key=f"caso_ot_numero_{tipo}")
-
-ot_te = f"OT-{int(ot_anio)}-{str(int(ot_numero)).zfill(3)}" if (ot_anio is not None and ot_numero is not None) else ""
-
-# Fila 2: Edad | Sexo
-col_edad, col_sexo = st.columns(2)
-with col_edad:
-    edad = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
-with col_sexo:
-    sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"], key=f"caso_sexo_{tipo}")
-
-# Fila 3: Departamento | Municipio
-col_dep, col_mun = st.columns(2)
-with col_dep:
-    departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
-                     ["Seleccione..."] + list(_MUNICIPIOS.keys()),
-                     key=f"p_departamento_{tipo}")
-with col_mun:
-    municipio = st.selectbox("SELECCIONE EL MUNICIPIO *",
-                     _MUNICIPIOS.get(departamento, ["Seleccione..."]),
-                     key=f"p_municipio_{tipo}")
-
-# Fila 4: Entidad Solicitante | Nivel de Riesgo
-col_sol, col_riesgo = st.columns(2)
-with col_sol:
-    solicitante  = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"], key=f"caso_solicitante_{tipo}")
-with col_riesgo:
-    nivel_riesgo = st.selectbox("Nivel de Riesgo *", ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"], key=f"caso_nivel_riesgo_{tipo}")
-
-observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
