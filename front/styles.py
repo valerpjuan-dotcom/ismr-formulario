@@ -1,12 +1,12 @@
 import streamlit as st
-
-
 def inyectar_css_selector():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
         .stApp { background: #0A0A0F; }
         #MainMenu, footer, header { visibility: hidden; }
+        [data-testid="manage-app-button"] { display: none !important; }
+        .stAppDeployButton { display: none !important; }
         .btn-individual > button, .btn-colectivo > button {
             width: 100% !important; min-height: 340px !important;
             border-radius: 4px !important; border: 1px solid !important;
