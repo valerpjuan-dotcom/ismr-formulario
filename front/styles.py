@@ -1,4 +1,5 @@
 import streamlit as st
+
 def inyectar_css_selector():
     st.markdown("""
     <style>
