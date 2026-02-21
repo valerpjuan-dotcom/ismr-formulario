@@ -351,14 +351,13 @@ def formulario_casos(tipo="individual"):
             p_otro_rol = st.text_input("¿QUÉ OTRO ROL?", key=f"p_otro_rol_{tipo}")
 
         # ── Campo 8: subpoblación Índice 1 ────────────────────────────────────
-        _SUBPOBLACIONES = ["Seleccione...", "Reincorporado/a", "Indultado/a",
-                           "Condenado/a", "Acusado/a", "Imputado/a",
-                           "En libertad condicional", "No aplica"]
-        p_subpoblacion = st.selectbox("SUBPOBLACIÓN (ÍNDICE 1)",
-            _SUBPOBLACIONES, key=f"p_subpob_{tipo}")
+        p_otro_rol_libre = st.text_input(
+            "¿QUÉ OTRO ROL?",
+            key=f"p_otro_rol_libre_{tipo}"
+        )
 
         # ── Campos 9 y 10: privación de libertad (condicional) ────────────────
-        mostrar_libertad = (p_modo == "Privado de la libertad") or (p_subpoblacion == "Indultado/a")
+        mostrar_libertad = (p_modo == "Privado de la libertad")
 
         p_meses_privado    = ""
         p_tipo_institucion = "Seleccione..."
@@ -403,7 +402,7 @@ def formulario_casos(tipo="individual"):
                     "lugar_acreditacion":  p_lugar_acreditacion,
                     "rol":                 p_rol,
                     "otro_rol":            p_otro_rol.strip() if p_otro_rol else "",
-                    "subpoblacion":        p_subpoblacion if p_subpoblacion != "Seleccione..." else "",
+                    "subpoblacion": p_otro_rol_libre.strip(),
                     "meses_privado":       str(p_meses_privado) if mostrar_libertad else "",
                     "tipo_institucion":    p_tipo_institucion if p_tipo_institucion != "Seleccione..." else "",
                     "pabellon_alta_seguridad": p_pabellon if p_pabellon != "Seleccione..." else "",
