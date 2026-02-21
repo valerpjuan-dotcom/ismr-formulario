@@ -81,7 +81,11 @@ def pantalla_selector():
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👤</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-individual">', unsafe_allow_html=True)
         if st.button("FORMULARIO\nINDIVIDUAL", key="btn_individual", use_container_width=True):
-            st.session_state.vista = "individual"; st.session_state.hechos = []; st.rerun()
+            st.session_state.vista = "individual"
+            st.session_state.hechos = []
+            st.session_state.perfiles = []
+            st.session_state["borrador_cargado_individual"] = False
+            st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Un caso por registro</p>', unsafe_allow_html=True)
 
@@ -89,7 +93,11 @@ def pantalla_selector():
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👥</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-colectivo">', unsafe_allow_html=True)
         if st.button("FORMULARIO\nCOLECTIVO", key="btn_colectivo", use_container_width=True):
-            st.session_state.vista = "colectivo"; st.session_state.hechos = []; st.rerun()
+            st.session_state.vista = "colectivo"
+            st.session_state.hechos = []
+            st.session_state.perfiles = []
+            st.session_state["borrador_cargado_colectivo"] = False
+            st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Múltiples personas afectadas</p>', unsafe_allow_html=True)
 
@@ -140,6 +148,15 @@ def formulario_casos(tipo="individual"):
             with col_des:
                 if st.button("🗑️ Descartar borrador", use_container_width=True, type="secondary", key=f"btn_descartar_{tipo}"):
                     eliminar_borrador(st.session_state.username, tipo)
+                    for _campo in [
+                        f"caso_ot_te_{tipo}", f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
+                        f"p_departamento_{tipo}", f"p_municipio_{tipo}",
+                        f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
+                        f"caso_observaciones_{tipo}",
+                    ]:
+                        st.session_state.pop(_campo, None)
+                    st.session_state.hechos = []
+                    st.session_state.perfiles = []
                     st.session_state[_borrador_key] = True
                     st.rerun()
             st.stop()
@@ -147,7 +164,11 @@ def formulario_casos(tipo="individual"):
     col_back, col_title = st.columns([1, 4])
     with col_back:
         if st.button("← Volver", type="secondary"):
-            st.session_state.vista = None; st.session_state.hechos = []; st.rerun()
+            st.session_state.vista = None
+            st.session_state.hechos = []
+            st.session_state.perfiles = []
+            st.session_state[f"borrador_cargado_{tipo}"] = False
+            st.rerun()
     with col_title:
         rgb = "79,139,255" if es_individual else "74,222,128"
         st.markdown(f"""
