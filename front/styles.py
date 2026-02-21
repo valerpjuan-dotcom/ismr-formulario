@@ -7,6 +7,7 @@ def inyectar_css_selector():
         .stApp { background: #0A0A0F; }
         #MainMenu, footer, header { visibility: hidden; }
         [data-testid="manage-app-button"] { display: none !important; }
+        ._terminalButton_rix23_138 { display: none !important; }
         .stAppDeployButton { display: none !important; }
         .btn-individual > button, .btn-colectivo > button {
             width: 100% !important; min-height: 340px !important;
