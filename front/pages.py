@@ -268,11 +268,11 @@ def formulario_casos(tipo="individual"):
              "Charras (San José del Guaviare)"],
             key=f"p_lugar_{tipo}")
 
-        p_rol = st.selectbox("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES, key=f"p_rol_{tipo}")
+        p_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:], key=f"p_rol_{tipo}")
 
         # ── Campo 7: texto libre si el rol requiere especificación ─────────────
         p_otro_rol = ""
-        if p_rol == "Otro":
+        if "Otro" in p_rol:
             p_otro_rol = st.text_input("¿QUÉ OTRO ROL?", key=f"p_otro_rol_{tipo}")
 
         # ── Campo 8: subpoblación Índice 1 ────────────────────────────────────
@@ -314,8 +314,8 @@ def formulario_casos(tipo="individual"):
             if p_bloque      == "Seleccione...": err_p.append("El bloque de operación es obligatorio")
             if p_estructura  == "Seleccione...": err_p.append("La estructura es obligatoria")
             if p_lugar_acreditacion == "Seleccione...": err_p.append("El lugar de acreditación es obligatorio")
-            if p_rol         == "Seleccione...": err_p.append("El rol es obligatorio")
-            if p_rol == "Otro" and not p_otro_rol.strip(): err_p.append("Especifica el otro rol")
+            if len(p_rol) == 0:                              err_p.append("El rol es obligatorio")
+            if "Otro" in p_rol and not p_otro_rol.strip():  err_p.append("Especifica el otro rol")
             if err_p:
                 for e in err_p: st.error(f"• {e}")
             else:
@@ -325,7 +325,7 @@ def formulario_casos(tipo="individual"):
                     "bloque":              p_bloque,
                     "estructura":          p_estructura,
                     "lugar_acreditacion":  p_lugar_acreditacion,
-                    "rol":                 p_rol,
+                    "rol":                 " | ".join(p_rol),
                     "otro_rol":            p_otro_rol.strip() if p_otro_rol else "",
                     "subpoblacion": p_otro_rol_libre.strip(),
                     "meses_privado":       str(p_meses_privado) if mostrar_libertad else "",
