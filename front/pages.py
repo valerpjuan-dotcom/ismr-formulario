@@ -270,16 +270,12 @@ def formulario_casos(tipo="individual"):
 
         p_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:], key=f"p_rol_{tipo}")
 
-        # ── Campo 7: texto libre si el rol requiere especificación ─────────────
+        # ── Campo 7 y 8: texto libre solo si "Otro" está seleccionado ────────────
         p_otro_rol = ""
+        p_otro_rol_libre = ""
         if "Otro" in p_rol:
             p_otro_rol = st.text_input("¿QUÉ OTRO ROL?", key=f"p_otro_rol_{tipo}")
-
-        # ── Campo 8: subpoblación Índice 1 ────────────────────────────────────
-        p_otro_rol_libre = st.text_input(
-            "¿QUÉ OTRO ROL?",
-            key=f"p_otro_rol_libre_{tipo}"
-        )
+            p_otro_rol_libre = p_otro_rol
 
         # ── Campos 9 y 10: privación de libertad (condicional) ────────────────
         mostrar_libertad = (p_modo == "Privado de la libertad")
