@@ -257,41 +257,7 @@ def formulario_casos(tipo="individual"):
 
         # ── Campos 5 y 6: siempre visibles tras bloque ────────────────────────
         p_lugar_acreditacion = st.selectbox("LUGAR DE ACREDITACIÓN *",
-            ["Seleccione...", "PONDORES, FONSECA",
-            "SAN JOSÉ DE ORIENTE, LA PAZ",
-            "CAÑO INDIO, TIBÚ",
-            "FILIPINAS, ARAUQUITA",
-            "LAS BRISAS DE TAMARINDO, VIDRÍ",
-            "AGUA BONITA, LA MONTAÑITA",
-            "MONTERREDONDO, MIRANDA",
-            "LLANOGRANDE, DABEIBA",
-            "LA FILA, ICONONZO",
-            "EL ESTRECHO, PATÍA",
-            "LAS COLINAS, SAN JOSÉ DEL GUAVIARE",
-            "LA GUAJIRA, MESETAS",
-            "LA PLANCHA, ANORÍ",
-            "EL OSO, PLANADAS",
-            "LA REFORMA, VISTAHERMOSA",
-            "MIRAVALLE, SAN VICENTE DEL CAGUÁN",
-            "LA VARIANTE, TUMACO",
-            "LOS MONOS, CALDONO",
-            "EL CERAL, BUENOS AIRES",
-            "CARACOLÍ, CARMEN DEL DARIÉN",
-            "CARRIZAL, REMEDIOS",
-            "CHARRAS, SAN JOSÉ DEL GUAVIARE",
-            "PLAYA RICA, LA MACARENA",
-            "SANTA LUCIA, ITUANGO",
-             "LA PRADERA, PUERTO ASÍS",
-             "LA PALOMA, POLICARPA",
-             "VAGAEZ, VIGÍA DEL FUERTE",
-             "LAS BRISAS, RIOSUCIO",
-             "GALLO, TIERRALTA",
-             "INSTITUCIÓN PENITENCIARIA",
-             "ACREDITADO POR LA JEP",
-             "PLANADAS, TOLIMA",
-             "OTRO",
-             "NO REPORTA",            
-            ],
+        _LUGAR_ACREDITACION,
             key=f"p_lugar_{tipo}")
 
         p_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:], key=f"p_rol_{tipo}")
@@ -311,17 +277,7 @@ def formulario_casos(tipo="individual"):
         if mostrar_libertad:
             p_meses_privado = st.number_input("NO. MESES PRIVADO DE LA LIBERTAD",
                 min_value=0, max_value=600, step=1, key=f"p_meses_{tipo}")
-            _INSTITUCIONES = ["Seleccione...", 
-                              "EPC - ESTABLECIMIENTO PENITENCIARIO Y CARCELARÍO",
-                              "RM - RECLUSIÓN DE MUJERES",
-                              "EPMS - ESTABLECIMIENTO PENITENCIARIO DE MEDIANA SEGURIDAD",
-                              "CPMS - CÁRCEL Y PENITENCIARIA DE MEDIANA SEGURIDAD",
-                              "CMS - CÁRCEL DE MEDIANA SEGURIDAD",
-                              "EPAMS - ESTABLECIMIENTO PENITENCIARIO DE MEDIANA Y ALTA SEGURIDAD",
-                              "CPAMS - CÁRCEL Y PENITENCIARIA DE ALTA Y MEDIANA SEGURIDAD",
-                              "ERE - ESTABLECIMIENTO DE RECLUSIÓN ESPECIAL",
-                              "CO -COMPLEJO CARCELARÍO",
-                              "PRISIÓN DOMICILIARIA"]
+
             p_tipo_institucion = st.selectbox("TIPO DE INSTITUCIÓN PENITENCIARIA",
                 _INSTITUCIONES, key=f"p_inst_{tipo}")
 
