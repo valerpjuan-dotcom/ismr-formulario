@@ -264,10 +264,6 @@ def formulario_casos(tipo="individual"):
              "Charras (San José del Guaviare)"],
             key=f"p_lugar_{tipo}")
 
-        _ROLES = ["Seleccione...", "Combatiente", "Mando Medio", "Comandante",
-                  "Miliciano/a", "Colaborador/a", "Finanzas", "Inteligencia",
-                  "Comunicaciones", "Sanidad", "Logística", "Político",
-                  "Jurídico", "Minería/Economía", "Otro"]
         p_rol = st.selectbox("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES, key=f"p_rol_{tipo}")
 
         # ── Campo 7: texto libre si el rol requiere especificación ─────────────
