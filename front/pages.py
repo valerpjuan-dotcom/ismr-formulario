@@ -45,7 +45,6 @@ def login_page():
             st.session_state.vista_recovery = "solicitar"
             st.rerun()
 
-    st.markdown("---")
     st.caption("🔒 Si tienes problemas, contacta al administrador")
 
 
