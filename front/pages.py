@@ -236,30 +236,26 @@ def formulario_casos(tipo="individual"):
         "INTEGRANTE DEL PARTIDO COMUNES",
         "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES",
     ]
-    _SUBPOBLACIONES = {
-        "REINCORPORADO/A": [
-            "Seleccione...", "Amnistiado/a", "Indultado/a",
-        ],
-        "FAMILIAR DE REINCORPORADO/A": [
-            "Seleccione...", "Madre", "Padre", "Hermano/a", "Hijo/a",
-            "Compañero/a permanente", "Otro familiar",
-        ],
-        "INTEGRANTE DEL PARTIDO COMUNES": [
-            "Seleccione...", "Militante del Partido Comunes", "Dirigente del Partido Comunes",
-        ],
-        "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES": [
-            "Seleccione...", "Madre", "Padre", "Hermano/a", "Hijo/a",
-            "Compañero/a permanente", "Otro familiar",
-        ],
-    }
+    _SUBPOBLACIONES = [
+        "Seleccione...",
+        "Amnistiado/a",
+        "Indultado/a",
+        "Militante del Partido Comunes",
+        "Dirigente del Partido Comunes",
+        "Madre",
+        "Padre",
+        "Hermano/a",
+        "Hijo/a",
+        "Compañero/a permanente",
+        "Otro familiar",
+    ]
 
     col_tpob, col_subpob = st.columns(2)
     with col_tpob:
         tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
                                       key=f"caso_tipo_poblacion_{tipo}")
     with col_subpob:
-        opciones_subpob = _SUBPOBLACIONES.get(tipo_poblacion, ["Seleccione..."])
-        subpoblacion = st.selectbox("Subpoblación *", opciones_subpob,
+        subpoblacion = st.selectbox("Subpoblación *", _SUBPOBLACIONES,
                                     key=f"caso_subpoblacion_{tipo}")
 
     # Controla si se muestra la sección Perfil Antiguo
