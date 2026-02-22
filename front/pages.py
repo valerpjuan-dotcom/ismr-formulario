@@ -782,6 +782,7 @@ def formulario_casos(tipo="individual"):
                 "perfiles":                      st.session_state.get("perfiles", []),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
+                st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
                 st.success("✅ Borrador guardado. Puedes retomarlo más tarde.")
             else:
                 st.error("❌ No se pudo guardar el borrador.")
