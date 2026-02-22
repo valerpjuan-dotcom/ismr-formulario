@@ -237,7 +237,6 @@ def formulario_casos(tipo="individual"):
         "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES",
     ]
     _SUBPOBLACIONES = [
-        "Seleccione...",
         "Amnistiado/a",
         "Indultado/a",
         "Militante del Partido Comunes",
@@ -255,8 +254,9 @@ def formulario_casos(tipo="individual"):
         tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
                                       key=f"caso_tipo_poblacion_{tipo}")
     with col_subpob:
-        subpoblacion = st.selectbox("Subpoblación *", _SUBPOBLACIONES,
-                                    key=f"caso_subpoblacion_{tipo}")
+        subpoblacion = st.multiselect("Subpoblación *", _SUBPOBLACIONES,
+                                      key=f"caso_subpoblacion_{tipo}",
+                                      placeholder="Escoge al menos una opción")
 
     # Controla si se muestra la sección Perfil Antiguo
     _mostrar_perfil_antiguo = tipo_poblacion in ("REINCORPORADO/A", "FAMILIAR DE REINCORPORADO/A")
@@ -647,7 +647,7 @@ def formulario_casos(tipo="individual"):
             pass  # ambos opcionales en emergencia
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
         if tipo_poblacion == "Seleccione...":           errores.append("Debe seleccionar el tipo de población")
-        if subpoblacion == "Seleccione...":             errores.append("Debe seleccionar la subpoblación")
+        if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
         if edad is None or edad == 0:                   errores.append("La edad es obligatoria")
         if sexo == "Seleccione...":                     errores.append("Debe seleccionar un sexo")
         if departamento == "Seleccione...":             errores.append("Debe seleccionar un departamento")
@@ -670,7 +670,7 @@ def formulario_casos(tipo="individual"):
                     hoja_casos.append_row([
                         id_caso, timestamp, tipo_estudio, ot_te.strip(),
                         str(fecha_expedicion_ot) if fecha_expedicion_ot else "",
-                        tipo_poblacion, subpoblacion,
+                        tipo_poblacion, " | ".join(subpoblacion),
                         edad, sexo,
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
@@ -720,7 +720,7 @@ def formulario_casos(tipo="individual"):
                     - **OT-TE:** {ot_te}
                     - **Fecha Expedición OT:** {fecha_expedicion_ot}
                     - **Tipo de Población:** {tipo_poblacion}
-                    - **Subpoblación:** {subpoblacion}
+                    - **Subpoblación:** {" | ".join(subpoblacion)}
                     - **Ubicación:** {municipio}, {departamento}
                     - **Nivel de Riesgo:** {nivel_riesgo}
                     - **Hechos registrados:** {hechos_guardados}
