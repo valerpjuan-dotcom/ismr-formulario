@@ -9,7 +9,7 @@ _CABECERAS_CASOS = [
     "ID_Caso", "Timestamp",
     "Tipo de Estudio", "OT-TE", "Fecha Expedicion OT",
     "Tipo de Poblacion", "Subpoblacion",
-    "Fecha de Nacimiento", "Sexo",
+    "Fecha de Nacimiento", "Sexo", "Género", "Orientación Sexual", "Jefatura del Hogar",
     "Departamento", "Municipio", "Solicitante",
     "Nivel de Riesgo", "Observaciones", "Analista", "Usuario Analista"
 ]

@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
@@ -258,6 +258,21 @@ def formulario_casos(tipo="individual"):
     else:
         fecha_nacimiento = None
         sexo = ""
+        genero = None
+        orientacion_sexual = None
+        jefatura_hogar = None
+
+    # ── Fila: Género | Orientación Sexual | Jefatura del Hogar (solo individual)
+    if es_individual:
+        col_gen, col_ori, col_jef = st.columns(3)
+        with col_gen:
+            genero = st.radio("Género *", _GENEROS, index=None, key=f"caso_genero_{tipo}")
+        with col_ori:
+            orientacion_sexual = st.radio("Orientación Sexual *", _ORIENTACIONES_SEXUALES,
+                                          index=None, key=f"caso_orientacion_{tipo}")
+        with col_jef:
+            jefatura_hogar = st.radio("Jefatura del Hogar *", _JEFATURA_HOGAR,
+                                      index=None, key=f"caso_jefatura_{tipo}")
 
     # ── Fila: Departamento | Municipio ────────────────────────────────────────
     col_dep, col_mun = st.columns(2)
@@ -647,8 +662,11 @@ def formulario_casos(tipo="individual"):
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
         if tipo_poblacion == "Seleccione...":           errores.append("Debe seleccionar el tipo de población")
         if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
-        if es_individual and fecha_nacimiento is None:     errores.append("La fecha de nacimiento es obligatoria")
-        if es_individual and sexo == "Seleccione...":   errores.append("Debe seleccionar un sexo")
+        if es_individual and fecha_nacimiento is None:      errores.append("La fecha de nacimiento es obligatoria")
+        if es_individual and sexo == "Seleccione...":        errores.append("Debe seleccionar un sexo")
+        if es_individual and genero is None:                 errores.append("Debe seleccionar un género")
+        if es_individual and orientacion_sexual is None:     errores.append("Debe seleccionar una orientación sexual")
+        if es_individual and jefatura_hogar is None:         errores.append("Debe seleccionar jefatura del hogar")
         if departamento == "Seleccione...":             errores.append("Debe seleccionar un departamento")
         if municipio == "Seleccione...":                errores.append("Debe seleccionar un municipio")
         if solicitante == "Seleccione...":              errores.append("Debe seleccionar una entidad solicitante")
@@ -671,6 +689,7 @@ def formulario_casos(tipo="individual"):
                         str(fecha_expedicion_ot) if fecha_expedicion_ot else "",
                         tipo_poblacion, " | ".join(subpoblacion),
                         str(fecha_nacimiento) if fecha_nacimiento else "", sexo,
+                        genero or "", orientacion_sexual or "", jefatura_hogar or "",
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
                         st.session_state.nombre_completo, st.session_state.username

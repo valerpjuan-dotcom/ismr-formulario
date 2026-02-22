@@ -188,4 +188,24 @@ _SUBPOBLACIONES = [
     "Otro familiar",
 ]
 
+_GENEROS = [
+    "FEMENINO",
+    "MASCULINO",
+    "TRANSGÉNERO",
+    "NO REPORTA",
+]
+
+_ORIENTACIONES_SEXUALES = [
+    "HETEROSEXUAL",
+    "HOMOSEXUAL",
+    "BISEXUAL",
+    "NO REPORTA",
+]
+
+_JEFATURA_HOGAR = [
+    "SÍ",
+    "NO",
+    "NO REPORTA",
+]
+
 
