@@ -223,4 +223,27 @@ _SI_NO = [
     "NO",
 ]
 
+_DISCAPACIDAD = [
+    "Seleccione...",
+    "D. VISUAL",
+    "D. PSICOSOCIAL",
+    "D. SORDOCEGUERA",
+    "D. TALLA BAJA",
+    "D. INTELECTUAL",
+    "D. FÍSICA",
+    "D. MÚLTIPLE",
+    "NO REPORTA",
+]
+
+_ETNIA = [
+    "Seleccione...",
+    "INDÍGENA",
+    "ROM",
+    "GITANO",
+    "AFROCOLOMBIANO",
+    "RAIZAL",
+    "PALENQUERO",
+    "NO REPORTA",
+]
+
 

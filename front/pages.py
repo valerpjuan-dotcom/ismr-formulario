@@ -6,7 +6,7 @@ from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
@@ -157,6 +157,9 @@ def formulario_casos(tipo="individual"):
                         f"caso_num_personas_{tipo}", f"caso_companero_{tipo}",
                         f"caso_hijos_menores_{tipo}", f"caso_menores_otros_{tipo}",
                         f"caso_adultos_mayores_{tipo}", f"caso_discapacidad_{tipo}",
+                        f"caso_osiegd_{tipo}",
+                        f"caso_factor_discapacidad_{tipo}", f"caso_factor_etnia_{tipo}",
+                        f"caso_factor_campesino_{tipo}",
                     ]
                     for campo in _todos_campos:
                         if campo in borrador:
@@ -188,6 +191,9 @@ def formulario_casos(tipo="individual"):
                         f"caso_num_personas_{tipo}", f"caso_companero_{tipo}",
                         f"caso_hijos_menores_{tipo}", f"caso_menores_otros_{tipo}",
                         f"caso_adultos_mayores_{tipo}", f"caso_discapacidad_{tipo}",
+                        f"caso_osiegd_{tipo}",
+                        f"caso_factor_discapacidad_{tipo}", f"caso_factor_etnia_{tipo}",
+                        f"caso_factor_campesino_{tipo}",
                     ]:
                         st.session_state.pop(_campo, None)
                     st.session_state.hechos = []
@@ -372,6 +378,33 @@ def formulario_casos(tipo="individual"):
         num_menores_otros = None
         num_adultos_mayores = None
         num_discapacidad = None
+        osiegd = ""
+        factor_discapacidad = ""
+        factor_etnia = ""
+        factor_campesino = ""
+
+    # ── Factores Diferenciales (solo individual) ───────────────────────────────
+    if es_individual:
+        st.markdown("---")
+        st.subheader("🏷️ FACTORES DIFERENCIALES")
+
+        osiegd = st.text_input(
+            "F. Orientación Sexual, Identidad y Expresión de Género Diversa (OSIEGD)",
+            key=f"caso_osiegd_{tipo}"
+        )
+
+        col_fd, col_fe = st.columns(2)
+        with col_fd:
+            factor_discapacidad = st.selectbox("F. Discapacidad *", _DISCAPACIDAD,
+                                               key=f"caso_factor_discapacidad_{tipo}")
+        with col_fe:
+            factor_etnia = st.selectbox("F. Étnico *", _ETNIA,
+                                        key=f"caso_factor_etnia_{tipo}")
+
+        col_fc, _ = st.columns(2)
+        with col_fc:
+            factor_campesino = st.selectbox("F. Campesino *", _SI_NO_REPORTA,
+                                            key=f"caso_factor_campesino_{tipo}")
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -739,6 +772,11 @@ def formulario_casos(tipo="individual"):
                 f"caso_menores_otros_{tipo}":    st.session_state.get(f"caso_menores_otros_{tipo}", None),
                 f"caso_adultos_mayores_{tipo}":  st.session_state.get(f"caso_adultos_mayores_{tipo}", None),
                 f"caso_discapacidad_{tipo}":     st.session_state.get(f"caso_discapacidad_{tipo}", None),
+                # FACTORES DIFERENCIALES
+                f"caso_osiegd_{tipo}":              st.session_state.get(f"caso_osiegd_{tipo}", ""),
+                f"caso_factor_discapacidad_{tipo}": st.session_state.get(f"caso_factor_discapacidad_{tipo}", "Seleccione..."),
+                f"caso_factor_etnia_{tipo}":        st.session_state.get(f"caso_factor_etnia_{tipo}", "Seleccione..."),
+                f"caso_factor_campesino_{tipo}":    st.session_state.get(f"caso_factor_campesino_{tipo}", "Seleccione..."),
                 # Hechos y perfiles
                 "hechos":                        st.session_state.get("hechos", []),
                 "perfiles":                      st.session_state.get("perfiles", []),
@@ -781,6 +819,9 @@ def formulario_casos(tipo="individual"):
         if es_individual and num_menores_otros is None:  errores.append("El número de menores de edad distintos a hijos es obligatorio")
         if es_individual and num_adultos_mayores is None: errores.append("El número de adultos mayores es obligatorio")
         if es_individual and num_discapacidad is None:   errores.append("El número de personas en situación de discapacidad es obligatorio")
+        if es_individual and factor_discapacidad == "Seleccione...": errores.append("Debe seleccionar el factor de discapacidad")
+        if es_individual and factor_etnia == "Seleccione...":        errores.append("Debe seleccionar el factor étnico")
+        if es_individual and factor_campesino == "Seleccione...":    errores.append("Debe seleccionar el factor campesino")
 
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
@@ -812,6 +853,10 @@ def formulario_casos(tipo="individual"):
                         num_menores_otros if num_menores_otros is not None else "",
                         num_adultos_mayores if num_adultos_mayores is not None else "",
                         num_discapacidad if num_discapacidad is not None else "",
+                        osiegd.strip() if osiegd else "",
+                        factor_discapacidad if factor_discapacidad and factor_discapacidad != "Seleccione..." else "",
+                        factor_etnia if factor_etnia and factor_etnia != "Seleccione..." else "",
+                        factor_campesino if factor_campesino and factor_campesino != "Seleccione..." else "",
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0

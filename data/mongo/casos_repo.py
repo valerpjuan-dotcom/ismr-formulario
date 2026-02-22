@@ -15,6 +15,7 @@ _CABECERAS_CASOS = [
     "Nivel de Riesgo", "Observaciones",
     "Num Personas Nucleo Familiar", "Companero Permanente",
     "Num Hijos Menores Edad", "Num Menores Otros", "Num Adultos Mayores", "Num Discapacidad",
+    "OSIEGD", "Factor Discapacidad", "Factor Etnia", "Factor Campesino",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [
