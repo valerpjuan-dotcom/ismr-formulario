@@ -189,6 +189,7 @@ _SUBPOBLACIONES = [
 ]
 
 _GENEROS = [
+    "Seleccione...",
     "FEMENINO",
     "MASCULINO",
     "TRANSGÉNERO",
@@ -196,6 +197,7 @@ _GENEROS = [
 ]
 
 _ORIENTACIONES_SEXUALES = [
+    "Seleccione...",
     "HETEROSEXUAL",
     "HOMOSEXUAL",
     "BISEXUAL",
@@ -203,6 +205,7 @@ _ORIENTACIONES_SEXUALES = [
 ]
 
 _JEFATURA_HOGAR = [
+    "Seleccione...",
     "SÍ",
     "NO",
     "NO REPORTA",

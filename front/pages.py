@@ -266,13 +266,13 @@ def formulario_casos(tipo="individual"):
     if es_individual:
         col_gen, col_ori, col_jef = st.columns(3)
         with col_gen:
-            genero = st.radio("Género *", _GENEROS, index=None, key=f"caso_genero_{tipo}")
+            genero = st.selectbox("Género *", _GENEROS, key=f"caso_genero_{tipo}")
         with col_ori:
-            orientacion_sexual = st.radio("Orientación Sexual *", _ORIENTACIONES_SEXUALES,
-                                          index=None, key=f"caso_orientacion_{tipo}")
+            orientacion_sexual = st.selectbox("Orientación Sexual *", _ORIENTACIONES_SEXUALES,
+                                              key=f"caso_orientacion_{tipo}")
         with col_jef:
-            jefatura_hogar = st.radio("Jefatura del Hogar *", _JEFATURA_HOGAR,
-                                      index=None, key=f"caso_jefatura_{tipo}")
+            jefatura_hogar = st.selectbox("Jefatura del Hogar *", _JEFATURA_HOGAR,
+                                          key=f"caso_jefatura_{tipo}")
 
     # ── Fila: Departamento | Municipio ────────────────────────────────────────
     col_dep, col_mun = st.columns(2)
@@ -664,9 +664,9 @@ def formulario_casos(tipo="individual"):
         if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
         if es_individual and fecha_nacimiento is None:      errores.append("La fecha de nacimiento es obligatoria")
         if es_individual and sexo == "Seleccione...":        errores.append("Debe seleccionar un sexo")
-        if es_individual and genero is None:                 errores.append("Debe seleccionar un género")
-        if es_individual and orientacion_sexual is None:     errores.append("Debe seleccionar una orientación sexual")
-        if es_individual and jefatura_hogar is None:         errores.append("Debe seleccionar jefatura del hogar")
+        if es_individual and genero == "Seleccione...":             errores.append("Debe seleccionar un género")
+        if es_individual and orientacion_sexual == "Seleccione...": errores.append("Debe seleccionar una orientación sexual")
+        if es_individual and jefatura_hogar == "Seleccione...":     errores.append("Debe seleccionar jefatura del hogar")
         if departamento == "Seleccione...":             errores.append("Debe seleccionar un departamento")
         if municipio == "Seleccione...":                errores.append("Debe seleccionar un municipio")
         if solicitante == "Seleccione...":              errores.append("Debe seleccionar una entidad solicitante")
@@ -689,7 +689,9 @@ def formulario_casos(tipo="individual"):
                         str(fecha_expedicion_ot) if fecha_expedicion_ot else "",
                         tipo_poblacion, " | ".join(subpoblacion),
                         str(fecha_nacimiento) if fecha_nacimiento else "", sexo,
-                        genero or "", orientacion_sexual or "", jefatura_hogar or "",
+                        genero if genero and genero != "Seleccione..." else "",
+                        orientacion_sexual if orientacion_sexual and orientacion_sexual != "Seleccione..." else "",
+                        jefatura_hogar if jefatura_hogar and jefatura_hogar != "Seleccione..." else "",
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
                         st.session_state.nombre_completo, st.session_state.username
