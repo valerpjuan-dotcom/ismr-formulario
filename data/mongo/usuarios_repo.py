@@ -1,4 +1,6 @@
+import hashlib
 import streamlit as st
+import bcrypt
 from pymongo import MongoClient
 
 
@@ -46,7 +48,38 @@ def obtener_usuario(username):
         return None
 
 
+def hashear_password(password: str) -> str:
+    """
+    Genera un hash bcrypt de la contraseña.
+    Retorna el hash como string (bcrypt ya incluye la sal internamente).
+    """
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
+
+
+def verificar_password(password: str, hash_guardado: str) -> bool:
+    """
+    Verifica una contraseña contra su hash.
+    Soporta tanto bcrypt (nuevo) como SHA-256 (legado) para migración automática.
+    Retorna (es_valida, es_sha256_legado).
+    """
+    # Detectar si es bcrypt por el prefijo $2b$ o $2a$
+    if hash_guardado.startswith("$2b$") or hash_guardado.startswith("$2a$"):
+        try:
+            es_valida = bcrypt.checkpw(password.encode(), hash_guardado.encode())
+            return es_valida, False
+        except Exception:
+            return False, False
+    else:
+        # Hash SHA-256 legado — verificar y marcar para migración
+        sha_hash = hashlib.sha256(password.encode()).hexdigest()
+        return sha_hash == hash_guardado, True
+
+
 def actualizar_password(username, nuevo_hash, debe_cambiar=False):
+    """
+    Actualiza password_hash. Acepta tanto hash bcrypt (str con $2b$)
+    como hash SHA-256 legado para compatibilidad durante migración.
+    """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
         return False
@@ -64,10 +97,28 @@ def actualizar_password(username, nuevo_hash, debe_cambiar=False):
         return False
 
 
-def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe_cambiar=True, email=None):
+def _migrar_a_bcrypt(username: str, password: str) -> None:
     """
-    Inserta un nuevo usuario.
-    El email se infiere automáticamente del username si no se provee explícitamente.
+    Migra silenciosamente un hash SHA-256 a bcrypt al momento del login.
+    El usuario no nota ningún cambio en su experiencia.
+    """
+    try:
+        nuevo_hash = hashear_password(password)
+        coleccion = _conectar_coleccion_usuarios()
+        if coleccion:
+            coleccion.update_one(
+                {"username": username},
+                {"$set": {"password_hash": nuevo_hash}}
+            )
+    except Exception:
+        pass  # Si falla la migración, no interrumpir el login
+
+
+def crear_usuario(username, password_plano, nombre_completo, es_admin=False, debe_cambiar=True, email=None):
+    """
+    Inserta un nuevo usuario hasheando la contraseña con bcrypt.
+    Acepta la contraseña en texto plano (no el hash) para aplicar bcrypt internamente.
+    El email se infiere automáticamente del username si no se provee.
     """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
@@ -75,11 +126,12 @@ def crear_usuario(username, password_hash, nombre_completo, es_admin=False, debe
     try:
         if obtener_usuario(username):
             return False
-        # Email institucional inferido del username si no se provee
         email_final = email or f"{username.strip().lower()}@unp.gov.co"
+        # Hashear con bcrypt
+        hash_bcrypt = hashear_password(password_plano)
         coleccion.insert_one({
             "username": username,
-            "password_hash": password_hash,
+            "password_hash": hash_bcrypt,
             "nombre_completo": nombre_completo,
             "es_admin": "TRUE" if es_admin else "FALSE",
             "debe_cambiar_password": "TRUE" if debe_cambiar else "FALSE",
@@ -117,7 +169,6 @@ def _normalizar_usuario(doc):
             doc[campo] = "TRUE" if valor.strip().upper() == "TRUE" else "FALSE"
         else:
             doc[campo] = "FALSE"
-    # Asegurar que email siempre esté presente (retrocompatibilidad con docs viejos)
     if "email" not in doc or not doc["email"]:
         doc["email"] = f"{doc.get('username','').strip().lower()}@unp.gov.co"
     return doc
