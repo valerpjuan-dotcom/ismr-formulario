@@ -251,8 +251,6 @@ def formulario_casos(tipo="individual"):
         col_fnac, col_sexo = st.columns(2)
         with col_fnac:
             fecha_nacimiento = st.date_input("Fecha de Nacimiento *", value=None,
-                                             min_value=date(1900, 1, 1),
-                                             max_value=date.today(),
                                              key=f"caso_fecha_nacimiento_{tipo}")
         with col_sexo:
             sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Intersexual"],
@@ -717,7 +715,10 @@ def formulario_casos(tipo="individual"):
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
         if tipo_poblacion == "Seleccione...":           errores.append("Debe seleccionar el tipo de población")
         if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
-        if es_individual and fecha_nacimiento is None:      errores.append("La fecha de nacimiento es obligatoria")
+        if es_individual and fecha_nacimiento is None:       errores.append("La fecha de nacimiento es obligatoria")
+        if es_individual and fecha_nacimiento is not None:
+            if fecha_nacimiento.year < 1900:                errores.append("La fecha de nacimiento no puede ser anterior a 1900")
+            if fecha_nacimiento > date.today():             errores.append("La fecha de nacimiento no puede ser futura")
         if es_individual and sexo == "Seleccione...":        errores.append("Debe seleccionar un sexo")
         if es_individual and genero == "Seleccione...":             errores.append("Debe seleccionar un género")
         if es_individual and orientacion_sexual == "Seleccione...": errores.append("Debe seleccionar una orientación sexual")
