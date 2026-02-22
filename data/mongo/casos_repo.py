@@ -44,6 +44,18 @@ def _conectar_db():
 
 # ── Borradores ────────────────────────────────────────────────────────────────
 
+def _serializar(obj):
+    """Convierte tipos no serializables por BSON (datetime.date, datetime.datetime) a string ISO."""
+    import datetime
+    if isinstance(obj, (datetime.date, datetime.datetime)):
+        return obj.isoformat()
+    if isinstance(obj, dict):
+        return {k: _serializar(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_serializar(i) for i in obj]
+    return obj
+
+
 def guardar_borrador(username: str, tipo: str, datos: dict) -> bool:
     """
     Upsert de un borrador asociado a username + tipo de formulario.
@@ -55,10 +67,11 @@ def guardar_borrador(username: str, tipo: str, datos: dict) -> bool:
     try:
         from datetime import datetime
         from zoneinfo import ZoneInfo
-        datos["_guardado_en"] = datetime.now(tz=ZoneInfo("America/Bogota")).strftime("%Y-%m-%d %H:%M:%S")
+        datos_serializados = _serializar(datos)
+        datos_serializados["_guardado_en"] = datetime.now(tz=ZoneInfo("America/Bogota")).strftime("%Y-%m-%d %H:%M:%S")
         db["borradores"].update_one(
             {"_username": username, "_tipo": tipo},
-            {"$set": {**datos, "_username": username, "_tipo": tipo}},
+            {"$set": {**datos_serializados, "_username": username, "_tipo": tipo}},
             upsert=True,
         )
         return True
