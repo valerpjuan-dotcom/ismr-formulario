@@ -43,6 +43,15 @@ def inyectar_css_selector():
             padding-top: 15px !important;
             padding-bottom: 15px !important;
         }
+        /* Labels de widgets (selectbox, number_input, text_area, date, multiselect, etc.) */
+        div[data-testid="stWidgetLabel"] p,
+        div[data-testid="stWidgetLabel"] label,
+        .stTextInput label, .stSelectbox label,
+        .stNumberInput label, .stTextArea label,
+        .stDateInput label, .stMultiSelect label,
+        .stRadio label, .stCheckbox label {
+            color: #D4D4D4 !important;
+        }
     </style>
     """, unsafe_allow_html=True)
     st.markdown("""
