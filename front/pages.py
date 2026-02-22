@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
@@ -229,26 +229,6 @@ def formulario_casos(tipo="individual"):
                                             key=f"caso_fecha_expedicion_{tipo}")
 
     # ── Fila: Tipo de Población | Subpoblación ────────────────────────────────
-    _TIPOS_POBLACION = [
-        "Seleccione...",
-        "REINCORPORADO/A",
-        "FAMILIAR DE REINCORPORADO/A",
-        "INTEGRANTE DEL PARTIDO COMUNES",
-        "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES",
-    ]
-    _SUBPOBLACIONES = [
-        "Amnistiado/a",
-        "Indultado/a",
-        "Militante del Partido Comunes",
-        "Dirigente del Partido Comunes",
-        "Madre",
-        "Padre",
-        "Hermano/a",
-        "Hijo/a",
-        "Compañero/a permanente",
-        "Otro familiar",
-    ]
-
     col_tpob, col_subpob = st.columns(2)
     with col_tpob:
         tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
@@ -261,13 +241,17 @@ def formulario_casos(tipo="individual"):
     # Controla si se muestra la sección Perfil Antiguo
     _mostrar_perfil_antiguo = tipo_poblacion in ("REINCORPORADO/A", "FAMILIAR DE REINCORPORADO/A")
 
-    # ── Fila: Edad | Sexo ─────────────────────────────────────────────────────
-    col_edad, col_sexo = st.columns(2)
-    with col_edad:
-        edad = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
-    with col_sexo:
-        sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"],
-                            key=f"caso_sexo_{tipo}")
+    # ── Fila: Edad | Sexo (solo individual) ──────────────────────────────────
+    if es_individual:
+        col_edad, col_sexo = st.columns(2)
+        with col_edad:
+            edad = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
+        with col_sexo:
+            sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"],
+                                key=f"caso_sexo_{tipo}")
+    else:
+        edad = None
+        sexo = ""
 
     # ── Fila: Departamento | Municipio ────────────────────────────────────────
     col_dep, col_mun = st.columns(2)
@@ -648,8 +632,8 @@ def formulario_casos(tipo="individual"):
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
         if tipo_poblacion == "Seleccione...":           errores.append("Debe seleccionar el tipo de población")
         if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
-        if edad is None or edad == 0:                   errores.append("La edad es obligatoria")
-        if sexo == "Seleccione...":                     errores.append("Debe seleccionar un sexo")
+        if es_individual and (edad is None or edad == 0): errores.append("La edad es obligatoria")
+        if es_individual and sexo == "Seleccione...":   errores.append("Debe seleccionar un sexo")
         if departamento == "Seleccione...":             errores.append("Debe seleccionar un departamento")
         if municipio == "Seleccione...":                errores.append("Debe seleccionar un municipio")
         if solicitante == "Seleccione...":              errores.append("Debe seleccionar una entidad solicitante")
