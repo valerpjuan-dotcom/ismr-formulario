@@ -142,6 +142,7 @@ def formulario_casos(tipo="individual"):
             col_ret, col_des = st.columns(2)
             with col_ret:
                 if st.button("↩️ Retomar borrador", use_container_width=True, type="primary", key=f"btn_retomar_{tipo}"):
+                    _campos_fecha = {f"caso_fecha_nacimiento_{tipo}"}
                     for campo in [
                         f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
                         f"caso_fecha_nacimiento_{tipo}", f"caso_sexo_{tipo}",
@@ -150,7 +151,13 @@ def formulario_casos(tipo="individual"):
                         f"caso_observaciones_{tipo}",
                     ]:
                         if campo in borrador:
-                            st.session_state[campo] = borrador[campo]
+                            valor = borrador[campo]
+                            if campo in _campos_fecha and isinstance(valor, str) and valor:
+                                try:
+                                    valor = date.fromisoformat(valor)
+                                except ValueError:
+                                    valor = None
+                            st.session_state[campo] = valor
                     st.session_state.hechos   = borrador.get("hechos", [])
                     st.session_state.perfiles = borrador.get("perfiles", [])
                     st.session_state[_borrador_key] = True
