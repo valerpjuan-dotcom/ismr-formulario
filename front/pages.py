@@ -232,12 +232,12 @@ def formulario_casos(tipo="individual"):
     tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
                                   key=f"caso_tipo_poblacion_{tipo}")
 
-    # ── Subpoblación: checkboxes en cuadrícula de 3 columnas ─────────────────
+    # ── Subpoblación: checkboxes en cuadrícula de 2 columnas ─────────────────
     st.markdown("**Subpoblación \\***")
-    cols_chk = st.columns(3)
+    cols_chk = st.columns(2)
     subpoblacion = [
         opcion for i, opcion in enumerate(_SUBPOBLACIONES)
-        if cols_chk[i % 3].checkbox(opcion, key=f"subpob_{i}_{tipo}")
+        if cols_chk[i % 2].checkbox(opcion, key=f"subpob_{i}_{tipo}")
     ]
 
     # Controla si se muestra la sección Perfil Antiguo
