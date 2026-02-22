@@ -6,7 +6,10 @@ from data.mongo.usuarios_repo import _get_client
 
 # Cabeceras canónicas por colección — espejo de lo que crea Google Sheets
 _CABECERAS_CASOS = [
-    "ID_Caso", "Timestamp", "OT-TE", "Edad", "Sexo",
+    "ID_Caso", "Timestamp",
+    "Tipo de Estudio", "OT-TE", "Fecha Expedicion OT",
+    "Tipo de Poblacion", "Subpoblacion",
+    "Edad", "Sexo",
     "Departamento", "Municipio", "Solicitante",
     "Nivel de Riesgo", "Observaciones", "Analista", "Usuario Analista"
 ]
