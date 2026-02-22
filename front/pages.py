@@ -228,17 +228,17 @@ def formulario_casos(tipo="individual"):
         fecha_expedicion_ot = st.date_input("Fecha de Expedición OT *", value=None,
                                             key=f"caso_fecha_expedicion_{tipo}")
 
-    # ── Fila: Tipo de Población | Subpoblación ────────────────────────────────
-    col_tpob, col_subpob = st.columns(2)
-    with col_tpob:
-        tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
-                                      key=f"caso_tipo_poblacion_{tipo}")
-    with col_subpob:
-        st.markdown("**Subpoblación \\***")
-        subpoblacion = [
-            opcion for i, opcion in enumerate(_SUBPOBLACIONES)
-            if st.checkbox(opcion, key=f"subpob_{i}_{tipo}")
-        ]
+    # ── Tipo de Población (fila propia) ──────────────────────────────────────
+    tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
+                                  key=f"caso_tipo_poblacion_{tipo}")
+
+    # ── Subpoblación: checkboxes en cuadrícula de 3 columnas ─────────────────
+    st.markdown("**Subpoblación \\***")
+    cols_chk = st.columns(3)
+    subpoblacion = [
+        opcion for i, opcion in enumerate(_SUBPOBLACIONES)
+        if cols_chk[i % 3].checkbox(opcion, key=f"subpob_{i}_{tipo}")
+    ]
 
     # Controla si se muestra la sección Perfil Antiguo
     _mostrar_perfil_antiguo = tipo_poblacion in ("REINCORPORADO/A", "FAMILIAR DE REINCORPORADO/A")
