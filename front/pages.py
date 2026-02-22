@@ -2,7 +2,7 @@ import streamlit as st
 import hashlib
 import time
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
@@ -251,6 +251,8 @@ def formulario_casos(tipo="individual"):
         col_fnac, col_sexo = st.columns(2)
         with col_fnac:
             fecha_nacimiento = st.date_input("Fecha de Nacimiento *", value=None,
+                                             min_value=date(1900, 1, 1),
+                                             max_value=date.today(),
                                              key=f"caso_fecha_nacimiento_{tipo}")
         with col_sexo:
             sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Intersexual"],
