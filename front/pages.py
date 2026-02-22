@@ -9,7 +9,7 @@ _BOGOTA = ZoneInfo("America/Bogota")
 from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS
 
 from configuration.settings import TAB_NOMBRES
-from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe
+from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
 from data.mongo.casos_repo import conectar_sheet_casos, guardar_borrador, cargar_borrador, eliminar_borrador
 from service.auth_service import verificar_credenciales, logout, obtener_siguiente_id
 from front.styles import inyectar_css_selector
@@ -66,7 +66,7 @@ def pantalla_cambiar_password():
             if errores:
                 for e in errores: st.error(f"❌ {e}")
             else:
-                nuevo_hash = hashlib.sha256(nueva.encode()).hexdigest()
+                nuevo_hash = hashear_password(nueva)
                 if actualizar_password(st.session_state.username, nuevo_hash, False):
                     st.session_state.debe_cambiar_password = False
                     st.success("✅ ¡Contraseña actualizada!")
@@ -832,8 +832,7 @@ def panel_gestion_usuarios():
             st.info("💡 El usuario deberá cambiar la contraseña en su primer acceso")
             if st.form_submit_button("✅ Crear Usuario", use_container_width=True, type="primary"):
                 if nuevo_username and nuevo_nombre and password_default:
-                    phash = hashlib.sha256(password_default.encode()).hexdigest()
-                    if crear_usuario(nuevo_username, phash, nuevo_nombre, es_admin_nuevo, True):
+                    if crear_usuario(nuevo_username, password_default, nuevo_nombre, es_admin_nuevo, True):
                         st.success(f"✅ Usuario '{nuevo_username}' creado!")
                         st.info(f"Usuario: **{nuevo_username}** | Contraseña temporal: **{password_default}**")
                     else: st.error("❌ El usuario ya existe o hubo un problema al crearlo")
@@ -966,7 +965,7 @@ def pantalla_recovery_nueva_password():
             if errores:
                 for e in errores: st.error(f"❌ {e}")
             else:
-                nuevo_hash = hashlib.sha256(nueva.encode()).hexdigest()
+                nuevo_hash = hashear_password(nueva)
                 if actualizar_password(username, nuevo_hash, False):
                     limpiar_codigo(username)
                     st.session_state.vista_recovery        = None
