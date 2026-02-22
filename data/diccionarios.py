@@ -167,3 +167,25 @@ _MUNICIPIOS = {
     'VAUPÉS': ['Seleccione...', 'CARURÚ', 'MITÚ', 'PACOA', 'PAPUNAHUA', 'TARAIRA', 'YAVARATÉ'],
     'VICHADA': ['Seleccione...', 'CUMARIBO', 'LA PRIMAVERA', 'PUERTO CARREÑO', 'SANTA ROSALÍA'],
 }
+
+_TIPOS_POBLACION = [
+    "Seleccione...",
+    "REINCORPORADO/A",
+    "FAMILIAR DE REINCORPORADO/A",
+    "INTEGRANTE DEL PARTIDO COMUNES",
+    "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES",
+]
+_SUBPOBLACIONES = [
+    "Amnistiado/a",
+    "Indultado/a",
+    "Militante del Partido Comunes",
+    "Dirigente del Partido Comunes",
+    "Madre",
+    "Padre",
+    "Hermano/a",
+    "Hijo/a",
+    "Compañero/a permanente",
+    "Otro familiar",
+]
+
+
