@@ -234,9 +234,11 @@ def formulario_casos(tipo="individual"):
         tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
                                       key=f"caso_tipo_poblacion_{tipo}")
     with col_subpob:
-        subpoblacion = st.multiselect("Subpoblación *", _SUBPOBLACIONES,
-                                      key=f"caso_subpoblacion_{tipo}",
-                                      placeholder="Escoge al menos una opción")
+        st.markdown("**Subpoblación \\***")
+        subpoblacion = [
+            opcion for i, opcion in enumerate(_SUBPOBLACIONES)
+            if st.checkbox(opcion, key=f"subpob_{i}_{tipo}")
+        ]
 
     # Controla si se muestra la sección Perfil Antiguo
     _mostrar_perfil_antiguo = tipo_poblacion in ("REINCORPORADO/A", "FAMILIAR DE REINCORPORADO/A")
