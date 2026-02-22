@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
@@ -284,6 +284,19 @@ def formulario_casos(tipo="individual"):
         municipio = st.selectbox("SELECCIONE EL MUNICIPIO *",
                                  _MUNICIPIOS.get(departamento, ["Seleccione..."]),
                                  key=f"p_municipio_{tipo}")
+
+    # ── Fila: Zona Rural | Zona de Reserva Campesina (solo individual) ─────────
+    if es_individual:
+        col_rural, col_reserva = st.columns(2)
+        with col_rural:
+            zona_rural = st.selectbox("¿Vive en zona rural? *", _SI_NO_REPORTA,
+                                      key=f"caso_zona_rural_{tipo}")
+        with col_reserva:
+            zona_reserva = st.selectbox("¿Vive en zona de reserva campesina? *", _SI_NO_REPORTA,
+                                        key=f"caso_zona_reserva_{tipo}")
+    else:
+        zona_rural = ""
+        zona_reserva = ""
 
     # ── Fila: Nivel de Riesgo ─────────────────────────────────────────────────
     nivel_riesgo = st.selectbox("Nivel de Riesgo *",
@@ -668,6 +681,8 @@ def formulario_casos(tipo="individual"):
         if es_individual and orientacion_sexual == "Seleccione...": errores.append("Debe seleccionar una orientación sexual")
         if es_individual and jefatura_hogar == "Seleccione...":     errores.append("Debe seleccionar jefatura del hogar")
         if departamento == "Seleccione...":             errores.append("Debe seleccionar un departamento")
+        if es_individual and zona_rural == "Seleccione...":    errores.append("Debe indicar si vive en zona rural")
+        if es_individual and zona_reserva == "Seleccione...":  errores.append("Debe indicar si vive en zona de reserva campesina")
         if municipio == "Seleccione...":                errores.append("Debe seleccionar un municipio")
         if solicitante == "Seleccione...":              errores.append("Debe seleccionar una entidad solicitante")
         if nivel_riesgo == "Seleccione...":             errores.append("Debe seleccionar un nivel de riesgo")
@@ -692,6 +707,8 @@ def formulario_casos(tipo="individual"):
                         genero if genero and genero != "Seleccione..." else "",
                         orientacion_sexual if orientacion_sexual and orientacion_sexual != "Seleccione..." else "",
                         jefatura_hogar if jefatura_hogar and jefatura_hogar != "Seleccione..." else "",
+                        zona_rural if zona_rural and zona_rural != "Seleccione..." else "",
+                        zona_reserva if zona_reserva and zona_reserva != "Seleccione..." else "",
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
                         st.session_state.nombre_completo, st.session_state.username

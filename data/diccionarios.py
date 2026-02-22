@@ -211,4 +211,10 @@ _JEFATURA_HOGAR = [
     "NO REPORTA",
 ]
 
+_SI_NO_REPORTA = [
+    "Seleccione...",
+    "SI",
+    "NO REPORTA",
+]
+
 

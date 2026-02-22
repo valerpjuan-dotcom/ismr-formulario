@@ -10,6 +10,7 @@ _CABECERAS_CASOS = [
     "Tipo de Estudio", "OT-TE", "Fecha Expedicion OT",
     "Tipo de Poblacion", "Subpoblacion",
     "Fecha de Nacimiento", "Sexo", "Género", "Orientación Sexual", "Jefatura del Hogar",
+    "Zona Rural", "Zona de Reserva Campesina",
     "Departamento", "Municipio", "Solicitante",
     "Nivel de Riesgo", "Observaciones", "Analista", "Usuario Analista"
 ]
