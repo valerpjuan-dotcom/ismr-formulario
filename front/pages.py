@@ -144,7 +144,7 @@ def formulario_casos(tipo="individual"):
                 if st.button("↩️ Retomar borrador", use_container_width=True, type="primary", key=f"btn_retomar_{tipo}"):
                     for campo in [
                         f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
-                        f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
+                        f"caso_fecha_nacimiento_{tipo}", f"caso_sexo_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
                         f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
                         f"caso_observaciones_{tipo}",
@@ -160,7 +160,7 @@ def formulario_casos(tipo="individual"):
                     eliminar_borrador(st.session_state.username, tipo)
                     for _campo in [
                         f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
-                        f"caso_edad_{tipo}", f"caso_sexo_{tipo}",
+                        f"caso_fecha_nacimiento_{tipo}", f"caso_sexo_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
                         f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
                         f"caso_observaciones_{tipo}",
@@ -244,16 +244,17 @@ def formulario_casos(tipo="individual"):
     st.markdown("---")
     st.subheader("👤 CARACTERÍSTICAS DEMOGRÁFICAS")
 
-    # ── Fila: Edad | Sexo (solo individual) ──────────────────────────────────
+    # ── Fila: Fecha de Nacimiento | Sexo (solo individual) ───────────────────
     if es_individual:
-        col_edad, col_sexo = st.columns(2)
-        with col_edad:
-            edad = st.number_input("Edad *", min_value=0, max_value=120, value=None, key=f"caso_edad_{tipo}")
+        col_fnac, col_sexo = st.columns(2)
+        with col_fnac:
+            fecha_nacimiento = st.date_input("Fecha de Nacimiento *", value=None,
+                                             key=f"caso_fecha_nacimiento_{tipo}")
         with col_sexo:
-            sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Otro", "No Reporta"],
+            sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Intersexual"],
                                 key=f"caso_sexo_{tipo}")
     else:
-        edad = None
+        fecha_nacimiento = None
         sexo = ""
 
     # ── Fila: Departamento | Municipio ────────────────────────────────────────
@@ -607,7 +608,7 @@ def formulario_casos(tipo="individual"):
             datos_borrador = {
                 f"caso_ot_anio_{tipo}":       st.session_state.get(f"caso_ot_anio_{tipo}", None),
                 f"caso_ot_numero_{tipo}":     st.session_state.get(f"caso_ot_numero_{tipo}", None),
-                f"caso_edad_{tipo}":          st.session_state.get(f"caso_edad_{tipo}", None),
+                f"caso_fecha_nacimiento_{tipo}": st.session_state.get(f"caso_fecha_nacimiento_{tipo}", None),
                 f"caso_sexo_{tipo}":          st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
                 f"p_departamento_{tipo}":     st.session_state.get(f"p_departamento_{tipo}", "Seleccione..."),
                 f"p_municipio_{tipo}":        st.session_state.get(f"p_municipio_{tipo}", "Seleccione..."),
@@ -635,7 +636,7 @@ def formulario_casos(tipo="individual"):
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
         if tipo_poblacion == "Seleccione...":           errores.append("Debe seleccionar el tipo de población")
         if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
-        if es_individual and (edad is None or edad == 0): errores.append("La edad es obligatoria")
+        if es_individual and fecha_nacimiento is None:     errores.append("La fecha de nacimiento es obligatoria")
         if es_individual and sexo == "Seleccione...":   errores.append("Debe seleccionar un sexo")
         if departamento == "Seleccione...":             errores.append("Debe seleccionar un departamento")
         if municipio == "Seleccione...":                errores.append("Debe seleccionar un municipio")
@@ -658,7 +659,7 @@ def formulario_casos(tipo="individual"):
                         id_caso, timestamp, tipo_estudio, ot_te.strip(),
                         str(fecha_expedicion_ot) if fecha_expedicion_ot else "",
                         tipo_poblacion, " | ".join(subpoblacion),
-                        edad, sexo,
+                        str(fecha_nacimiento) if fecha_nacimiento else "", sexo,
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
                         st.session_state.nombre_completo, st.session_state.username
