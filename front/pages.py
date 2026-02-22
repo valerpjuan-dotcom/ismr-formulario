@@ -430,9 +430,13 @@ def formulario_casos(tipo="individual"):
 
                     _rol_actual = [r.strip() for r in perfil.get("rol","").split("|")
                                    if r.strip() in _ROLES[1:]]
-                    ep_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:],
-                        default=_rol_actual, key=f"ep_rol_{tipo}_{i}",
-                        placeholder="Escoge al menos una opción")
+                    st.markdown("**ROL/ACTIVIDADES P_ANTIGUO \\***")
+                    cols_rol_ep = st.columns(2)
+                    ep_rol = [
+                        opcion for j, opcion in enumerate(_ROLES[1:])
+                        if cols_rol_ep[j % 2].checkbox(opcion, value=(opcion in _rol_actual),
+                                                        key=f"ep_rol_{j}_{tipo}_{i}")
+                    ]
 
                     ep_otro_rol = ""
                     if "Otro" in ep_rol:
@@ -550,7 +554,12 @@ def formulario_casos(tipo="individual"):
             _LUGAR_ACREDITACION,
                 key=f"p_lugar_{tipo}")
 
-            p_rol = st.multiselect("ROL/ACTIVIDADES P_ANTIGUO *", _ROLES[1:], key=f"p_rol_{tipo}", placeholder="Escoge al menos una opción")
+            st.markdown("**ROL/ACTIVIDADES P_ANTIGUO \\***")
+            cols_rol = st.columns(2)
+            p_rol = [
+                opcion for j, opcion in enumerate(_ROLES[1:])
+                if cols_rol[j % 2].checkbox(opcion, key=f"p_rol_{j}_{tipo}")
+            ]
 
             p_otro_rol = ""
             p_otro_rol_libre = ""
