@@ -12,7 +12,10 @@ _CABECERAS_CASOS = [
     "Fecha de Nacimiento", "Sexo", "Género", "Orientación Sexual", "Jefatura del Hogar",
     "Zona Rural", "Zona de Reserva Campesina",
     "Departamento", "Municipio", "Solicitante",
-    "Nivel de Riesgo", "Observaciones", "Analista", "Usuario Analista"
+    "Nivel de Riesgo", "Observaciones",
+    "Num Personas Nucleo Familiar", "Companero Permanente",
+    "Num Hijos Menores Edad", "Num Menores Otros", "Num Adultos Mayores", "Num Discapacidad",
+    "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [
     "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",

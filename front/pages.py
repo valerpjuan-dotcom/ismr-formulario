@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
@@ -306,6 +306,46 @@ def formulario_casos(tipo="individual"):
     # ── Observaciones (ancho completo) ────────────────────────────────────────
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
+    # ── Composición Núcleo Familiar (solo individual) ─────────────────────────
+    if es_individual:
+        st.markdown("---")
+        st.subheader("👨‍👩‍👧‍👦 COMPOSICIÓN NÚCLEO FAMILIAR")
+
+        col_np, col_cp = st.columns(2)
+        with col_np:
+            num_personas = st.number_input("Número de personas en el núcleo familiar *",
+                                           min_value=0, step=1, value=None,
+                                           key=f"caso_num_personas_{tipo}")
+        with col_cp:
+            companero = st.selectbox("¿Tiene compañero(a) permanente? *", _SI_NO,
+                                     key=f"caso_companero_{tipo}")
+
+        col_hm, col_md = st.columns(2)
+        with col_hm:
+            num_hijos_menores = st.number_input("Número de hijos menores de edad *",
+                                                min_value=0, step=1, value=None,
+                                                key=f"caso_hijos_menores_{tipo}")
+        with col_md:
+            num_menores_otros = st.number_input("Número de menores de edad distintos a hijos *",
+                                                min_value=0, step=1, value=None,
+                                                key=f"caso_menores_otros_{tipo}")
+
+        col_am, col_di = st.columns(2)
+        with col_am:
+            num_adultos_mayores = st.number_input("Número de adultos mayores (60 años en adelante) *",
+                                                  min_value=0, step=1, value=None,
+                                                  key=f"caso_adultos_mayores_{tipo}")
+        with col_di:
+            num_discapacidad = st.number_input("Número de personas en situación de discapacidad *",
+                                               min_value=0, step=1, value=None,
+                                               key=f"caso_discapacidad_{tipo}")
+    else:
+        num_personas = None
+        companero = ""
+        num_hijos_menores = None
+        num_menores_otros = None
+        num_adultos_mayores = None
+        num_discapacidad = None
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -686,6 +726,12 @@ def formulario_casos(tipo="individual"):
         if municipio == "Seleccione...":                errores.append("Debe seleccionar un municipio")
         if solicitante == "Seleccione...":              errores.append("Debe seleccionar una entidad solicitante")
         if nivel_riesgo == "Seleccione...":             errores.append("Debe seleccionar un nivel de riesgo")
+        if es_individual and num_personas is None:       errores.append("El número de personas en el núcleo familiar es obligatorio")
+        if es_individual and companero == "Seleccione...": errores.append("Debe indicar si tiene compañero(a) permanente")
+        if es_individual and num_hijos_menores is None:  errores.append("El número de hijos menores de edad es obligatorio")
+        if es_individual and num_menores_otros is None:  errores.append("El número de menores de edad distintos a hijos es obligatorio")
+        if es_individual and num_adultos_mayores is None: errores.append("El número de adultos mayores es obligatorio")
+        if es_individual and num_discapacidad is None:   errores.append("El número de personas en situación de discapacidad es obligatorio")
 
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
@@ -711,6 +757,12 @@ def formulario_casos(tipo="individual"):
                         zona_reserva if zona_reserva and zona_reserva != "Seleccione..." else "",
                         departamento.strip(), municipio.strip(), solicitante, nivel_riesgo,
                         observaciones.strip() if observaciones else "",
+                        num_personas if num_personas is not None else "",
+                        companero if companero and companero != "Seleccione..." else "",
+                        num_hijos_menores if num_hijos_menores is not None else "",
+                        num_menores_otros if num_menores_otros is not None else "",
+                        num_adultos_mayores if num_adultos_mayores is not None else "",
+                        num_discapacidad if num_discapacidad is not None else "",
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0

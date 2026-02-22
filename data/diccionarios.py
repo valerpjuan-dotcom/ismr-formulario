@@ -217,4 +217,10 @@ _SI_NO_REPORTA = [
     "NO REPORTA",
 ]
 
+_SI_NO = [
+    "Seleccione...",
+    "SI",
+    "NO",
+]
+
 
