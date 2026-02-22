@@ -142,14 +142,23 @@ def formulario_casos(tipo="individual"):
             col_ret, col_des = st.columns(2)
             with col_ret:
                 if st.button("↩️ Retomar borrador", use_container_width=True, type="primary", key=f"btn_retomar_{tipo}"):
-                    _campos_fecha = {f"caso_fecha_nacimiento_{tipo}"}
-                    for campo in [
+                    _campos_fecha = {f"caso_fecha_nacimiento_{tipo}", f"caso_fecha_expedicion_{tipo}"}
+                    _todos_campos = [
+                        f"caso_tipo_estudio_{tipo}",
                         f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
+                        f"caso_solicitante_{tipo}", f"caso_fecha_expedicion_{tipo}",
+                        f"caso_tipo_poblacion_{tipo}",
+                        *[f"subpob_{i}_{tipo}" for i in range(len(_SUBPOBLACIONES))],
                         f"caso_fecha_nacimiento_{tipo}", f"caso_sexo_{tipo}",
+                        f"caso_genero_{tipo}", f"caso_orientacion_{tipo}", f"caso_jefatura_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
-                        f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
-                        f"caso_observaciones_{tipo}",
-                    ]:
+                        f"caso_zona_rural_{tipo}", f"caso_zona_reserva_{tipo}",
+                        f"caso_nivel_riesgo_{tipo}", f"caso_observaciones_{tipo}",
+                        f"caso_num_personas_{tipo}", f"caso_companero_{tipo}",
+                        f"caso_hijos_menores_{tipo}", f"caso_menores_otros_{tipo}",
+                        f"caso_adultos_mayores_{tipo}", f"caso_discapacidad_{tipo}",
+                    ]
+                    for campo in _todos_campos:
                         if campo in borrador:
                             valor = borrador[campo]
                             if campo in _campos_fecha and isinstance(valor, str) and valor:
@@ -166,11 +175,19 @@ def formulario_casos(tipo="individual"):
                 if st.button("🗑️ Descartar borrador", use_container_width=True, type="secondary", key=f"btn_descartar_{tipo}"):
                     eliminar_borrador(st.session_state.username, tipo)
                     for _campo in [
+                        f"caso_tipo_estudio_{tipo}",
                         f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
+                        f"caso_solicitante_{tipo}", f"caso_fecha_expedicion_{tipo}",
+                        f"caso_tipo_poblacion_{tipo}",
+                        *[f"subpob_{i}_{tipo}" for i in range(len(_SUBPOBLACIONES))],
                         f"caso_fecha_nacimiento_{tipo}", f"caso_sexo_{tipo}",
+                        f"caso_genero_{tipo}", f"caso_orientacion_{tipo}", f"caso_jefatura_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
-                        f"caso_solicitante_{tipo}", f"caso_nivel_riesgo_{tipo}",
-                        f"caso_observaciones_{tipo}",
+                        f"caso_zona_rural_{tipo}", f"caso_zona_reserva_{tipo}",
+                        f"caso_nivel_riesgo_{tipo}", f"caso_observaciones_{tipo}",
+                        f"caso_num_personas_{tipo}", f"caso_companero_{tipo}",
+                        f"caso_hijos_menores_{tipo}", f"caso_menores_otros_{tipo}",
+                        f"caso_adultos_mayores_{tipo}", f"caso_discapacidad_{tipo}",
                     ]:
                         st.session_state.pop(_campo, None)
                     st.session_state.hechos = []
@@ -694,17 +711,37 @@ def formulario_casos(tipo="individual"):
     with col_borrador:
         if st.button("💾 Guardar borrador", use_container_width=True, type="secondary", key=f"btn_guardar_borrador_{tipo}"):
             datos_borrador = {
-                f"caso_ot_anio_{tipo}":       st.session_state.get(f"caso_ot_anio_{tipo}", None),
-                f"caso_ot_numero_{tipo}":     st.session_state.get(f"caso_ot_numero_{tipo}", None),
+                # DATOS DE OT/TE
+                f"caso_tipo_estudio_{tipo}":     st.session_state.get(f"caso_tipo_estudio_{tipo}", "Seleccione..."),
+                f"caso_ot_anio_{tipo}":          st.session_state.get(f"caso_ot_anio_{tipo}", None),
+                f"caso_ot_numero_{tipo}":        st.session_state.get(f"caso_ot_numero_{tipo}", None),
+                f"caso_solicitante_{tipo}":      st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
+                f"caso_fecha_expedicion_{tipo}": st.session_state.get(f"caso_fecha_expedicion_{tipo}", None),
+                f"caso_tipo_poblacion_{tipo}":   st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
+                **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
+                   for i in range(len(_SUBPOBLACIONES))},
+                # CARACTERÍSTICAS DEMOGRÁFICAS
                 f"caso_fecha_nacimiento_{tipo}": st.session_state.get(f"caso_fecha_nacimiento_{tipo}", None),
-                f"caso_sexo_{tipo}":          st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
-                f"p_departamento_{tipo}":     st.session_state.get(f"p_departamento_{tipo}", "Seleccione..."),
-                f"p_municipio_{tipo}":        st.session_state.get(f"p_municipio_{tipo}", "Seleccione..."),
-                f"caso_solicitante_{tipo}":   st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
-                f"caso_nivel_riesgo_{tipo}":  st.session_state.get(f"caso_nivel_riesgo_{tipo}", "Seleccione..."),
-                f"caso_observaciones_{tipo}": st.session_state.get(f"caso_observaciones_{tipo}", ""),
-                "hechos":                     st.session_state.get("hechos", []),
-                "perfiles":                   st.session_state.get("perfiles", []),
+                f"caso_sexo_{tipo}":             st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
+                f"caso_genero_{tipo}":           st.session_state.get(f"caso_genero_{tipo}", "Seleccione..."),
+                f"caso_orientacion_{tipo}":      st.session_state.get(f"caso_orientacion_{tipo}", "Seleccione..."),
+                f"caso_jefatura_{tipo}":         st.session_state.get(f"caso_jefatura_{tipo}", "Seleccione..."),
+                f"p_departamento_{tipo}":        st.session_state.get(f"p_departamento_{tipo}", "Seleccione..."),
+                f"p_municipio_{tipo}":           st.session_state.get(f"p_municipio_{tipo}", "Seleccione..."),
+                f"caso_zona_rural_{tipo}":       st.session_state.get(f"caso_zona_rural_{tipo}", "Seleccione..."),
+                f"caso_zona_reserva_{tipo}":     st.session_state.get(f"caso_zona_reserva_{tipo}", "Seleccione..."),
+                f"caso_nivel_riesgo_{tipo}":     st.session_state.get(f"caso_nivel_riesgo_{tipo}", "Seleccione..."),
+                f"caso_observaciones_{tipo}":    st.session_state.get(f"caso_observaciones_{tipo}", ""),
+                # COMPOSICIÓN NÚCLEO FAMILIAR
+                f"caso_num_personas_{tipo}":     st.session_state.get(f"caso_num_personas_{tipo}", None),
+                f"caso_companero_{tipo}":        st.session_state.get(f"caso_companero_{tipo}", "Seleccione..."),
+                f"caso_hijos_menores_{tipo}":    st.session_state.get(f"caso_hijos_menores_{tipo}", None),
+                f"caso_menores_otros_{tipo}":    st.session_state.get(f"caso_menores_otros_{tipo}", None),
+                f"caso_adultos_mayores_{tipo}":  st.session_state.get(f"caso_adultos_mayores_{tipo}", None),
+                f"caso_discapacidad_{tipo}":     st.session_state.get(f"caso_discapacidad_{tipo}", None),
+                # Hechos y perfiles
+                "hechos":                        st.session_state.get("hechos", []),
+                "perfiles":                      st.session_state.get("perfiles", []),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.success("✅ Borrador guardado. Puedes retomarlo más tarde.")
