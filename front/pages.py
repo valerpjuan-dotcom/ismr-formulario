@@ -195,7 +195,7 @@ def formulario_casos(tipo="individual"):
         """, unsafe_allow_html=True)
 
     st.markdown("---")
-    st.subheader("📝 Información del Caso")
+    st.subheader("📝 DATOS DE OT/TE")
 
     # ── Tipo de estudio (ancho completo) ─────────────────────────────────────
     tipo_estudio = st.selectbox(
@@ -240,6 +240,9 @@ def formulario_casos(tipo="individual"):
 
     # Controla si se muestra la sección Perfil Antiguo
     _mostrar_perfil_antiguo = tipo_poblacion in ("REINCORPORADO/A", "FAMILIAR DE REINCORPORADO/A")
+
+    st.markdown("---")
+    st.subheader("👤 CARACTERÍSTICAS DEMOGRÁFICAS")
 
     # ── Fila: Edad | Sexo (solo individual) ──────────────────────────────────
     if es_individual:
