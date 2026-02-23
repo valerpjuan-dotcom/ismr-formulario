@@ -6,7 +6,7 @@ from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA, _CUIDADOR, _VICTIMA_CONFLICTO_ARMADO
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA, _CUIDADOR, _VICTIMA_CONFLICTO_ARMADO, _LIDER_SOCIAL_DDHH
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
@@ -164,6 +164,7 @@ def formulario_casos(tipo="individual"):
                         f"caso_factor_discapacidad_{tipo}", f"caso_factor_etnia_{tipo}",
                         f"caso_factor_campesino_{tipo}", f"caso_factor_cuidador_{tipo}",
                         *[f"victima_{i}_{tipo}" for i in range(len(_VICTIMA_CONFLICTO_ARMADO))],
+                        *[f"lider_{i}_{tipo}" for i in range(len(_LIDER_SOCIAL_DDHH))],
                     ]
                     for campo in _todos_campos:
                         if campo in borrador:
@@ -199,6 +200,7 @@ def formulario_casos(tipo="individual"):
                         f"caso_factor_discapacidad_{tipo}", f"caso_factor_etnia_{tipo}",
                         f"caso_factor_campesino_{tipo}", f"caso_factor_cuidador_{tipo}",
                         *[f"victima_{i}_{tipo}" for i in range(len(_VICTIMA_CONFLICTO_ARMADO))],
+                        *[f"lider_{i}_{tipo}" for i in range(len(_LIDER_SOCIAL_DDHH))],
                     ]:
                         st.session_state.pop(_campo, None)
                     st.session_state.hechos = []
@@ -389,6 +391,7 @@ def formulario_casos(tipo="individual"):
         factor_campesino = ""
         factor_cuidador = ""
         victima_conflicto = []
+        lider_social = []
 
     # ── Factores Diferenciales (solo individual) ───────────────────────────────
     if es_individual:
@@ -421,6 +424,13 @@ def formulario_casos(tipo="individual"):
         victima_conflicto = [
             opcion for i, opcion in enumerate(_VICTIMA_CONFLICTO_ARMADO)
             if cols_vic[i % 2].checkbox(opcion, key=f"victima_{i}_{tipo}")
+        ]
+
+        st.markdown("**F. Líder Social y Defensor de DDHH \\***")
+        cols_lid = st.columns(2)
+        lider_social = [
+            opcion for i, opcion in enumerate(_LIDER_SOCIAL_DDHH)
+            if cols_lid[i % 2].checkbox(opcion, key=f"lider_{i}_{tipo}")
         ]
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
@@ -797,6 +807,8 @@ def formulario_casos(tipo="individual"):
                 f"caso_factor_cuidador_{tipo}":     st.session_state.get(f"caso_factor_cuidador_{tipo}", "Seleccione..."),
                 **{f"victima_{i}_{tipo}": st.session_state.get(f"victima_{i}_{tipo}", False)
                    for i in range(len(_VICTIMA_CONFLICTO_ARMADO))},
+                **{f"lider_{i}_{tipo}": st.session_state.get(f"lider_{i}_{tipo}", False)
+                   for i in range(len(_LIDER_SOCIAL_DDHH))},
                 # Hechos y perfiles
                 "hechos":                        st.session_state.get("hechos", []),
                 "perfiles":                      st.session_state.get("perfiles", []),
@@ -881,6 +893,7 @@ def formulario_casos(tipo="individual"):
                         factor_campesino if factor_campesino and factor_campesino != "Seleccione..." else "",
                         factor_cuidador if factor_cuidador and factor_cuidador != "Seleccione..." else "",
                         " | ".join(victima_conflicto),
+                        " | ".join(lider_social),
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0
