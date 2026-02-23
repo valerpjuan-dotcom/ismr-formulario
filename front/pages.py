@@ -6,7 +6,7 @@ from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
 _BOGOTA = ZoneInfo("America/Bogota")
-from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA
+from data.diccionarios import _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION, _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES, _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA, _CUIDADOR, _VICTIMA_CONFLICTO_ARMADO
 
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
@@ -162,7 +162,8 @@ def formulario_casos(tipo="individual"):
                         f"caso_adultos_mayores_{tipo}", f"caso_discapacidad_{tipo}",
                         f"caso_osiegd_{tipo}",
                         f"caso_factor_discapacidad_{tipo}", f"caso_factor_etnia_{tipo}",
-                        f"caso_factor_campesino_{tipo}",
+                        f"caso_factor_campesino_{tipo}", f"caso_factor_cuidador_{tipo}",
+                        *[f"victima_{i}_{tipo}" for i in range(len(_VICTIMA_CONFLICTO_ARMADO))],
                     ]
                     for campo in _todos_campos:
                         if campo in borrador:
@@ -196,7 +197,8 @@ def formulario_casos(tipo="individual"):
                         f"caso_adultos_mayores_{tipo}", f"caso_discapacidad_{tipo}",
                         f"caso_osiegd_{tipo}",
                         f"caso_factor_discapacidad_{tipo}", f"caso_factor_etnia_{tipo}",
-                        f"caso_factor_campesino_{tipo}",
+                        f"caso_factor_campesino_{tipo}", f"caso_factor_cuidador_{tipo}",
+                        *[f"victima_{i}_{tipo}" for i in range(len(_VICTIMA_CONFLICTO_ARMADO))],
                     ]:
                         st.session_state.pop(_campo, None)
                     st.session_state.hechos = []
@@ -385,6 +387,8 @@ def formulario_casos(tipo="individual"):
         factor_discapacidad = ""
         factor_etnia = ""
         factor_campesino = ""
+        factor_cuidador = ""
+        victima_conflicto = []
 
     # ── Factores Diferenciales (solo individual) ───────────────────────────────
     if es_individual:
@@ -404,10 +408,20 @@ def formulario_casos(tipo="individual"):
             factor_etnia = st.selectbox("F. Étnico *", _ETNIA,
                                         key=f"caso_factor_etnia_{tipo}")
 
-        col_fc, _ = st.columns(2)
+        col_fc, col_fcuid = st.columns(2)
         with col_fc:
             factor_campesino = st.selectbox("F. Campesino *", _SI_NO_REPORTA,
                                             key=f"caso_factor_campesino_{tipo}")
+        with col_fcuid:
+            factor_cuidador = st.selectbox("F. Cuidador *", _CUIDADOR,
+                                           key=f"caso_factor_cuidador_{tipo}")
+
+        st.markdown("**F. Víctima de Conflicto Armado \\***")
+        cols_vic = st.columns(2)
+        victima_conflicto = [
+            opcion for i, opcion in enumerate(_VICTIMA_CONFLICTO_ARMADO)
+            if cols_vic[i % 2].checkbox(opcion, key=f"victima_{i}_{tipo}")
+        ]
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -780,6 +794,9 @@ def formulario_casos(tipo="individual"):
                 f"caso_factor_discapacidad_{tipo}": st.session_state.get(f"caso_factor_discapacidad_{tipo}", "Seleccione..."),
                 f"caso_factor_etnia_{tipo}":        st.session_state.get(f"caso_factor_etnia_{tipo}", "Seleccione..."),
                 f"caso_factor_campesino_{tipo}":    st.session_state.get(f"caso_factor_campesino_{tipo}", "Seleccione..."),
+                f"caso_factor_cuidador_{tipo}":     st.session_state.get(f"caso_factor_cuidador_{tipo}", "Seleccione..."),
+                **{f"victima_{i}_{tipo}": st.session_state.get(f"victima_{i}_{tipo}", False)
+                   for i in range(len(_VICTIMA_CONFLICTO_ARMADO))},
                 # Hechos y perfiles
                 "hechos":                        st.session_state.get("hechos", []),
                 "perfiles":                      st.session_state.get("perfiles", []),
@@ -826,6 +843,7 @@ def formulario_casos(tipo="individual"):
         if es_individual and factor_discapacidad == "Seleccione...": errores.append("Debe seleccionar el factor de discapacidad")
         if es_individual and factor_etnia == "Seleccione...":        errores.append("Debe seleccionar el factor étnico")
         if es_individual and factor_campesino == "Seleccione...":    errores.append("Debe seleccionar el factor campesino")
+        if es_individual and factor_cuidador == "Seleccione...":     errores.append("Debe seleccionar el factor cuidador")
 
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
@@ -861,6 +879,8 @@ def formulario_casos(tipo="individual"):
                         factor_discapacidad if factor_discapacidad and factor_discapacidad != "Seleccione..." else "",
                         factor_etnia if factor_etnia and factor_etnia != "Seleccione..." else "",
                         factor_campesino if factor_campesino and factor_campesino != "Seleccione..." else "",
+                        factor_cuidador if factor_cuidador and factor_cuidador != "Seleccione..." else "",
+                        " | ".join(victima_conflicto),
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0
