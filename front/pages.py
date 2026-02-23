@@ -172,15 +172,9 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
 
     # ── JEP ─────────────────────────────────────────────────────────────────
     st.markdown("**Jurisdicción Especial para la Paz (JEP)**")
-    col5, col6 = st.columns(2)
-    with col5:
-        st.selectbox("¿Ha comparecido ante la JEP? *", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("comparecencia_jep")) if _v("comparecencia_jep") in _SI_NO_REPORTA else 0,
-                     key=f"pa_jep_comp_{sfx}")
-    with col6:
-        st.selectbox("¿Es víctima reconocida por la JEP?", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("victima_jep")) if _v("victima_jep") in _SI_NO_REPORTA else 0,
-                     key=f"pa_jep_vic_{sfx}")
+    st.selectbox("¿Es víctima reconocida por la JEP?", _SI_NO_REPORTA,
+                 index=_SI_NO_REPORTA.index(_v("victima_jep")) if _v("victima_jep") in _SI_NO_REPORTA else 0,
+                 key=f"pa_jep_vic_{sfx}")
 
     # Macrocaso en calidad de víctima — solo si respondió SI a víctima JEP
     _es_victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
