@@ -179,11 +179,12 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     # Macrocaso en calidad de víctima — solo si respondió SI a víctima JEP
     _es_victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     if _es_victima_jep:
-        _opts_mcv = ["Seleccione..."] + _PA_MACROCASOS_JEP
-        _mcv_cur  = _v("macrocaso_victima")
-        _mcv_idx  = _opts_mcv.index(_mcv_cur) if _mcv_cur in _opts_mcv else 0
-        st.selectbox("Macrocaso en calidad de víctima", _opts_mcv,
-                     index=_mcv_idx, key=f"pa_mcv_{sfx}")
+        _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
+        st.markdown("**Macrocaso en calidad de víctima** (selecciona los que apliquen)")
+        st.pills("Macrocasos víctima", _PA_MACROCASOS_JEP,
+                 selection_mode="multi",
+                 default=_mcv_prev,
+                 key=f"pa_mcv_{sfx}")
 
     # ── Compromisos del proceso de paz ───────────────────────────────────────
     st.markdown("**Compromisos del Proceso de Paz**")
@@ -331,9 +332,8 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     _es_victima = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     macrocaso_vic = ""
     if _es_victima:
-        macrocaso_vic = st.session_state.get(f"pa_mcv_{sfx}", "Seleccione...")
-        if macrocaso_vic == "Seleccione...":
-            macrocaso_vic = ""
+        _mcv_val = st.session_state.get(f"pa_mcv_{sfx}", [])
+        macrocaso_vic = " | ".join(_mcv_val) if isinstance(_mcv_val, list) else (_mcv_val or "")
 
     # Partido Comunes
     instancias_partido = ""
