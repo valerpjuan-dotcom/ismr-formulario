@@ -182,19 +182,21 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                      index=_SI_NO_REPORTA.index(_v("victima_jep")) if _v("victima_jep") in _SI_NO_REPORTA else 0,
                      key=f"pa_jep_vic_{sfx}")
 
-    # Macrocasos JEP (multi-select checkboxes)
-    _mc_prev = [m.strip() for m in _v("macrocasos_jep", "").split("|") if m.strip()] if pa else []
-    st.markdown("**Macrocasos JEP en que participa** (selecciona todos los que apliquen)")
-    cols_mc = st.columns(2)
-    for j, mc in enumerate(_PA_MACROCASOS_JEP):
-        cols_mc[j % 2].checkbox(mc, value=(mc in _mc_prev), key=f"pa_mc_{j}_{sfx}")
+    # Macrocaso JEP en que participa (uno solo — selectbox)
+    _opts_mc = ["Seleccione..."] + _PA_MACROCASOS_JEP
+    _mc_cur  = _v("macrocasos_jep")
+    _mc_idx  = _opts_mc.index(_mc_cur) if _mc_cur in _opts_mc else 0
+    st.selectbox("Macrocaso JEP en que participa", _opts_mc,
+                 index=_mc_idx, key=f"pa_mc_{sfx}")
 
-    # Macrocaso víctima JEP
-    _mc_vic_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
-    st.markdown("**Macrocaso en calidad de víctima** (si aplica)")
-    cols_mcv = st.columns(2)
-    for j, mc in enumerate(_PA_MACROCASOS_JEP):
-        cols_mcv[j % 2].checkbox(mc, value=(mc in _mc_vic_prev), key=f"pa_mcv_{j}_{sfx}")
+    # Macrocaso en calidad de víctima — solo si respondió SI a víctima JEP
+    _es_victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
+    if _es_victima_jep:
+        _opts_mcv = ["Seleccione..."] + _PA_MACROCASOS_JEP
+        _mcv_cur  = _v("macrocaso_victima")
+        _mcv_idx  = _opts_mcv.index(_mcv_cur) if _mcv_cur in _opts_mcv else 0
+        st.selectbox("Macrocaso en calidad de víctima", _opts_mcv,
+                     index=_mcv_idx, key=f"pa_mcv_{sfx}")
 
     # ── Compromisos del proceso de paz ───────────────────────────────────────
     st.markdown("**Compromisos del Proceso de Paz**")
@@ -304,12 +306,12 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                             min_value=1990, max_value=2099,
                             value=_anio_fin, step=1, key=f"pa_anio_fin_org_{sfx}")
 
-        # Ámbito (multi-select checkboxes)
-        _amb_prev = [a.strip() for a in _v("ambito_org", "").split("|") if a.strip()] if pa else []
-        st.markdown("**Ámbito / temática de la organización** (selecciona todos los que apliquen)")
-        cols_amb = st.columns(3)
-        for j, amb in enumerate(_PA_AMBITO_ORG):
-            cols_amb[j % 3].checkbox(amb, value=(amb in _amb_prev), key=f"pa_amb_{j}_{sfx}")
+        # Ámbito (un solo valor — selectbox)
+        _opts_amb = ["Seleccione..."] + _PA_AMBITO_ORG
+        _amb_cur  = _v("ambito_org")
+        _amb_idx  = _opts_amb.index(_amb_cur) if _amb_cur in _opts_amb else 0
+        st.selectbox("**Ámbito / temática de la organización**", _opts_amb,
+                     index=_amb_idx, key=f"pa_amb_{sfx}")
 
     # ── Cargo de elección popular ─────────────────────────────────────────────
     st.markdown("**Cargo de Elección Popular**")
@@ -336,15 +338,18 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
             st.error(f"• {e}")
         return None
 
-    # Macrocasos JEP
-    macrocasos = " | ".join([
-        mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
-        if st.session_state.get(f"pa_mc_{j}_{sfx}", False)
-    ])
-    macrocaso_vic = " | ".join([
-        mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
-        if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
-    ])
+    # Macrocaso JEP (selectbox único)
+    macrocasos = st.session_state.get(f"pa_mc_{sfx}", "Seleccione...")
+    if macrocasos == "Seleccione...":
+        macrocasos = ""
+
+    # Macrocaso víctima (condicional, selectbox único)
+    _es_victima = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
+    macrocaso_vic = ""
+    if _es_victima:
+        macrocaso_vic = st.session_state.get(f"pa_mcv_{sfx}", "Seleccione...")
+        if macrocaso_vic == "Seleccione...":
+            macrocaso_vic = ""
 
     # Partido Comunes
     instancias_partido = ""
@@ -384,10 +389,9 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         _anio_f     = st.session_state.get(f"pa_anio_fin_org_{sfx}")
         anio_ini    = str(int(_anio_i)) if _anio_i is not None else ""
         anio_fin    = str(int(_anio_f)) if _anio_f is not None else ""
-        ambito_org  = " | ".join([
-            amb for j, amb in enumerate(_PA_AMBITO_ORG)
-            if st.session_state.get(f"pa_amb_{j}_{sfx}", False)
-        ])
+        ambito_org  = st.session_state.get(f"pa_amb_{sfx}", "Seleccione...")
+        if ambito_org == "Seleccione...":
+            ambito_org = ""
 
     # ARN
     arn_estado    = st.session_state.get(f"pa_arn_estado_{sfx}", "Seleccione...") if es_reincorporado else ""
