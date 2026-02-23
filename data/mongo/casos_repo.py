@@ -39,6 +39,47 @@ _CABECERAS_PERFILES = [
     "Analista", "Usuario Analista"
 ]
 
+_CABECERAS_PERFILES_ACTUALES = [
+    "ID_PerfilActual", "ID_Caso", "OT-TE",
+    # Educación e ingresos
+    "Nivel Educativo",
+    "Fuente Principal Ingresos",
+    # Proyecto ARN
+    "Estado Proyecto ARN",
+    "Actividad Económica Proyecto",
+    # JEP
+    "Comparecencia JEP",
+    "Macrocasos JEP",
+    "Victima JEP",
+    "Macrocaso Victima JEP",
+    # Compromisos paz
+    "Participacion TOAR",
+    "Busqueda Personas Desaparecidas",
+    "Participacion PNIS",
+    "Participacion Desminado",
+    # Partido Comunes
+    "Participa Partido Comunes",
+    "Concejo Municipal Comunes",
+    "Instancias Partido",
+    "Roles Partido",
+    "Consejeria Nacional",
+    "Tipo Consejeria",
+    # Otras organizaciones
+    "Participa Otras Org",
+    "Tipo Organizacion",
+    "Nombre Organizacion",
+    "Ambito Organizacion",
+    "Escala Organizacion",
+    "Departamento Org",
+    "Municipio Org",
+    "Rol Organizacion",
+    "Anio Inicio Org",
+    "Anio Fin Org",
+    # Cargo de elección
+    "Cargo Eleccion Popular",
+    "Analista", "Usuario Analista"
+]
+
 
 def _conectar_db():
     """Retorna la base de datos MongoDB usando el cliente singleton."""
@@ -133,39 +174,44 @@ def conectar_sheet_casos(tipo="individual"):
         return None, None, None, None, None
 
     try:
-        tab_casos         = TAB_NOMBRES[tipo]["casos"]
-        tab_hechos        = TAB_NOMBRES[tipo]["hechos"]
-        tab_perfiles      = TAB_NOMBRES[tipo]["perfiles"]
-        tab_antecedentes  = TAB_NOMBRES[tipo]["antecedentes"]
+        tab_casos               = TAB_NOMBRES[tipo]["casos"]
+        tab_hechos              = TAB_NOMBRES[tipo]["hechos"]
+        tab_perfiles            = TAB_NOMBRES[tipo]["perfiles"]
+        tab_antecedentes        = TAB_NOMBRES[tipo]["antecedentes"]
+        tab_perfiles_actuales   = TAB_NOMBRES[tipo]["perfiles_actuales"]
 
-        nombre_col_casos         = f"casos_{tab_casos.lower()}"
-        nombre_col_hechos        = f"hechos_{tab_hechos.lower()}"
-        nombre_col_perfiles      = f"perfiles_{tab_perfiles.lower()}"
-        nombre_col_antecedentes  = f"antecedentes_{tab_antecedentes.lower()}"
+        nombre_col_casos              = f"casos_{tab_casos.lower()}"
+        nombre_col_hechos             = f"hechos_{tab_hechos.lower()}"
+        nombre_col_perfiles           = f"perfiles_{tab_perfiles.lower()}"
+        nombre_col_antecedentes       = f"antecedentes_{tab_antecedentes.lower()}"
+        nombre_col_perfiles_actuales  = f"perfilesactuales_{tab_perfiles_actuales.replace('PerfilesActuales_','').lower()}"
 
-        col_casos        = db[nombre_col_casos]
-        col_hechos       = db[nombre_col_hechos]
-        col_perfiles     = db[nombre_col_perfiles]
-        col_antecedentes = db[nombre_col_antecedentes]
+        col_casos               = db[nombre_col_casos]
+        col_hechos              = db[nombre_col_hechos]
+        col_perfiles            = db[nombre_col_perfiles]
+        col_antecedentes        = db[nombre_col_antecedentes]
+        col_perfiles_actuales   = db[nombre_col_perfiles_actuales]
 
         # Índices — idempotentes, no fallan si ya existen
         col_casos.create_index([("OT-TE", ASCENDING)], unique=True, background=True)
         col_hechos.create_index([("ID_Caso", ASCENDING)], background=True)
         col_perfiles.create_index([("ID_Caso", ASCENDING)], background=True)
         col_antecedentes.create_index([("ID_Caso", ASCENDING)], background=True)
+        col_perfiles_actuales.create_index([("ID_Caso", ASCENDING)], background=True)
 
-        proxy_casos        = WorksheetProxy(col_casos,        _CABECERAS_CASOS)
-        proxy_hechos       = WorksheetProxy(col_hechos,       _CABECERAS_HECHOS)
-        proxy_perfiles     = WorksheetProxy(col_perfiles,     _CABECERAS_PERFILES)
-        proxy_antecedentes = WorksheetProxy(col_antecedentes, _CABECERAS_ANTECEDENTES)
+        proxy_casos               = WorksheetProxy(col_casos,              _CABECERAS_CASOS)
+        proxy_hechos              = WorksheetProxy(col_hechos,             _CABECERAS_HECHOS)
+        proxy_perfiles            = WorksheetProxy(col_perfiles,           _CABECERAS_PERFILES)
+        proxy_antecedentes        = WorksheetProxy(col_antecedentes,       _CABECERAS_ANTECEDENTES)
+        proxy_perfiles_actuales   = WorksheetProxy(col_perfiles_actuales,  _CABECERAS_PERFILES_ACTUALES)
 
         uri = st.secrets["mongodb"]["uri"]
         db_url = uri.split("@")[-1] if "@" in uri else uri  # oculta credenciales
 
-        return proxy_casos, proxy_hechos, proxy_perfiles, proxy_antecedentes, db_url
+        return proxy_casos, proxy_hechos, proxy_perfiles, proxy_antecedentes, proxy_perfiles_actuales, db_url
     except Exception as e:
         st.error(f"Error al conectar colecciones MongoDB ({tipo}): {str(e)}")
-        return None, None, None, None, None
+        return None, None, None, None, None, None
 
 
 # ── Proxy de Worksheet ────────────────────────────────────────────────────────
