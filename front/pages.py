@@ -182,13 +182,6 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                      index=_SI_NO_REPORTA.index(_v("victima_jep")) if _v("victima_jep") in _SI_NO_REPORTA else 0,
                      key=f"pa_jep_vic_{sfx}")
 
-    # Macrocaso JEP en que participa (uno solo — selectbox)
-    _opts_mc = ["Seleccione..."] + _PA_MACROCASOS_JEP
-    _mc_cur  = _v("macrocasos_jep")
-    _mc_idx  = _opts_mc.index(_mc_cur) if _mc_cur in _opts_mc else 0
-    st.selectbox("Macrocaso JEP en que participa", _opts_mc,
-                 index=_mc_idx, key=f"pa_mc_{sfx}")
-
     # Macrocaso en calidad de víctima — solo si respondió SI a víctima JEP
     _es_victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     if _es_victima_jep:
@@ -274,27 +267,29 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                          key=f"pa_tipo_org_{sfx}")
             st.text_input("Nombre de la Organización",
                           value=_v("nombre_org", ""), key=f"pa_nombre_org_{sfx}")
+        with col_ot2:
             _opts_esc = _PA_ESCALA_ORG
             st.selectbox("Escala / Alcance", _opts_esc,
                          index=_opts_esc.index(_v("escala_org")) if _v("escala_org") in _opts_esc else 0,
                          key=f"pa_escala_org_{sfx}")
-        with col_ot2:
             st.text_input("Rol en la Organización",
                           value=_v("rol_org", ""), key=f"pa_rol_org_{sfx}")
-            col_dep_o, col_mun_o = st.columns(2)
-            with col_dep_o:
-                _dep_org_opts = ["Seleccione..."] + list(_MUNICIPIOS.keys())
-                _dep_org_cur  = _v("departamento_org")
-                st.selectbox("Departamento (Org)", _dep_org_opts,
-                             index=_dep_org_opts.index(_dep_org_cur) if _dep_org_cur in _dep_org_opts else 0,
-                             key=f"pa_dep_org_{sfx}")
-            with col_mun_o:
-                _dep_sel = st.session_state.get(f"pa_dep_org_{sfx}", "Seleccione...")
-                _mun_opts = _MUNICIPIOS.get(_dep_sel, ["Seleccione..."])
-                _mun_cur  = _v("municipio_org")
-                st.selectbox("Municipio (Org)", _mun_opts,
-                             index=_mun_opts.index(_mun_cur) if _mun_cur in _mun_opts else 0,
-                             key=f"pa_mun_org_{sfx}")
+
+        col_dep_o, col_mun_o = st.columns(2)
+        with col_dep_o:
+            _dep_org_opts = ["Seleccione..."] + list(_MUNICIPIOS.keys())
+            _dep_org_cur  = _v("departamento_org")
+            st.selectbox("Departamento", _dep_org_opts,
+                         index=_dep_org_opts.index(_dep_org_cur) if _dep_org_cur in _dep_org_opts else 0,
+                         key=f"pa_dep_org_{sfx}")
+        with col_mun_o:
+            _dep_sel  = st.session_state.get(f"pa_dep_org_{sfx}", "Seleccione...")
+            _mun_opts = _MUNICIPIOS.get(_dep_sel, ["Seleccione..."])
+            _mun_cur  = _v("municipio_org")
+            st.selectbox("Municipio", _mun_opts,
+                         index=_mun_opts.index(_mun_cur) if _mun_cur in _mun_opts else 0,
+                         key=f"pa_mun_org_{sfx}")
+
         col_ai, col_af = st.columns(2)
         with col_ai:
             _anio_ini = int(_v("anio_inicio_org", 0)) if str(_v("anio_inicio_org", "")).isdigit() else None
@@ -338,12 +333,7 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
             st.error(f"• {e}")
         return None
 
-    # Macrocaso JEP (selectbox único)
-    macrocasos = st.session_state.get(f"pa_mc_{sfx}", "Seleccione...")
-    if macrocasos == "Seleccione...":
-        macrocasos = ""
-
-    # Macrocaso víctima (condicional, selectbox único)
+    # Macrocaso JEP — solo se guarda el de víctima (condicional)
     _es_victima = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     macrocaso_vic = ""
     if _es_victima:
@@ -403,7 +393,7 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         "estado_proyecto_arn":    arn_estado    if arn_estado    != "Seleccione..." else "",
         "actividad_economica":    arn_actividad if arn_actividad != "Seleccione..." else "",
         "comparecencia_jep":      st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione..."),
-        "macrocasos_jep":         macrocasos,
+        "macrocasos_jep":         "",
         "victima_jep":            st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione..."),
         "macrocaso_victima":      macrocaso_vic,
         "participacion_toar":     st.session_state.get(f"pa_toar_{sfx}", "Seleccione..."),
