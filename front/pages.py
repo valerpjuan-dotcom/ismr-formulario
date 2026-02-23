@@ -1,6 +1,7 @@
 import streamlit as st
 import hashlib
 import time
+import calendar
 import pandas as pd
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
@@ -95,6 +96,7 @@ def pantalla_selector():
             st.session_state.vista = "individual"
             st.session_state.hechos = []
             st.session_state.perfiles = []
+            st.session_state.antecedentes = []
             st.session_state["borrador_cargado_individual"] = False
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -107,6 +109,7 @@ def pantalla_selector():
             st.session_state.vista = "colectivo"
             st.session_state.hechos = []
             st.session_state.perfiles = []
+            st.session_state.antecedentes = []
             st.session_state["borrador_cargado_colectivo"] = False
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -126,7 +129,7 @@ def formulario_casos(tipo="individual"):
     titulo            = "Formulario Individual" if es_individual else "Formulario Colectivo"
     nombre_hoja_casos = TAB_NOMBRES[tipo]["casos"]
 
-    hoja_casos, hoja_hechos, hoja_perfiles, sheet_url = conectar_sheet_casos(tipo)
+    hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes, sheet_url = conectar_sheet_casos(tipo)
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets"); return
 
@@ -175,8 +178,9 @@ def formulario_casos(tipo="individual"):
                                 except ValueError:
                                     valor = None
                             st.session_state[campo] = valor
-                    st.session_state.hechos   = borrador.get("hechos", [])
-                    st.session_state.perfiles = borrador.get("perfiles", [])
+                    st.session_state.hechos        = borrador.get("hechos", [])
+                    st.session_state.perfiles      = borrador.get("perfiles", [])
+                    st.session_state.antecedentes  = borrador.get("antecedentes", [])
                     st.session_state[_borrador_key] = True
                     st.rerun()
             with col_des:
@@ -205,6 +209,7 @@ def formulario_casos(tipo="individual"):
                         st.session_state.pop(_campo, None)
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
+                    st.session_state.antecedentes = []
                     st.session_state[_borrador_key] = True
                     st.rerun()
             st.stop()
@@ -215,6 +220,7 @@ def formulario_casos(tipo="individual"):
             st.session_state.vista = None
             st.session_state.hechos = []
             st.session_state.perfiles = []
+            st.session_state.antecedentes = []
             st.session_state[f"borrador_cargado_{tipo}"] = False
             st.rerun()
     with col_title:
@@ -432,6 +438,169 @@ def formulario_casos(tipo="individual"):
             opcion for i, opcion in enumerate(_LIDER_SOCIAL_DDHH)
             if cols_lid[i % 2].checkbox(opcion, key=f"lider_{i}_{tipo}")
         ]
+
+    # ── Antecedentes ──────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("📁 ANTECEDENTES")
+    st.caption("Opcional. Agrega uno o varios antecedentes asociados a este caso.")
+
+    if "antecedentes" not in st.session_state:
+        st.session_state.antecedentes = []
+
+    _edit_ant_key = f"editando_antecedente_{tipo}"
+    _REGISTRA_RES = ["Seleccione...", "SI", "NO", "SI MEDIDAS COLECTIVAS"]
+
+    for i, ant in enumerate(st.session_state.antecedentes):
+        with st.container(border=True):
+            if st.session_state.get(_edit_ant_key) == i:
+                # ── Modo edición ──────────────────────────────────────────────
+                st.markdown(f"**✏️ Editando Antecedente #{i+1}**")
+                _anio_val_e = int(ant.get("anio_resolucion")) if str(ant.get("anio_resolucion","")).isdigit() else None
+                _mes_val_e  = int(ant.get("mes_resolucion"))  if str(ant.get("mes_resolucion","")).isdigit()  else None
+                _dia_val_e  = int(ant.get("dia_resolucion"))  if str(ant.get("dia_resolucion","")).isdigit()  else None
+
+                _reg_ot_opts = ["Seleccione...", "SI", "NO"]
+                ea_reg_ot = st.selectbox(
+                    "¿REGISTRA OT ANTECEDENTES? *", _reg_ot_opts,
+                    index=_reg_ot_opts.index(ant.get("registra_ot","Seleccione..."))
+                          if ant.get("registra_ot","") in _reg_ot_opts else 0,
+                    key=f"ea_reg_ot_{tipo}_{i}"
+                )
+                ea_reg_res = st.selectbox(
+                    "¿REGISTRA RESOLUCIONES O MEDIDAS VIGENTES? *", _REGISTRA_RES,
+                    index=_REGISTRA_RES.index(ant.get("registra_resoluciones","Seleccione..."))
+                          if ant.get("registra_resoluciones","") in _REGISTRA_RES else 0,
+                    key=f"ea_reg_res_{tipo}_{i}"
+                )
+                col_a1, col_a2 = st.columns(2)
+                with col_a1:
+                    ea_anio = st.number_input(
+                        "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
+                        value=_anio_val_e, step=1, key=f"ea_anio_{tipo}_{i}"
+                    )
+                with col_a2:
+                    ea_mes = st.number_input(
+                        "MES RESOLUCIÓN MTSP", min_value=1, max_value=12,
+                        value=_mes_val_e, step=1, key=f"ea_mes_{tipo}_{i}"
+                    )
+                _e_max_dia = 31
+                _e_dia_key = f"ea_dia_{tipo}_{i}"
+                if ea_anio is not None and ea_mes is not None:
+                    try:
+                        _e_max_dia = calendar.monthrange(int(ea_anio), int(ea_mes))[1]
+                        _e_dia_cur = st.session_state.get(_e_dia_key)
+                        if _e_dia_cur is not None and _e_dia_cur > _e_max_dia:
+                            st.session_state[_e_dia_key] = _e_max_dia
+                    except Exception:
+                        _e_max_dia = 31
+                ea_dia = st.number_input(
+                    "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_e_max_dia,
+                    value=_dia_val_e, step=1, key=_e_dia_key
+                )
+                col_save_a, col_cancel_a = st.columns(2)
+                with col_save_a:
+                    if st.button("💾 Guardar cambios", key=f"ea_save_{tipo}_{i}",
+                                 type="primary", use_container_width=True):
+                        err_ea = []
+                        if ea_reg_ot  == "Seleccione...": err_ea.append("Debe indicar si registra OT antecedentes")
+                        if ea_reg_res == "Seleccione...": err_ea.append("Debe indicar si registra resoluciones o medidas vigentes")
+                        if err_ea:
+                            for e in err_ea: st.error(f"• {e}")
+                        else:
+                            st.session_state.antecedentes[i] = {
+                                "registra_ot":            ea_reg_ot,
+                                "registra_resoluciones":  ea_reg_res,
+                                "anio_resolucion":        str(int(ea_anio)) if ea_anio is not None else "",
+                                "mes_resolucion":         str(int(ea_mes))  if ea_mes  is not None else "",
+                                "dia_resolucion":         str(int(ea_dia))  if ea_dia  is not None else "",
+                            }
+                            st.session_state[_edit_ant_key] = None
+                            st.rerun()
+                with col_cancel_a:
+                    if st.button("✖ Cancelar", key=f"ea_cancel_{tipo}_{i}",
+                                 type="secondary", use_container_width=True):
+                        st.session_state[_edit_ant_key] = None
+                        st.rerun()
+            else:
+                # ── Modo lectura ──────────────────────────────────────────────
+                col_tit_a, col_edit_a, col_del_a = st.columns([4, 1, 1])
+                with col_tit_a:
+                    st.markdown(f"**Antecedente #{i+1}**")
+                with col_edit_a:
+                    if st.button("✏️", key=f"edit_a_{tipo}_{i}", help="Editar este antecedente"):
+                        st.session_state[_edit_ant_key] = i
+                        st.rerun()
+                with col_del_a:
+                    if st.button("🗑️", key=f"del_a_{tipo}_{i}", help="Eliminar este antecedente"):
+                        st.session_state.antecedentes.pop(i)
+                        st.session_state[_edit_ant_key] = None
+                        st.rerun()
+                ca1, ca2 = st.columns(2)
+                with ca1:
+                    st.write(f"📋 **¿Registra OT Antecedentes?:** {ant.get('registra_ot','')}")
+                    st.write(f"📋 **¿Registra Resoluciones?:** {ant.get('registra_resoluciones','')}")
+                with ca2:
+                    _fecha_ant = " / ".join(filter(None, [
+                        ant.get("dia_resolucion",""),
+                        ant.get("mes_resolucion",""),
+                        ant.get("anio_resolucion","")
+                    ]))
+                    if _fecha_ant:
+                        st.write(f"📅 **Fecha Resolución MTSP (D/M/A):** {_fecha_ant}")
+
+    with st.expander("➕ Agregar Antecedente", expanded=len(st.session_state.antecedentes) == 0):
+        ant_reg_ot = st.selectbox(
+            "¿REGISTRA OT ANTECEDENTES? *",
+            ["Seleccione...", "SI", "NO"],
+            key=f"ant_reg_ot_{tipo}"
+        )
+        ant_reg_res = st.selectbox(
+            "¿REGISTRA RESOLUCIONES O MEDIDAS VIGENTES? *",
+            _REGISTRA_RES,
+            key=f"ant_reg_res_{tipo}"
+        )
+        col_anio_ant, col_mes_ant = st.columns(2)
+        with col_anio_ant:
+            ant_anio = st.number_input(
+                "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
+                value=None, step=1, key=f"ant_anio_{tipo}"
+            )
+        with col_mes_ant:
+            ant_mes = st.number_input(
+                "MES RESOLUCIÓN MTSP", min_value=1, max_value=12,
+                value=None, step=1, key=f"ant_mes_{tipo}"
+            )
+        _max_dia_ant = 31
+        _dia_ant_key = f"ant_dia_{tipo}"
+        if ant_anio is not None and ant_mes is not None:
+            try:
+                _max_dia_ant = calendar.monthrange(int(ant_anio), int(ant_mes))[1]
+                _dia_cur_ant = st.session_state.get(_dia_ant_key)
+                if _dia_cur_ant is not None and _dia_cur_ant > _max_dia_ant:
+                    st.session_state[_dia_ant_key] = _max_dia_ant
+            except Exception:
+                _max_dia_ant = 31
+        ant_dia = st.number_input(
+            "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_max_dia_ant,
+            value=None, step=1, key=_dia_ant_key
+        )
+        st.markdown("")
+        if st.button("➕ Agregar este antecedente", use_container_width=True,
+                     key=f"btn_add_ant_{tipo}", type="secondary"):
+            err_ant = []
+            if ant_reg_ot  == "Seleccione...": err_ant.append("Debe indicar si registra OT antecedentes")
+            if ant_reg_res == "Seleccione...": err_ant.append("Debe indicar si registra resoluciones o medidas vigentes")
+            if err_ant:
+                for e in err_ant: st.error(f"• {e}")
+            else:
+                st.session_state.antecedentes.append({
+                    "registra_ot":           ant_reg_ot,
+                    "registra_resoluciones": ant_reg_res,
+                    "anio_resolucion":       str(int(ant_anio)) if ant_anio is not None else "",
+                    "mes_resolucion":        str(int(ant_mes))  if ant_mes  is not None else "",
+                    "dia_resolucion":        str(int(ant_dia))  if ant_dia  is not None else "",
+                })
+                st.success("✅ Antecedente agregado"); st.rerun()
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -809,9 +978,10 @@ def formulario_casos(tipo="individual"):
                    for i in range(len(_VICTIMA_CONFLICTO_ARMADO))},
                 **{f"lider_{i}_{tipo}": st.session_state.get(f"lider_{i}_{tipo}", False)
                    for i in range(len(_LIDER_SOCIAL_DDHH))},
-                # Hechos y perfiles
-                "hechos":                        st.session_state.get("hechos", []),
-                "perfiles":                      st.session_state.get("perfiles", []),
+                # Hechos, perfiles y antecedentes
+                "hechos":        st.session_state.get("hechos", []),
+                "perfiles":      st.session_state.get("perfiles", []),
+                "antecedentes":  st.session_state.get("antecedentes", []),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
@@ -925,13 +1095,28 @@ def formulario_casos(tipo="individual"):
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         perfiles_guardados += 1
+                    antecedentes_guardados = 0
+                    for ant in st.session_state.antecedentes:
+                        id_ant = obtener_siguiente_id(hoja_antecedentes)
+                        hoja_antecedentes.append_row([
+                            id_ant, id_caso, ot_te.strip(),
+                            ant.get("registra_ot", ""),
+                            ant.get("registra_resoluciones", ""),
+                            ant.get("dia_resolucion", ""),
+                            ant.get("mes_resolucion", ""),
+                            ant.get("anio_resolucion", ""),
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+                        antecedentes_guardados += 1
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
+                    st.session_state.antecedentes = []
                     eliminar_borrador(st.session_state.username, tipo)
                     st.session_state[f"borrador_cargado_{tipo}"] = False
                     st.success(f"✅ Caso **{ot_te}** registrado en {label_badge}!")
-                    if hechos_guardados   > 0: st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
-                    if perfiles_guardados > 0: st.info(f"🧑‍🤝‍🧑 {perfiles_guardados} perfil(es) registrados")
+                    if hechos_guardados        > 0: st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
+                    if perfiles_guardados      > 0: st.info(f"🧑‍🤝‍🧑 {perfiles_guardados} perfil(es) registrados")
+                    if antecedentes_guardados  > 0: st.info(f"📁 {antecedentes_guardados} antecedente(s) registrados")
                     st.balloons()
                     st.info(f"""
                     **Resumen:**
@@ -960,10 +1145,10 @@ def panel_visualizacion():
     tab_ind, tab_col = st.tabs(["👤 Individual", "👥 Colectivo"])
     for tab, tipo in [(tab_ind, "individual"), (tab_col, "colectivo")]:
         with tab:
-            hoja_casos, hoja_hechos, hoja_perfiles, sheet_url = conectar_sheet_casos(tipo)
+            hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes_v, sheet_url = conectar_sheet_casos(tipo)
             if hoja_casos is None: st.error(f"No se pudo conectar a la hoja {tipo}"); continue
 
-            sub1, sub2, sub3 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo"])
+            sub1, sub2, sub3, sub4 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo", "📁 Antecedentes"])
 
             try: datos   = hoja_casos.get_all_records()
             except: datos = []
@@ -971,10 +1156,13 @@ def panel_visualizacion():
             except: datos_h = []
             try: datos_p = hoja_perfiles.get_all_records()
             except: datos_p = []
+            try: datos_a = hoja_antecedentes_v.get_all_records()
+            except: datos_a = []
 
             df   = pd.DataFrame(datos)   if datos   else pd.DataFrame()
             df_h = pd.DataFrame(datos_h) if datos_h else pd.DataFrame()
             df_p = pd.DataFrame(datos_p) if datos_p else pd.DataFrame()
+            df_a = pd.DataFrame(datos_a) if datos_a else pd.DataFrame()
 
             with sub1:
                 if not df.empty:
@@ -1014,13 +1202,22 @@ def panel_visualizacion():
                     st.dataframe(df_p, use_container_width=True, hide_index=True)
                 else: st.info("📭 No hay perfiles registrados")
 
+            with sub4:
+                if not df_a.empty:
+                    c1,c2 = st.columns(2)
+                    c1.metric("Total Antecedentes",    len(df_a))
+                    c2.metric("Casos con antecedentes", df_a["ID_Caso"].nunique() if "ID_Caso" in df_a.columns else 0)
+                    st.dataframe(df_a, use_container_width=True, hide_index=True)
+                else: st.info("📭 No hay antecedentes registrados")
+
             st.markdown("---")
-            if not df.empty or not df_h.empty or not df_p.empty:
+            if not df.empty or not df_h.empty or not df_p.empty or not df_a.empty:
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-                    (df_f   if not df.empty   else df).to_excel(writer, sheet_name="Casos",           index=False)
+                    (df_f   if not df.empty   else df).to_excel(writer, sheet_name="Casos",            index=False)
                     (df_hf  if not df_h.empty else df_h).to_excel(writer, sheet_name="Hechos de Riesgo", index=False)
-                    df_p.to_excel(writer, sheet_name="Perfiles",         index=False)
+                    df_p.to_excel(writer, sheet_name="Perfiles",          index=False)
+                    df_a.to_excel(writer, sheet_name="Antecedentes",      index=False)
                 buffer.seek(0)
                 nombre_archivo = f"ISMR_{tipo}_{datetime.now(tz=_BOGOTA).strftime('%Y%m%d_%H%M')}.xlsx"
                 st.download_button(
