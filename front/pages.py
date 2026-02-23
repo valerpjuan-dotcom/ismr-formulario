@@ -181,10 +181,9 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     if _es_victima_jep:
         _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
         st.markdown("**Macrocaso en calidad de víctima** (selecciona los que apliquen)")
-        st.pills("Macrocasos víctima", _PA_MACROCASOS_JEP,
-                 selection_mode="multi",
-                 default=_mcv_prev,
-                 key=f"pa_mcv_{sfx}")
+        _cols_mcv = st.columns(2)
+        for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+            _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
 
     # ── Compromisos del proceso de paz ───────────────────────────────────────
     st.markdown("**Compromisos del Proceso de Paz**")
@@ -332,8 +331,10 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     _es_victima = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     macrocaso_vic = ""
     if _es_victima:
-        _mcv_val = st.session_state.get(f"pa_mcv_{sfx}", [])
-        macrocaso_vic = " | ".join(_mcv_val) if isinstance(_mcv_val, list) else (_mcv_val or "")
+        macrocaso_vic = " | ".join([
+            mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+            if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
+        ])
 
     # Partido Comunes
     instancias_partido = ""
