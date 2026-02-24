@@ -2049,9 +2049,39 @@ def panel_visualizacion():
                 )
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Panel_gestion_usuarios
+# ═══════════════════════════════════════════════════════════════════════════════
+
 def panel_gestion_usuarios():
-    st.title("👥 Gestión de Usuarios"); st.markdown("---")
-    tab1, tab2, tab3 = st.tabs(["➕ Crear Usuario", "📋 Ver Usuarios", "🔑 Ver Hashes"])
+    import unicodedata, io
+    from data.mongo.usuarios_repo import crear_usuarios_masivo, hashear_password
+
+    def _normalizar(texto):
+        """Quita tildes y pasa a minúsculas."""
+        return "".join(
+            c for c in unicodedata.normalize("NFD", texto)
+            if unicodedata.category(c) != "Mn"
+        ).lower()
+
+    def _generar_username(nombre_completo):
+        """'Juan Carlos Pérez López' → 'juan.perez'  (primer nombre . primer apellido)"""
+        partes = nombre_completo.strip().split()
+        if len(partes) >= 2:
+            return f"{_normalizar(partes[0])}.{_normalizar(partes[-1])}"
+        return _normalizar(partes[0]) if partes else ""
+
+    st.title("👥 Gestión de Usuarios")
+    st.markdown("---")
+
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "➕ Crear Usuario",
+        "📤 Carga Masiva (Excel)",
+        "📋 Ver Usuarios",
+        "🔑 Ver Hashes",
+    ])
+
+    # ── TAB 1: Crear usuario individual (sin cambios) ───────────────────────────
     with tab1:
         st.subheader("➕ Crear Nuevo Usuario")
         with st.form("crear_usuario_form"):
@@ -2068,26 +2098,151 @@ def panel_gestion_usuarios():
                     if crear_usuario(nuevo_username, password_default, nuevo_nombre, es_admin_nuevo, True):
                         st.success(f"✅ Usuario '{nuevo_username}' creado!")
                         st.info(f"Usuario: **{nuevo_username}** | Contraseña temporal: **{password_default}**")
-                    else: st.error("❌ El usuario ya existe o hubo un problema al crearlo")
-                else: st.warning("⚠️ Completa todos los campos")
+                    else:
+                        st.error("❌ El usuario ya existe o hubo un problema al crearlo")
+                else:
+                    st.warning("⚠️ Completa todos los campos")
+
+    # ── TAB 2: Carga masiva desde Excel ────────────────────────────────────────
     with tab2:
+        st.subheader("📤 Carga Masiva de Usuarios desde Excel")
+
+        # Plantilla descargable
+        with st.expander("📥 Descargar plantilla Excel", expanded=False):
+            st.markdown(
+                "El archivo debe tener **dos columnas** con los encabezados exactos:\n"
+                "- `nombre_completo` — Ej: *María López Rodríguez*\n"
+                "- `username` *(opcional)* — si se deja vacío se genera automáticamente "
+                "como `primer_nombre.primer_apellido`"
+            )
+            df_plantilla = pd.DataFrame({
+                "nombre_completo": ["María López Rodríguez", "Carlos Gómez Martínez"],
+                "username":        ["maria.rodriguez",       ""],
+            })
+            buf_plantilla = io.BytesIO()
+            df_plantilla.to_excel(buf_plantilla, index=False, engine="openpyxl")
+            buf_plantilla.seek(0)
+            st.download_button(
+                "⬇️ Descargar plantilla",
+                data=buf_plantilla,
+                file_name="plantilla_usuarios.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+
+        st.markdown("---")
+
+        archivo = st.file_uploader(
+            "Sube el Excel con los usuarios", type=["xlsx", "xls"],
+            help="Columna requerida: nombre_completo. Opcional: username",
+        )
+
+        if archivo:
+            try:
+                df_up = pd.read_excel(archivo, dtype=str).fillna("")
+            except Exception as e:
+                st.error(f"❌ No se pudo leer el archivo: {e}")
+                df_up = None
+
+            if df_up is not None:
+                if "nombre_completo" not in df_up.columns:
+                    st.error("❌ El archivo debe tener una columna llamada **nombre_completo**.")
+                else:
+                    # Generar username si está vacío o la columna no existe
+                    if "username" not in df_up.columns:
+                        df_up["username"] = ""
+                    df_up["username"] = df_up.apply(
+                        lambda r: r["username"].strip() if r["username"].strip()
+                        else _generar_username(r["nombre_completo"]),
+                        axis=1,
+                    )
+                    df_up = df_up[df_up["nombre_completo"].str.strip() != ""].reset_index(drop=True)
+
+                    st.info(f"📊 Se encontraron **{len(df_up)}** usuarios en el archivo.")
+                    st.dataframe(
+                        df_up[["nombre_completo", "username"]],
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+
+                    col_pw, col_adm = st.columns(2)
+                    with col_pw:
+                        pwd_masiva = st.text_input(
+                            "Contraseña temporal para todos", value="ISMR2024",
+                            key="pwd_masiva",
+                            help="Todos los usuarios deberán cambiarla al primer ingreso",
+                        )
+                    with col_adm:
+                        admin_masivo = st.checkbox(
+                            "¿Todos son administradores?", value=False, key="admin_masivo"
+                        )
+
+                    if st.button("🚀 Crear todos los usuarios", type="primary", use_container_width=True):
+                        if not pwd_masiva:
+                            st.warning("⚠️ Define una contraseña temporal")
+                        else:
+                            lista = df_up[["nombre_completo", "username"]].to_dict("records")
+                            with st.spinner(f"Registrando {len(lista)} usuarios…"):
+                                resultado = crear_usuarios_masivo(lista, pwd_masiva, admin_masivo)
+
+                            creados  = resultado["creados"]
+                            omitidos = resultado["omitidos"]
+                            errores  = resultado["errores"]
+
+                            if creados:
+                                st.success(f"✅ **{len(creados)}** usuarios creados correctamente.")
+                            if omitidos:
+                                st.warning(f"⚠️ **{len(omitidos)}** ya existían y fueron omitidos: {', '.join(omitidos)}")
+                            if errores:
+                                st.error(f"❌ **{len(errores)}** con errores:")
+                                for e in errores:
+                                    st.caption(f"• `{e['username']}`: {e['error']}")
+
+                            # Resumen descargable
+                            df_res = pd.DataFrame({
+                                "username": creados + omitidos + [e["username"] for e in errores],
+                                "estado":   (["creado"]     * len(creados) +
+                                             ["ya existía"] * len(omitidos) +
+                                             ["error"]      * len(errores)),
+                                "detalle":  ([""] * len(creados) +
+                                             [""] * len(omitidos) +
+                                             [e["error"] for e in errores]),
+                            })
+                            buf_res = io.BytesIO()
+                            df_res.to_excel(buf_res, index=False, engine="openpyxl")
+                            buf_res.seek(0)
+                            st.download_button(
+                                "📥 Descargar resumen de carga",
+                                data=buf_res,
+                                file_name="resumen_carga_usuarios.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            )
+
+    # ── TAB 3: Ver usuarios ─────────────────────────────────────────────────────
+    with tab3:
         st.subheader("📋 Lista de Usuarios")
         usuarios = listar_usuarios()
         if usuarios:
             df = pd.DataFrame(usuarios)
-            c1,c2,c3 = st.columns(3)
+            c1, c2, c3 = st.columns(3)
             c1.metric("Total", len(df))
             admins = df[df["es_admin"].astype(str).str.upper() == "TRUE"].shape[0] if "es_admin" in df.columns else 0
-            c2.metric("Admins", admins); c3.metric("Analistas", len(df)-admins)
-            st.dataframe(df[["username","nombre_completo","es_admin","debe_cambiar_password"]], use_container_width=True)
-        else: st.info("📭 No hay usuarios")
-    with tab3:
+            c2.metric("Admins", admins)
+            c3.metric("Analistas", len(df) - admins)
+            st.dataframe(
+                df[["username", "nombre_completo", "es_admin", "debe_cambiar_password"]],
+                use_container_width=True,
+            )
+        else:
+            st.info("📭 No hay usuarios")
+
+    # ── TAB 4: Ver hashes ───────────────────────────────────────────────────────
+    with tab4:
         st.subheader("🔑 Hashes de Contraseñas")
         st.warning("⚠️ Información sensible — solo visible para administradores")
         if st.checkbox("Mostrar hashes"):
             for u in listar_usuarios():
                 with st.expander(f"👤 {u.get('nombre_completo','?')} (@{u.get('username','?')})"):
-                    st.code(u.get('password_hash','N/A'), language=None)
+                    st.code(u.get('password_hash', 'N/A'), language=None)
                     st.caption(f"Debe cambiar: {u.get('debe_cambiar_password','N/A')}")
 
 
