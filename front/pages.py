@@ -2239,6 +2239,60 @@ def formulario_casos(tipo="individual"):
                 if st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
 
+    st.markdown("**IMPACTO EN LA ESFERA DE LA SALUD Y EL BIENESTAR**")
+    imp_sal_col1, imp_sal_col2 = st.columns(2)
+    with imp_sal_col1:
+        imp_sal_proyeccion = st.selectbox(
+            "AFECTACIÓN A LA PROYECCIÓN PERSONAL O COLECTIVA",
+            _IMPACTO_SI_NR,
+            key=f"imp_sal_proyeccion_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_proyeccion_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_sal_proyeccion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_sal_desescolarizacion = st.selectbox(
+            "DESESCOLARIZACIÓN",
+            _IMPACTO_SI_NR,
+            key=f"imp_sal_desescolarizacion_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_desescolarizacion_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_sal_desescolarizacion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_sal_psicosocial = st.selectbox(
+            "AFECTACIÓN PSICOSOCIAL",
+            _IMPACTO_SI_NR,
+            key=f"imp_sal_psicosocial_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_psicosocial_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_sal_psicosocial_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_sal_dano_vida = st.selectbox(
+            "DAÑO IRREPARABLE A LA VIDA E INTEGRIDAD PERSONAL",
+            _IMPACTO_SI_NR,
+            key=f"imp_sal_dano_vida_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_dano_vida_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_sal_dano_vida_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+    with imp_sal_col2:
+        imp_sal_cuidados = st.selectbox(
+            "IMPOSIBILIDAD DE ATENDER LOS CUIDADOS DOMÉSTICOS O DE PERSONAS DEPENDIENTES",
+            _IMPACTO_SI_NR,
+            key=f"imp_sal_cuidados_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_cuidados_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_sal_cuidados_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_sal_abandono = st.selectbox(
+            "PROCESOS DE ABANDONO A MENORES Y/O ADULTOS MAYORES",
+            _IMPACTO_SI_NR,
+            key=f"imp_sal_abandono_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_abandono_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_sal_abandono_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_sal_discapacidad = st.selectbox(
+            "DISCAPACIDAD",
+            _IMPACTO_SI_NR,
+            key=f"imp_sal_discapacidad_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
     with col_borrador:
@@ -2308,6 +2362,13 @@ def formulario_casos(tipo="individual"):
                 f"imp_pol_derechos_{tipo}":      st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione..."),
                 f"imp_pol_estigmatizacion_{tipo}": st.session_state.get(f"imp_pol_estigmatizacion_{tipo}", "Seleccione..."),
                 f"imp_pol_confianza_{tipo}":     st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione..."),
+                f"imp_sal_proyeccion_{tipo}":       st.session_state.get(f"imp_sal_proyeccion_{tipo}", "Seleccione..."),
+                f"imp_sal_cuidados_{tipo}":         st.session_state.get(f"imp_sal_cuidados_{tipo}", "Seleccione..."),
+                f"imp_sal_desescolarizacion_{tipo}": st.session_state.get(f"imp_sal_desescolarizacion_{tipo}", "Seleccione..."),
+                f"imp_sal_abandono_{tipo}":         st.session_state.get(f"imp_sal_abandono_{tipo}", "Seleccione..."),
+                f"imp_sal_psicosocial_{tipo}":      st.session_state.get(f"imp_sal_psicosocial_{tipo}", "Seleccione..."),
+                f"imp_sal_discapacidad_{tipo}":     st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione..."),
+                f"imp_sal_dano_vida_{tipo}":        st.session_state.get(f"imp_sal_dano_vida_{tipo}", "Seleccione..."),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
@@ -2409,6 +2470,13 @@ def formulario_casos(tipo="individual"):
                         imp_pol_derechos if imp_pol_derechos != "Seleccione..." else "",
                         imp_pol_estigmatizacion if imp_pol_estigmatizacion != "Seleccione..." else "",
                         imp_pol_confianza if imp_pol_confianza != "Seleccione..." else "",
+                        imp_sal_proyeccion if imp_sal_proyeccion != "Seleccione..." else "",
+                        imp_sal_cuidados if imp_sal_cuidados != "Seleccione..." else "",
+                        imp_sal_desescolarizacion if imp_sal_desescolarizacion != "Seleccione..." else "",
+                        imp_sal_abandono if imp_sal_abandono != "Seleccione..." else "",
+                        imp_sal_psicosocial if imp_sal_psicosocial != "Seleccione..." else "",
+                        imp_sal_discapacidad if imp_sal_discapacidad != "Seleccione..." else "",
+                        imp_sal_dano_vida if imp_sal_dano_vida != "Seleccione..." else "",
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0

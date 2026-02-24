@@ -30,6 +30,11 @@ _CABECERAS_CASOS = [
     "Imp Pol Restriccion Participacion", "Imp Pol Desarticulacion Liderazgos",
     "Imp Pol Oferta Institucional", "Imp Pol Derechos Politicos",
     "Imp Pol Estigmatizacion", "Imp Pol Confianza Instituciones",
+    # Impacto Consecuencial - Esfera de la Salud y el Bienestar
+    "Imp Sal Proyeccion Personal", "Imp Sal Cuidados Dependientes",
+    "Imp Sal Desescolarizacion", "Imp Sal Abandono Menores",
+    "Imp Sal Afectacion Psicosocial", "Imp Sal Discapacidad",
+    "Imp Sal Dano Vida Integridad",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [
