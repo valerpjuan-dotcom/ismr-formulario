@@ -25,7 +25,7 @@ _CABECERAS_HECHOS = [
     "Tipo Actor Generador", "Actor Generador",
     "Medio Hecho", "Victima Situacion", "Tipo Amenaza",
     "Motivacion Amenaza", "Nexo Causal",
-    "Autor", "Descripcion",
+    "Descripcion",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_ANTECEDENTES = [

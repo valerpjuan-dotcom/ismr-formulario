@@ -1563,13 +1563,11 @@ def formulario_casos(tipo="individual"):
                     )
                 with ec_desc:
                     eh_desc = st.text_area("Descripción", value=hecho["descripcion"], height=122, key=f"eh_desc_{tipo}_{i}")
-                eh_autor = st.text_input("Autor *", value=hecho["autor"], key=f"eh_autor_{tipo}_{i}")
                 col_save, col_cancel = st.columns(2)
                 with col_save:
                     if st.button("💾 Guardar cambios", key=f"eh_save_{tipo}_{i}", type="primary", use_container_width=True):
                         err_e = []
                         if eh_tipo == "Seleccione...": err_e.append("Selecciona el tipo de hecho")
-                        if not eh_autor.strip():       err_e.append("El autor es obligatorio")
                         if err_e:
                             for e in err_e: st.error(f"• {e}")
                         else:
@@ -1590,7 +1588,6 @@ def formulario_casos(tipo="individual"):
                                 "tipo_amenaza": eh_tipo_amenaza if eh_tipo_amenaza != "Seleccione..." else "",
                                 "motivacion_amenaza": eh_motivacion.strip(),
                                 "nexo_causal": eh_nexo_causal if eh_nexo_causal != "Seleccione..." else "",
-                                "autor": eh_autor.strip(),
                                 "descripcion": eh_desc.strip()
                             }
                             st.session_state[_edit_hecho_key] = None
@@ -1620,7 +1617,6 @@ def formulario_casos(tipo="individual"):
                     st.write(f"💬 **Motivación Amenaza:** {hecho.get('motivacion_amenaza', '')}")
                     st.write(f"🔗 **Nexo Causal:** {hecho.get('nexo_causal', '')}")
                 with c2:
-                    st.write(f"👤 **Autor:** {hecho['autor']}")
                     st.write(f"⚡ **Tipo Actor:** {hecho.get('tipo_actor', '')}")
                     st.write(f"🔫 **Actor Generador:** {hecho.get('actor_generador', '')}")
                     st.write(f"📡 **Medio:** {hecho.get('medio', '')}")
@@ -1722,13 +1718,10 @@ def formulario_casos(tipo="individual"):
             descripcion_hecho = st.text_area("Descripción",
                                              placeholder="Describe brevemente el hecho...", height=122,
                                              key=f"hf_desc_{tipo}")
-        autor_hecho = st.text_input("Autor *", placeholder="Grupo armado, persona, etc.",
-                                    key=f"hf_autor_{tipo}")
         st.markdown("")
         if st.button("➕ Agregar este hecho", use_container_width=True, key=f"btn_add_hecho_{tipo}", type="secondary"):
             err_h = []
             if tipo_hecho == "Seleccione...": err_h.append("Selecciona el tipo de hecho")
-            if not autor_hecho.strip():        err_h.append("El autor es obligatorio")
             if err_h:
                 for e in err_h: st.error(f"• {e}")
             else:
@@ -1749,7 +1742,6 @@ def formulario_casos(tipo="individual"):
                     "tipo_amenaza": hecho_tipo_amenaza if hecho_tipo_amenaza != "Seleccione..." else "",
                     "motivacion_amenaza": motivacion_hecho.strip(),
                     "nexo_causal": nexo_causal_hecho if nexo_causal_hecho != "Seleccione..." else "",
-                    "autor": autor_hecho.strip(),
                     "descripcion": descripcion_hecho.strip()
                 })
                 st.success("✅ Hecho agregado"); st.rerun()
@@ -1897,7 +1889,7 @@ def formulario_casos(tipo="individual"):
                             hecho.get("tipo_actor", ""), hecho.get("actor_generador", ""),
                             hecho.get("medio", ""), hecho.get("victima_situacion", ""), hecho.get("tipo_amenaza", ""),
                             hecho.get("motivacion_amenaza", ""), hecho.get("nexo_causal", ""),
-                            hecho["autor"], hecho["descripcion"],
+                            hecho["descripcion"],
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         hechos_guardados += 1
