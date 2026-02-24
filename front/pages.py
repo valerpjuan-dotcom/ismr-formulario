@@ -2131,6 +2131,67 @@ def formulario_casos(tipo="individual"):
                 if st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
 
+    st.markdown("**IMPACTO EN LA ESFERA SOCIAL**")
+    imp_soc_col1, imp_soc_col2 = st.columns(2)
+    with imp_soc_col1:
+        imp_soc_tejido = st.selectbox(
+            "RUPTURA DEL TEJIDO SOCIAL",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_tejido_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_tejido_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_tejido_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_soc_traslado = st.selectbox(
+            "TRASLADO DE FACTORES DE VIOLENCIA DE UN TERRITORIO A OTRO",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_traslado_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_traslado_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_traslado_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_soc_movilidad = st.selectbox(
+            "RESTRICCIÓN DE MOVILIDAD",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_movilidad_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_movilidad_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_movilidad_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_soc_normalizacion = st.selectbox(
+            "NORMALIZACIÓN DE LA VIOLENCIA",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_normalizacion_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_normalizacion_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_normalizacion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+    with imp_soc_col2:
+        imp_soc_redes = st.selectbox(
+            "PÉRDIDA DE REDES DE APOYO",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_redes_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_redes_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_redes_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_soc_confinamiento = st.selectbox(
+            "CONFINAMIENTO O AUTO-CONFINAMIENTO",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_confinamiento_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_confinamiento_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_confinamiento_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_soc_desarraigo = st.selectbox(
+            "DESARRAIGO CULTURAL Y TERRITORIAL",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_desarraigo_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_soc_libertad = st.selectbox(
+            "AFECTACIÓN AL GOCE DEL DERECHO A LA LIBERTAD Y SEGURIDAD PERSONAL",
+            _IMPACTO_SI_NR,
+            key=f"imp_soc_libertad_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
     with col_borrador:
@@ -2186,6 +2247,14 @@ def formulario_casos(tipo="individual"):
                 f"imp_eco_empleos_{tipo}":     st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione..."),
                 f"imp_eco_ilicita_{tipo}":     st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione..."),
                 f"imp_eco_bienes_{tipo}":      st.session_state.get(f"imp_eco_bienes_{tipo}", "Seleccione..."),
+                f"imp_soc_tejido_{tipo}":       st.session_state.get(f"imp_soc_tejido_{tipo}", "Seleccione..."),
+                f"imp_soc_redes_{tipo}":        st.session_state.get(f"imp_soc_redes_{tipo}", "Seleccione..."),
+                f"imp_soc_traslado_{tipo}":     st.session_state.get(f"imp_soc_traslado_{tipo}", "Seleccione..."),
+                f"imp_soc_confinamiento_{tipo}": st.session_state.get(f"imp_soc_confinamiento_{tipo}", "Seleccione..."),
+                f"imp_soc_movilidad_{tipo}":    st.session_state.get(f"imp_soc_movilidad_{tipo}", "Seleccione..."),
+                f"imp_soc_desarraigo_{tipo}":   st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione..."),
+                f"imp_soc_normalizacion_{tipo}": st.session_state.get(f"imp_soc_normalizacion_{tipo}", "Seleccione..."),
+                f"imp_soc_libertad_{tipo}":     st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione..."),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
@@ -2273,6 +2342,14 @@ def formulario_casos(tipo="individual"):
                         imp_eco_empleos if imp_eco_empleos != "Seleccione..." else "",
                         imp_eco_ilicita if imp_eco_ilicita != "Seleccione..." else "",
                         imp_eco_bienes if imp_eco_bienes != "Seleccione..." else "",
+                        imp_soc_tejido if imp_soc_tejido != "Seleccione..." else "",
+                        imp_soc_redes if imp_soc_redes != "Seleccione..." else "",
+                        imp_soc_traslado if imp_soc_traslado != "Seleccione..." else "",
+                        imp_soc_confinamiento if imp_soc_confinamiento != "Seleccione..." else "",
+                        imp_soc_movilidad if imp_soc_movilidad != "Seleccione..." else "",
+                        imp_soc_desarraigo if imp_soc_desarraigo != "Seleccione..." else "",
+                        imp_soc_normalizacion if imp_soc_normalizacion != "Seleccione..." else "",
+                        imp_soc_libertad if imp_soc_libertad != "Seleccione..." else "",
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0

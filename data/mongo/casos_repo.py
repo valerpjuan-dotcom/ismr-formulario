@@ -21,6 +21,11 @@ _CABECERAS_CASOS = [
     "Imp Eco Dependencia Subsidio", "Imp Eco Perdida Iniciativas",
     "Imp Eco Acceso Empleos Formales", "Imp Eco Economia Ilicita",
     "Imp Eco Acceso Bienes",
+    # Impacto Consecuencial - Esfera Social
+    "Imp Soc Ruptura Tejido Social", "Imp Soc Perdida Redes Apoyo",
+    "Imp Soc Traslado Violencia", "Imp Soc Confinamiento",
+    "Imp Soc Restriccion Movilidad", "Imp Soc Desarraigo Cultural",
+    "Imp Soc Normalizacion Violencia", "Imp Soc Libertad Seguridad",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [
