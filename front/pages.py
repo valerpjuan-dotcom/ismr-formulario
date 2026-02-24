@@ -1538,23 +1538,38 @@ def formulario_casos(tipo="individual"):
                         index=_TIPOS_AMENAZA.index(_eh_amenaza_val) if _eh_amenaza_val in _TIPOS_AMENAZA else 0,
                         key=f"eh_tipo_amenaza_{tipo}_{i}"
                     )
-                ec1, ec2 = st.columns(2)
-                with ec1:
-                    eh_tipo  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
+                ec_tipo, ec_motivacion = st.columns(2)
+                with ec_tipo:
+                    eh_tipo = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
                         index=_TIPOS_HECHO.index(hecho["tipo"]) if hecho["tipo"] in _TIPOS_HECHO else 0,
                         key=f"eh_tipo_{tipo}_{i}")
-                    eh_lugar = st.text_input("Lugar donde ocurrió *", value=hecho["lugar"], key=f"eh_lugar_{tipo}_{i}")
-                with ec2:
-                    eh_autor = st.text_input("Autor *", value=hecho["autor"], key=f"eh_autor_{tipo}_{i}")
-                    eh_desc  = st.text_area("Descripción *", value=hecho["descripcion"], height=122, key=f"eh_desc_{tipo}_{i}")
+                with ec_motivacion:
+                    eh_motivacion = st.text_input(
+                        "MOTIVACIÓN AMENAZA HECHO DE RIESGO",
+                        value=hecho.get("motivacion_amenaza", ""),
+                        placeholder="Máximo en 10 palabras",
+                        key=f"eh_motivacion_{tipo}_{i}"
+                    )
+                ec_nexo, ec_desc = st.columns(2)
+                with ec_nexo:
+                    _eh_nexo_opts = ["Seleccione...", "SI", "NO"]
+                    _eh_nexo_val  = hecho.get("nexo_causal", "Seleccione...")
+                    _eh_nexo_idx  = _eh_nexo_opts.index(_eh_nexo_val) if _eh_nexo_val in _eh_nexo_opts else 0
+                    eh_nexo_causal = st.selectbox(
+                        "NEXO CAUSAL",
+                        _eh_nexo_opts,
+                        index=_eh_nexo_idx,
+                        key=f"eh_nexo_{tipo}_{i}"
+                    )
+                with ec_desc:
+                    eh_desc = st.text_area("Descripción", value=hecho["descripcion"], height=122, key=f"eh_desc_{tipo}_{i}")
+                eh_autor = st.text_input("Autor *", value=hecho["autor"], key=f"eh_autor_{tipo}_{i}")
                 col_save, col_cancel = st.columns(2)
                 with col_save:
                     if st.button("💾 Guardar cambios", key=f"eh_save_{tipo}_{i}", type="primary", use_container_width=True):
                         err_e = []
                         if eh_tipo == "Seleccione...": err_e.append("Selecciona el tipo de hecho")
-                        if not eh_lugar.strip():       err_e.append("El lugar es obligatorio")
                         if not eh_autor.strip():       err_e.append("El autor es obligatorio")
-                        if not eh_desc.strip():        err_e.append("La descripción es obligatoria")
                         if err_e:
                             for e in err_e: st.error(f"• {e}")
                         else:
@@ -1573,7 +1588,9 @@ def formulario_casos(tipo="individual"):
                                 "medio": eh_medio if eh_medio != "Seleccione..." else "",
                                 "victima_situacion": eh_victima_situacion if eh_victima_situacion != "Seleccione..." else "",
                                 "tipo_amenaza": eh_tipo_amenaza if eh_tipo_amenaza != "Seleccione..." else "",
-                                "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
+                                "motivacion_amenaza": eh_motivacion.strip(),
+                                "nexo_causal": eh_nexo_causal if eh_nexo_causal != "Seleccione..." else "",
+                                "autor": eh_autor.strip(),
                                 "descripcion": eh_desc.strip()
                             }
                             st.session_state[_edit_hecho_key] = None
@@ -1600,7 +1617,8 @@ def formulario_casos(tipo="individual"):
                     st.write(f"📅 **Fecha:** {hecho['fecha']}")
                     st.write(f"🗺️ **Departamento:** {hecho.get('departamento', '')}")
                     st.write(f"🏙️ **Municipio:** {hecho.get('municipio', '')}")
-                    st.write(f"📍 **Lugar:** {hecho['lugar']}")
+                    st.write(f"💬 **Motivación Amenaza:** {hecho.get('motivacion_amenaza', '')}")
+                    st.write(f"🔗 **Nexo Causal:** {hecho.get('nexo_causal', '')}")
                 with c2:
                     st.write(f"👤 **Autor:** {hecho['autor']}")
                     st.write(f"⚡ **Tipo Actor:** {hecho.get('tipo_actor', '')}")
@@ -1683,25 +1701,34 @@ def formulario_casos(tipo="individual"):
                 _TIPOS_AMENAZA,
                 key=f"hf_tipo_amenaza_{tipo}"
             )
-        c1, c2 = st.columns(2)
-        with c1:
-            tipo_hecho  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
+        col_tipo, col_motivacion = st.columns(2)
+        with col_tipo:
+            tipo_hecho = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
                 key=f"hf_tipo_{tipo}")
-            lugar_hecho = st.text_input("Lugar donde ocurrió *", placeholder="Municipio, vereda, barrio...",
-                                        key=f"hf_lugar_{tipo}")
-        with c2:
-            autor_hecho       = st.text_input("Autor *", placeholder="Grupo armado, persona, etc.",
-                                              key=f"hf_autor_{tipo}")
-            descripcion_hecho = st.text_area("Descripción *",
+        with col_motivacion:
+            motivacion_hecho = st.text_input(
+                "MOTIVACIÓN AMENAZA HECHO DE RIESGO",
+                placeholder="Máximo en 10 palabras",
+                key=f"hf_motivacion_{tipo}"
+            )
+        col_nexo, col_desc = st.columns(2)
+        with col_nexo:
+            nexo_causal_hecho = st.selectbox(
+                "NEXO CAUSAL",
+                ["Seleccione...", "SI", "NO"],
+                key=f"hf_nexo_{tipo}"
+            )
+        with col_desc:
+            descripcion_hecho = st.text_area("Descripción",
                                              placeholder="Describe brevemente el hecho...", height=122,
                                              key=f"hf_desc_{tipo}")
+        autor_hecho = st.text_input("Autor *", placeholder="Grupo armado, persona, etc.",
+                                    key=f"hf_autor_{tipo}")
         st.markdown("")
         if st.button("➕ Agregar este hecho", use_container_width=True, key=f"btn_add_hecho_{tipo}", type="secondary"):
             err_h = []
             if tipo_hecho == "Seleccione...": err_h.append("Selecciona el tipo de hecho")
-            if not lugar_hecho.strip():        err_h.append("El lugar es obligatorio")
             if not autor_hecho.strip():        err_h.append("El autor es obligatorio")
-            if not descripcion_hecho.strip():  err_h.append("La descripción es obligatoria")
             if err_h:
                 for e in err_h: st.error(f"• {e}")
             else:
@@ -1720,7 +1747,9 @@ def formulario_casos(tipo="individual"):
                     "medio": hecho_medio if hecho_medio != "Seleccione..." else "",
                     "victima_situacion": hecho_victima_situacion if hecho_victima_situacion != "Seleccione..." else "",
                     "tipo_amenaza": hecho_tipo_amenaza if hecho_tipo_amenaza != "Seleccione..." else "",
-                    "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
+                    "motivacion_amenaza": motivacion_hecho.strip(),
+                    "nexo_causal": nexo_causal_hecho if nexo_causal_hecho != "Seleccione..." else "",
+                    "autor": autor_hecho.strip(),
                     "descripcion": descripcion_hecho.strip()
                 })
                 st.success("✅ Hecho agregado"); st.rerun()
@@ -1867,7 +1896,7 @@ def formulario_casos(tipo="individual"):
                             hecho.get("departamento", ""), hecho.get("municipio", ""),
                             hecho.get("tipo_actor", ""), hecho.get("actor_generador", ""),
                             hecho.get("medio", ""), hecho.get("victima_situacion", ""), hecho.get("tipo_amenaza", ""),
-                            hecho["lugar"],
+                            hecho.get("motivacion_amenaza", ""), hecho.get("nexo_causal", ""),
                             hecho["autor"], hecho["descripcion"],
                             st.session_state.nombre_completo, st.session_state.username
                         ])
