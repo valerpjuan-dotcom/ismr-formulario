@@ -444,8 +444,36 @@ _PA_CARGO_ELECCION = [
 ]
 
 # ══════════════════════════════════════════════════════════════════════════════
-# HECHOS DE RIESGO — Actor Generador
+# HECHOS DE RIESGO
 # ══════════════════════════════════════════════════════════════════════════════
+
+_TIPOS_HECHO = [
+    "Seleccione...",
+    "RETEN VEHICULAR",
+    "RETENCIÓN",
+    "SECUESTRO",
+    "EXTORSIÓN",
+    "PERSECUCIÓN",
+    "SEGUIMIENTO",
+    "PERFILAMIENTO",
+    "ESTIGMATIZACIÓN",
+    "AGRESIÓN FÍSICA",
+    "ATENTADO",
+    "HOMICIDIO",
+    "DESAPARICIÓN FORZADA",
+    "AMENAZA DE MUERTE",
+    "VINCULACIÓN FORZADA A ACCIONES EN EL MARCO DEL CONFLICTO ARMADO",
+    "CONSTREÑIMIENTO",
+    "CITACIÓN DE GRUPO ARMADO O DELINCUENCIAL",
+    "INTENTO DE RECLUTAMIENTO",
+    "HURTO",
+    "DESPOJO DE TIERRAS",
+    "DESPLAZAMIENTO FORZADO",
+    "MENSAJE INTIDIMATORIO",
+    "VIOLENCIAS BASADAS EN GENERO",
+    "CONFINAMIENTO",
+    "NO REPORTA",
+]
 
 _TIPOS_ACTOR_GENERADOR = [
     "GAO - GRUPO ARMADO ORGANIZADO",

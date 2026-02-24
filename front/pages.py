@@ -18,7 +18,7 @@ from data.diccionarios import (
     _PA_CONSEJERIA_NACIONAL, _PA_TIPO_ORG, _PA_AMBITO_ORG, _PA_ESCALA_ORG,
     _PA_CARGO_ELECCION,
     # Hechos de Riesgo
-    _TIPOS_ACTOR_GENERADOR, _MEDIOS_HECHO, _VICTIMAS_SITUACION_HECHO, _TIPOS_AMENAZA,
+    _TIPOS_HECHO, _TIPOS_ACTOR_GENERADOR, _MEDIOS_HECHO, _VICTIMAS_SITUACION_HECHO, _TIPOS_AMENAZA,
     # Desplazamientos
     _DESP_MOTIVOS, _DESP_MEDIOS_TRANSPORTE, _DESP_FRECUENCIAS,
     _DESP_TIPOS_VIA, _DESP_DEPARTAMENTOS,
@@ -1436,9 +1436,6 @@ def formulario_casos(tipo="individual"):
     st.caption("Opcional. Agrega uno o varios hechos de riesgo asociados a este caso.")
 
     _edit_hecho_key = f"editando_hecho_{tipo}"
-    _TIPOS_HECHO = ["Seleccione...", "Amenaza", "Atentado", "Desplazamiento forzado",
-                    "Homicidio", "Secuestro", "Extorsión", "Reclutamiento forzado",
-                    "Violencia sexual", "Confinamiento", "Otro"]
 
     for i, hecho in enumerate(st.session_state.hechos):
         with st.container(border=True):
@@ -1688,10 +1685,7 @@ def formulario_casos(tipo="individual"):
             )
         c1, c2 = st.columns(2)
         with c1:
-            tipo_hecho  = st.selectbox("Tipo de Hecho *", [
-                "Seleccione...", "Amenaza", "Atentado", "Desplazamiento forzado",
-                "Homicidio", "Secuestro", "Extorsión", "Reclutamiento forzado",
-                "Violencia sexual", "Confinamiento", "Otro"],
+            tipo_hecho  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
                 key=f"hf_tipo_{tipo}")
             lugar_hecho = st.text_input("Lugar donde ocurrió *", placeholder="Municipio, vereda, barrio...",
                                         key=f"hf_lugar_{tipo}")
