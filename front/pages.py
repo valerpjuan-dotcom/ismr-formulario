@@ -157,30 +157,33 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         st.text_input("FUENTE PRINCIPAL DE INGRESOS",
                       value=_v("fuente_ingresos", ""), key=f"pa_ingresos_{sfx}")
 
-    # ── Proyecto ARN (solo reincorporados) ───────────────────────────────────
-    if es_reincorporado:
-        st.markdown("**Proyecto de Reincorporación ARN**")
-        col3, col4 = st.columns(2)
-        with col3:
-            _opts_est = _PA_ESTADO_PROYECTO_ARN
-            _idx_est  = _opts_est.index(_v("estado_proyecto_arn")) if _v("estado_proyecto_arn") in _opts_est else 0
-            st.selectbox("Estado del Proyecto ARN", _opts_est,
-                         index=_idx_est, key=f"pa_arn_estado_{sfx}")
-        with col4:
-            _opts_act = _PA_ACTIVIDAD_ECONOMICA
-            _idx_act  = _opts_act.index(_v("actividad_economica")) if _v("actividad_economica") in _opts_act else 0
-            st.selectbox("Actividad Económica del Proyecto", _opts_act,
-                         index=_idx_act, key=f"pa_arn_actividad_{sfx}")
-
     # ── JEP ─────────────────────────────────────────────────────────────────
+    _opts_si_no_rep = ["Seleccione...", "SI", "NO REPORTA"]
+
+    # Comparecencia ante la JEP
+    st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_si_no_rep,
+                 index=_opts_si_no_rep.index(_v("comparecencia_jep")) if _v("comparecencia_jep") in _opts_si_no_rep else 0,
+                 key=f"pa_jep_comp_{sfx}")
+
+    # Macrocaso compareciente — solo si respondió SI
+    _es_compareciente = st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...") == "SI"
+    if _es_compareciente:
+        _mcc_prev = [m.strip() for m in _v("macrocasos_jep", "").split("|") if m.strip()] if pa else []
+        st.markdown("**MACROCASO COMPARECIENTE**")
+        _cols_mcc = st.columns(2)
+        for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+            _cols_mcc[_j % 2].checkbox(_mc, value=(_mc in _mcc_prev), key=f"pa_mcc_{_j}_{sfx}")
+
+    # Víctima ante la JEP
     st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
                  index=_SI_NO_REPORTA.index(_v("victima_jep")) if _v("victima_jep") in _SI_NO_REPORTA else 0,
                  key=f"pa_jep_vic_{sfx}")
 
-    # Macrocaso en calidad de víctima — solo si respondió SI a víctima JEP
+    # Macrocaso en calidad de víctima — solo si respondió SI
     _es_victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     if _es_victima_jep:
         _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
+        st.markdown("**MACROCASO VÍCTIMA**")
         _cols_mcv = st.columns(2)
         for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
             _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
@@ -323,7 +326,15 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
             st.error(f"• {e}")
         return None
 
-    # Macrocaso JEP — solo se guarda el de víctima (condicional)
+    # Macrocasos JEP — compareciente y víctima (ambos condicionales)
+    _es_compareciente_r = st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...") == "SI"
+    macrocaso_comp = ""
+    if _es_compareciente_r:
+        macrocaso_comp = " | ".join([
+            mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+            if st.session_state.get(f"pa_mcc_{j}_{sfx}", False)
+        ])
+
     _es_victima = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     macrocaso_vic = ""
     if _es_victima:
@@ -372,17 +383,13 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         if ambito_org == "Seleccione...":
             ambito_org = ""
 
-    # ARN
-    arn_estado    = st.session_state.get(f"pa_arn_estado_{sfx}", "Seleccione...") if es_reincorporado else ""
-    arn_actividad = st.session_state.get(f"pa_arn_actividad_{sfx}", "Seleccione...") if es_reincorporado else ""
-
     return {
         "nivel_educativo":        nivel_edu,
         "fuente_ingresos":        st.session_state.get(f"pa_ingresos_{sfx}", ""),
-        "estado_proyecto_arn":    arn_estado    if arn_estado    != "Seleccione..." else "",
-        "actividad_economica":    arn_actividad if arn_actividad != "Seleccione..." else "",
+        "estado_proyecto_arn":    "",
+        "actividad_economica":    "",
         "comparecencia_jep":      st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione..."),
-        "macrocasos_jep":         "",
+        "macrocasos_jep":         macrocaso_comp,
         "victima_jep":            st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione..."),
         "macrocaso_victima":      macrocaso_vic,
         "participacion_toar":     st.session_state.get(f"pa_toar_{sfx}", "Seleccione..."),
