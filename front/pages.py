@@ -207,42 +207,36 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         st.markdown("PARTIDO COMUNES")
         col9, col10 = st.columns(2)
         with col9:
-            st.selectbox("¿Hace parte del Partido Comunes?", _SI_NO,
-                         index=_SI_NO.index(_v("participa_comunes")) if _v("participa_comunes") in _SI_NO else 0,
-                         key=f"pa_comunes_{sfx}")
-        with col10:
             st.selectbox("¿Pertenece a un Concejo Municipal Comunes?", _SI_NO,
                          index=_SI_NO.index(_v("concejo_comunes")) if _v("concejo_comunes") in _SI_NO else 0,
                          key=f"pa_concejo_{sfx}")
 
-        _participa_c = st.session_state.get(f"pa_comunes_{sfx}", "Seleccione...")
-        if _participa_c == "SI":
-            # Instancias del partido (multi)
-            _inst_prev = [x.strip() for x in _v("instancias_partido", "").split("|") if x.strip()] if pa else []
-            st.markdown("**Instancias del Partido en que participa**")
-            cols_inst = st.columns(2)
-            for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
-                cols_inst[j % 2].checkbox(inst, value=(inst in _inst_prev), key=f"pa_inst_{j}_{sfx}")
+        # Instancias del partido (multi) — siempre visibles
+        _inst_prev = [x.strip() for x in _v("instancias_partido", "").split("|") if x.strip()] if pa else []
+        st.markdown("**Instancias del Partido en que participa**")
+        cols_inst = st.columns(2)
+        for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
+            cols_inst[j % 2].checkbox(inst, value=(inst in _inst_prev), key=f"pa_inst_{j}_{sfx}")
 
-            # Roles en el partido (multi)
-            _roles_prev = [x.strip() for x in _v("roles_partido", "").split("|") if x.strip()] if pa else []
-            st.markdown("**Rol(es) en el Partido**")
-            cols_rp = st.columns(2)
-            for j, rol in enumerate(_PA_ROLES_PARTIDO[1:]):
-                cols_rp[j % 2].checkbox(rol, value=(rol in _roles_prev), key=f"pa_rol_{j}_{sfx}")
+        # Roles en el partido (multi) — siempre visibles
+        _roles_prev = [x.strip() for x in _v("roles_partido", "").split("|") if x.strip()] if pa else []
+        st.markdown("**Rol(es) en el Partido**")
+        cols_rp = st.columns(2)
+        for j, rol in enumerate(_PA_ROLES_PARTIDO[1:]):
+            cols_rp[j % 2].checkbox(rol, value=(rol in _roles_prev), key=f"pa_rol_{j}_{sfx}")
 
-            col11, col12 = st.columns(2)
-            with col11:
-                st.selectbox("¿Tiene Consejería Nacional?", _SI_NO,
-                             index=_SI_NO.index(_v("consejeria_nacional")) if _v("consejeria_nacional") in _SI_NO else 0,
-                             key=f"pa_cons_nac_{sfx}")
-            _tiene_consejeria = st.session_state.get(f"pa_cons_nac_{sfx}", "Seleccione...")
-            if _tiene_consejeria == "SI":
-                _opts_cn = _PA_CONSEJERIA_NACIONAL
-                with col12:
-                    st.selectbox("Tipo de Consejería", _opts_cn,
-                                 index=_opts_cn.index(_v("tipo_consejeria")) if _v("tipo_consejeria") in _opts_cn else 0,
-                                 key=f"pa_tipo_cons_{sfx}")
+        col11, col12 = st.columns(2)
+        with col11:
+            st.selectbox("¿Tiene Consejería Nacional?", _SI_NO,
+                         index=_SI_NO.index(_v("consejeria_nacional")) if _v("consejeria_nacional") in _SI_NO else 0,
+                         key=f"pa_cons_nac_{sfx}")
+        _tiene_consejeria = st.session_state.get(f"pa_cons_nac_{sfx}", "Seleccione...")
+        if _tiene_consejeria == "SI":
+            _opts_cn = _PA_CONSEJERIA_NACIONAL
+            with col12:
+                st.selectbox("Tipo de Consejería", _opts_cn,
+                             index=_opts_cn.index(_v("tipo_consejeria")) if _v("tipo_consejeria") in _opts_cn else 0,
+                             key=f"pa_tipo_cons_{sfx}")
 
     # ── Otras Organizaciones ─────────────────────────────────────────────────
     st.selectbox("¿PARTICIPA DE ALGÚN TIPO DE ORGANIZACIÓN SOCIAL, POLÍTICA O INSTANCIA INSTITUCIONAL DIFERENTE A COMUNES?", _SI_NO,
@@ -335,28 +329,26 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
             if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
         ])
 
-    # Partido Comunes
+    # Partido Comunes — siempre se recogen todos los campos cuando aplica
     instancias_partido = ""
     roles_partido      = ""
     consejeria_nac     = ""
     tipo_consejeria    = ""
-    participa_comunes  = ""
+    participa_comunes  = "SI"  # implícito: si mostrar_cargo_comunes es True, pertenece al partido
     concejo_comunes    = ""
     if mostrar_cargo_comunes:
-        participa_comunes = st.session_state.get(f"pa_comunes_{sfx}", "Seleccione...")
-        concejo_comunes   = st.session_state.get(f"pa_concejo_{sfx}", "Seleccione...")
-        if participa_comunes == "SI":
-            instancias_partido = " | ".join([
-                inst for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:])
-                if st.session_state.get(f"pa_inst_{j}_{sfx}", False)
-            ])
-            roles_partido = " | ".join([
-                rol for j, rol in enumerate(_PA_ROLES_PARTIDO[1:])
-                if st.session_state.get(f"pa_rol_{j}_{sfx}", False)
-            ])
-            consejeria_nac  = st.session_state.get(f"pa_cons_nac_{sfx}", "Seleccione...")
-            if consejeria_nac == "SI":
-                tipo_consejeria = st.session_state.get(f"pa_tipo_cons_{sfx}", "Seleccione...")
+        concejo_comunes    = st.session_state.get(f"pa_concejo_{sfx}", "Seleccione...")
+        instancias_partido = " | ".join([
+            inst for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:])
+            if st.session_state.get(f"pa_inst_{j}_{sfx}", False)
+        ])
+        roles_partido = " | ".join([
+            rol for j, rol in enumerate(_PA_ROLES_PARTIDO[1:])
+            if st.session_state.get(f"pa_rol_{j}_{sfx}", False)
+        ])
+        consejeria_nac = st.session_state.get(f"pa_cons_nac_{sfx}", "Seleccione...")
+        if consejeria_nac == "SI":
+            tipo_consejeria = st.session_state.get(f"pa_tipo_cons_{sfx}", "Seleccione...")
 
     # Otras organizaciones
     participa_otras = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
