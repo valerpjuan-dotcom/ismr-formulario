@@ -442,3 +442,17 @@ _PA_CARGO_ELECCION = [
     "JUNTA DE ACCIÓN COMUNAL",
     "NINGUNO",
 ]
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HECHOS DE RIESGO — Actor Generador
+# ══════════════════════════════════════════════════════════════════════════════
+
+_TIPOS_ACTOR_GENERADOR = [
+    "GAO - GRUPO ARMADO ORGANIZADO",
+    "GAO R - GRUPO ARMADO ORGANIZADO RESIDUAL",
+    "GDO - GRUPO DELINCUENCIAL ORGANIZADO",
+    "GDCO - GRUPO DE DELINCUENCIA COMUN ORGANIZADA",
+    "CIVIL",
+    "ESTADO COLOMBIANO",
+    "NO REPORTA",
+]

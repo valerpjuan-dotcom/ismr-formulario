@@ -17,6 +17,8 @@ from data.diccionarios import (
     _PA_MACROCASOS_JEP, _PA_INSTANCIAS_PARTIDO, _PA_ROLES_PARTIDO,
     _PA_CONSEJERIA_NACIONAL, _PA_TIPO_ORG, _PA_AMBITO_ORG, _PA_ESCALA_ORG,
     _PA_CARGO_ELECCION,
+    # Hechos de Riesgo
+    _TIPOS_ACTOR_GENERADOR,
 )
 
 from configuration.settings import TAB_NOMBRES
@@ -1289,6 +1291,23 @@ def formulario_casos(tipo="individual"):
                         "MUNICIPIO DEL HECHO", _eh_mun_opts,
                         index=_eh_mun_idx, key=f"eh_municipio_{tipo}_{i}"
                     )
+                _eh_tipo_actor_val = hecho.get("tipo_actor", None)
+                _eh_tipo_actor_idx = _TIPOS_ACTOR_GENERADOR.index(_eh_tipo_actor_val) if _eh_tipo_actor_val in _TIPOS_ACTOR_GENERADOR else None
+                ec_tipo_actor, ec_actor_gen = st.columns(2)
+                with ec_tipo_actor:
+                    eh_tipo_actor = st.radio(
+                        "TIPO ACTOR GENERADOR HECHO DE RIESGO",
+                        _TIPOS_ACTOR_GENERADOR,
+                        index=_eh_tipo_actor_idx,
+                        key=f"eh_tipo_actor_{tipo}_{i}"
+                    )
+                with ec_actor_gen:
+                    st.caption("Escribir en mayúscula sostenida")
+                    eh_actor_generador = st.text_input(
+                        "ACTOR GENERADOR HECHO RIESGO",
+                        value=hecho.get("actor_generador", ""),
+                        key=f"eh_actor_gen_{tipo}_{i}"
+                    )
                 ec1, ec2 = st.columns(2)
                 with ec1:
                     eh_tipo  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
@@ -1319,6 +1338,8 @@ def formulario_casos(tipo="individual"):
                                 "tipo": eh_tipo, "fecha": _fecha_eh,
                                 "departamento": eh_departamento if eh_departamento != "Seleccione..." else "",
                                 "municipio": eh_municipio if eh_municipio != "Seleccione..." else "",
+                                "tipo_actor": eh_tipo_actor or "",
+                                "actor_generador": eh_actor_generador.strip(),
                                 "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
                                 "descripcion": eh_desc.strip()
                             }
@@ -1349,6 +1370,8 @@ def formulario_casos(tipo="individual"):
                     st.write(f"📍 **Lugar:** {hecho['lugar']}")
                 with c2:
                     st.write(f"👤 **Autor:** {hecho['autor']}")
+                    st.write(f"⚡ **Tipo Actor:** {hecho.get('tipo_actor', '')}")
+                    st.write(f"🔫 **Actor Generador:** {hecho.get('actor_generador', '')}")
                 st.write(f"📄 **Descripción:** {hecho['descripcion']}")
 
     with st.expander("➕ Agregar hecho de riesgo", expanded=len(st.session_state.hechos) == 0):
@@ -1393,6 +1416,20 @@ def formulario_casos(tipo="individual"):
                 _MUNICIPIOS.get(hecho_departamento, ["Seleccione..."]),
                 key=f"hf_municipio_{tipo}"
             )
+        col_hf_tipo_actor, col_hf_actor_gen = st.columns(2)
+        with col_hf_tipo_actor:
+            hecho_tipo_actor = st.radio(
+                "TIPO ACTOR GENERADOR HECHO DE RIESGO",
+                _TIPOS_ACTOR_GENERADOR,
+                index=None,
+                key=f"hf_tipo_actor_{tipo}"
+            )
+        with col_hf_actor_gen:
+            st.caption("Escribir en mayúscula sostenida")
+            hecho_actor_generador = st.text_input(
+                "ACTOR GENERADOR HECHO RIESGO",
+                key=f"hf_actor_gen_{tipo}"
+            )
         c1, c2 = st.columns(2)
         with c1:
             tipo_hecho  = st.selectbox("Tipo de Hecho *", [
@@ -1428,6 +1465,8 @@ def formulario_casos(tipo="individual"):
                     "tipo": tipo_hecho, "fecha": _fecha_hf,
                     "departamento": hecho_departamento if hecho_departamento != "Seleccione..." else "",
                     "municipio": hecho_municipio if hecho_municipio != "Seleccione..." else "",
+                    "tipo_actor": hecho_tipo_actor or "",
+                    "actor_generador": hecho_actor_generador.strip(),
                     "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
                     "descripcion": descripcion_hecho.strip()
                 })
@@ -1572,6 +1611,7 @@ def formulario_casos(tipo="individual"):
                             id_hecho, id_caso, ot_te.strip(),
                             hecho["tipo"], hecho["fecha"],
                             hecho.get("departamento", ""), hecho.get("municipio", ""),
+                            hecho.get("tipo_actor", ""), hecho.get("actor_generador", ""),
                             hecho["lugar"],
                             hecho["autor"], hecho["descripcion"],
                             st.session_state.nombre_completo, st.session_state.username
