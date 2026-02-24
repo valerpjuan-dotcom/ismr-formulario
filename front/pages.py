@@ -485,6 +485,7 @@ def formulario_casos(tipo="individual"):
                     st.session_state.antecedentes  = borrador.get("antecedentes", [])
                     st.session_state.perfiles_actuales = borrador.get("perfiles_actuales", [])
                     st.session_state.desplazamientos   = borrador.get("desplazamientos", [])
+                    st.session_state.verificaciones    = borrador.get("verificaciones", [])
                     st.session_state[_borrador_key] = True
                     st.rerun()
             with col_des:
