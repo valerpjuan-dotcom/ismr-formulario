@@ -241,51 +241,61 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                         st.session_state[_ic_key].pop(_ic_i)
                         st.rerun()
 
-        # Formulario para añadir nueva instancia
-        with st.expander("➕ Agregar instancia en Partido Comunes",
-                         expanded=len(st.session_state[_ic_key]) == 0):
-            _idx_no_reporta_new = len(_PA_INSTANCIAS_PARTIDO) - 2
-            st.markdown("**¿DE CUÁL INSTANCIA DE DIRECCIÓN O VIGILANCIA DEL PARTIDO COMUNES ES INTEGRANTE?**")
-            cols_inst_new = st.columns(2)
-            for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
-                cols_inst_new[_j % 2].checkbox(_inst_n, value=False, key=f"pa_inst_{_j}_{sfx}_new")
+        # Formulario para añadir nueva instancia (sin expander — no se permite anidar)
+        _ic_show_key = f"show_ic_form_{sfx}"
+        if _ic_show_key not in st.session_state:
+            st.session_state[_ic_show_key] = len(st.session_state[_ic_key]) == 0
 
-            _no_reporta_new = st.session_state.get(f"pa_inst_{_idx_no_reporta_new}_{sfx}_new", False)
-            if not _no_reporta_new:
-                st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
-                cols_rp_new = st.columns(2)
-                for _j, _rol_n in enumerate(_PA_ROLES_PARTIDO[1:]):
-                    cols_rp_new[_j % 2].checkbox(_rol_n, value=False, key=f"pa_rol_{_j}_{sfx}_new")
+        _ic_btn_label = "🔼 Ocultar formulario de instancia" if st.session_state[_ic_show_key] else "➕ Agregar instancia en Partido Comunes"
+        if st.button(_ic_btn_label, key=f"toggle_ic_{sfx}", use_container_width=True, type="secondary"):
+            st.session_state[_ic_show_key] = not st.session_state[_ic_show_key]
+            st.rerun()
 
-            col11_n, col12_n = st.columns(2)
-            with col11_n:
-                st.selectbox("ES INTEGRANTE DE CONSEJERÍA NACIONAL", _SI_NO,
-                             index=0, key=f"pa_cons_nac_{sfx}_new")
-            _tiene_cons_new = st.session_state.get(f"pa_cons_nac_{sfx}_new", "Seleccione...")
-            if _tiene_cons_new == "SI":
-                with col12_n:
-                    st.selectbox("¿CUÁL CONSEJERÍA?", _PA_CONSEJERIA_NACIONAL,
-                                 index=0, key=f"pa_tipo_cons_{sfx}_new")
+        if st.session_state[_ic_show_key]:
+            with st.container(border=True):
+                _idx_no_reporta_new = len(_PA_INSTANCIAS_PARTIDO) - 2
+                st.markdown("**¿DE CUÁL INSTANCIA DE DIRECCIÓN O VIGILANCIA DEL PARTIDO COMUNES ES INTEGRANTE?**")
+                cols_inst_new = st.columns(2)
+                for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
+                    cols_inst_new[_j % 2].checkbox(_inst_n, value=False, key=f"pa_inst_{_j}_{sfx}_new")
 
-            if st.button("➕ Agregar esta instancia", key=f"add_ic_{sfx}",
-                         use_container_width=True, type="secondary"):
-                _new_insts = " | ".join([
-                    _inst_n for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:])
-                    if st.session_state.get(f"pa_inst_{_j}_{sfx}_new", False)
-                ])
-                _new_roles = " | ".join([
-                    _rol_n for _j, _rol_n in enumerate(_PA_ROLES_PARTIDO[1:])
-                    if st.session_state.get(f"pa_rol_{_j}_{sfx}_new", False)
-                ])
-                _new_cons_nac  = st.session_state.get(f"pa_cons_nac_{sfx}_new", "Seleccione...")
-                _new_tipo_cons = st.session_state.get(f"pa_tipo_cons_{sfx}_new", "") if _new_cons_nac == "SI" else ""
-                st.session_state[_ic_key].append({
-                    "instancias_partido":  _new_insts,
-                    "roles_partido":       _new_roles,
-                    "consejeria_nacional": _new_cons_nac if _new_cons_nac != "Seleccione..." else "",
-                    "tipo_consejeria":     _new_tipo_cons if _new_tipo_cons != "Seleccione..." else "",
-                })
-                st.rerun()
+                _no_reporta_new = st.session_state.get(f"pa_inst_{_idx_no_reporta_new}_{sfx}_new", False)
+                if not _no_reporta_new:
+                    st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
+                    cols_rp_new = st.columns(2)
+                    for _j, _rol_n in enumerate(_PA_ROLES_PARTIDO[1:]):
+                        cols_rp_new[_j % 2].checkbox(_rol_n, value=False, key=f"pa_rol_{_j}_{sfx}_new")
+
+                col11_n, col12_n = st.columns(2)
+                with col11_n:
+                    st.selectbox("ES INTEGRANTE DE CONSEJERÍA NACIONAL", _SI_NO,
+                                 index=0, key=f"pa_cons_nac_{sfx}_new")
+                _tiene_cons_new = st.session_state.get(f"pa_cons_nac_{sfx}_new", "Seleccione...")
+                if _tiene_cons_new == "SI":
+                    with col12_n:
+                        st.selectbox("¿CUÁL CONSEJERÍA?", _PA_CONSEJERIA_NACIONAL,
+                                     index=0, key=f"pa_tipo_cons_{sfx}_new")
+
+                if st.button("✅ Guardar instancia", key=f"add_ic_{sfx}",
+                             use_container_width=True, type="primary"):
+                    _new_insts = " | ".join([
+                        _inst_n for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:])
+                        if st.session_state.get(f"pa_inst_{_j}_{sfx}_new", False)
+                    ])
+                    _new_roles = " | ".join([
+                        _rol_n for _j, _rol_n in enumerate(_PA_ROLES_PARTIDO[1:])
+                        if st.session_state.get(f"pa_rol_{_j}_{sfx}_new", False)
+                    ])
+                    _new_cons_nac  = st.session_state.get(f"pa_cons_nac_{sfx}_new", "Seleccione...")
+                    _new_tipo_cons = st.session_state.get(f"pa_tipo_cons_{sfx}_new", "") if _new_cons_nac == "SI" else ""
+                    st.session_state[_ic_key].append({
+                        "instancias_partido":  _new_insts,
+                        "roles_partido":       _new_roles,
+                        "consejeria_nacional": _new_cons_nac if _new_cons_nac != "Seleccione..." else "",
+                        "tipo_consejeria":     _new_tipo_cons if _new_tipo_cons != "Seleccione..." else "",
+                    })
+                    st.session_state[_ic_show_key] = False
+                    st.rerun()
 
 
     # ── Otras Organizaciones (multiregistro) ────────────────────────────────
@@ -318,65 +328,75 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                         st.session_state[_oo_key].pop(_oo_i)
                         st.rerun()
 
-        # Formulario para añadir nueva organización
-        with st.expander("➕ Agregar organización / instancia",
-                         expanded=len(st.session_state[_oo_key]) == 0):
-            col_ot1_n, col_ot2_n = st.columns(2)
-            with col_ot1_n:
-                st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG,
-                             index=0, key=f"pa_tipo_org_{sfx}_new")
-                st.text_input("NOMBRE ORGANIZACIÓN", value="", key=f"pa_nombre_org_{sfx}_new")
-            with col_ot2_n:
-                st.selectbox("ESCALA", _PA_ESCALA_ORG,
-                             index=0, key=f"pa_escala_org_{sfx}_new")
-                st.text_input("¿QUÉ ROL EJERCE EN DICHA INSTANCIA?", value="", key=f"pa_rol_org_{sfx}_new")
+        # Formulario para añadir nueva organización (sin expander — no se permite anidar)
+        _oo_show_key = f"show_oo_form_{sfx}"
+        if _oo_show_key not in st.session_state:
+            st.session_state[_oo_show_key] = len(st.session_state[_oo_key]) == 0
 
-            col_dep_on, col_mun_on = st.columns(2)
-            _dep_org_opts_n = ["Seleccione..."] + list(_MUNICIPIOS.keys())
-            with col_dep_on:
-                st.selectbox("DEPARTAMENTO", _dep_org_opts_n,
-                             index=0, key=f"pa_dep_org_{sfx}_new")
-            with col_mun_on:
-                _dep_sel_n  = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
-                _mun_opts_n = _MUNICIPIOS.get(_dep_sel_n, ["Seleccione..."])
-                st.selectbox("MUNICIPIO", _mun_opts_n,
-                             index=0, key=f"pa_mun_org_{sfx}_new")
+        _oo_btn_label = "🔼 Ocultar formulario de organización" if st.session_state[_oo_show_key] else "➕ Agregar organización / instancia"
+        if st.button(_oo_btn_label, key=f"toggle_oo_{sfx}", use_container_width=True, type="secondary"):
+            st.session_state[_oo_show_key] = not st.session_state[_oo_show_key]
+            st.rerun()
 
-            col_ai_n, col_af_n = st.columns(2)
-            with col_ai_n:
-                st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
-                                value=None, step=1, key=f"pa_anio_ini_org_{sfx}_new")
-            with col_af_n:
-                st.text_input("AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
-                              value="", key=f"pa_anio_fin_org_{sfx}_new")
+        if st.session_state[_oo_show_key]:
+            with st.container(border=True):
+                col_ot1_n, col_ot2_n = st.columns(2)
+                with col_ot1_n:
+                    st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG,
+                                 index=0, key=f"pa_tipo_org_{sfx}_new")
+                    st.text_input("NOMBRE ORGANIZACIÓN", value="", key=f"pa_nombre_org_{sfx}_new")
+                with col_ot2_n:
+                    st.selectbox("ESCALA", _PA_ESCALA_ORG,
+                                 index=0, key=f"pa_escala_org_{sfx}_new")
+                    st.text_input("¿QUÉ ROL EJERCE EN DICHA INSTANCIA?", value="", key=f"pa_rol_org_{sfx}_new")
 
-            _opts_amb_n = ["Seleccione..."] + _PA_AMBITO_ORG
-            st.selectbox("**ÁMBITO DE LA ORGANIZACIÓN**", _opts_amb_n,
-                         index=0, key=f"pa_amb_{sfx}_new")
+                col_dep_on, col_mun_on = st.columns(2)
+                _dep_org_opts_n = ["Seleccione..."] + list(_MUNICIPIOS.keys())
+                with col_dep_on:
+                    st.selectbox("DEPARTAMENTO", _dep_org_opts_n,
+                                 index=0, key=f"pa_dep_org_{sfx}_new")
+                with col_mun_on:
+                    _dep_sel_n  = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                    _mun_opts_n = _MUNICIPIOS.get(_dep_sel_n, ["Seleccione..."])
+                    st.selectbox("MUNICIPIO", _mun_opts_n,
+                                 index=0, key=f"pa_mun_org_{sfx}_new")
 
-            if st.button("➕ Agregar esta organización", key=f"add_oo_{sfx}",
-                         use_container_width=True, type="secondary"):
-                _oo_tipo   = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
-                _oo_nombre = st.session_state.get(f"pa_nombre_org_{sfx}_new", "")
-                _oo_escala = st.session_state.get(f"pa_escala_org_{sfx}_new", "Seleccione...")
-                _oo_rol    = st.session_state.get(f"pa_rol_org_{sfx}_new", "")
-                _oo_dep    = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
-                _oo_mun    = st.session_state.get(f"pa_mun_org_{sfx}_new", "Seleccione...")
-                _oo_ai     = st.session_state.get(f"pa_anio_ini_org_{sfx}_new")
-                _oo_af     = st.session_state.get(f"pa_anio_fin_org_{sfx}_new", "")
-                _oo_amb    = st.session_state.get(f"pa_amb_{sfx}_new", "Seleccione...")
-                st.session_state[_oo_key].append({
-                    "tipo_org":        _oo_tipo   if _oo_tipo   != "Seleccione..." else "",
-                    "nombre_org":      _oo_nombre,
-                    "escala_org":      _oo_escala if _oo_escala != "Seleccione..." else "",
-                    "rol_org":         _oo_rol,
-                    "departamento_org": _oo_dep   if _oo_dep    != "Seleccione..." else "",
-                    "municipio_org":   _oo_mun    if _oo_mun    != "Seleccione..." else "",
-                    "anio_inicio_org": str(int(_oo_ai)) if _oo_ai is not None else "",
-                    "anio_fin_org":    str(_oo_af),
-                    "ambito_org":      _oo_amb    if _oo_amb    != "Seleccione..." else "",
-                })
-                st.rerun()
+                col_ai_n, col_af_n = st.columns(2)
+                with col_ai_n:
+                    st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
+                                    value=None, step=1, key=f"pa_anio_ini_org_{sfx}_new")
+                with col_af_n:
+                    st.text_input("AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
+                                  value="", key=f"pa_anio_fin_org_{sfx}_new")
+
+                _opts_amb_n = ["Seleccione..."] + _PA_AMBITO_ORG
+                st.selectbox("**ÁMBITO DE LA ORGANIZACIÓN**", _opts_amb_n,
+                             index=0, key=f"pa_amb_{sfx}_new")
+
+                if st.button("✅ Guardar organización", key=f"add_oo_{sfx}",
+                             use_container_width=True, type="primary"):
+                    _oo_tipo   = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
+                    _oo_nombre = st.session_state.get(f"pa_nombre_org_{sfx}_new", "")
+                    _oo_escala = st.session_state.get(f"pa_escala_org_{sfx}_new", "Seleccione...")
+                    _oo_rol    = st.session_state.get(f"pa_rol_org_{sfx}_new", "")
+                    _oo_dep    = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                    _oo_mun    = st.session_state.get(f"pa_mun_org_{sfx}_new", "Seleccione...")
+                    _oo_ai     = st.session_state.get(f"pa_anio_ini_org_{sfx}_new")
+                    _oo_af     = st.session_state.get(f"pa_anio_fin_org_{sfx}_new", "")
+                    _oo_amb    = st.session_state.get(f"pa_amb_{sfx}_new", "Seleccione...")
+                    st.session_state[_oo_key].append({
+                        "tipo_org":         _oo_tipo   if _oo_tipo   != "Seleccione..." else "",
+                        "nombre_org":       _oo_nombre,
+                        "escala_org":       _oo_escala if _oo_escala != "Seleccione..." else "",
+                        "rol_org":          _oo_rol,
+                        "departamento_org": _oo_dep    if _oo_dep    != "Seleccione..." else "",
+                        "municipio_org":    _oo_mun    if _oo_mun    != "Seleccione..." else "",
+                        "anio_inicio_org":  str(int(_oo_ai)) if _oo_ai is not None else "",
+                        "anio_fin_org":     str(_oo_af),
+                        "ambito_org":       _oo_amb    if _oo_amb    != "Seleccione..." else "",
+                    })
+                    st.session_state[_oo_show_key] = False
+                    st.rerun()
 
 
     # ── Cargo de elección popular ─────────────────────────────────────────────
