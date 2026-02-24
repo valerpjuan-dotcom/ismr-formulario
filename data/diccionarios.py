@@ -551,3 +551,24 @@ _DESP_DEPARTAMENTOS = [
     "SANTANDER", "SUCRE", "TOLIMA", "VALLE DEL CAUCA", "VAUPÉS", "VICHADA",
     "BOGOTÁ D.C.", "Área en Litigio Cauca-Huila",
 ]
+
+# ══════════════════════════════════════════════════════════════════════════════
+# VERIFICACIONES
+# ══════════════════════════════════════════════════════════════════════════════
+
+_FUENTES_VERIFICACION = [
+    "Seleccione...",
+    "TERCEROS",
+    "ONG",
+    "INSTITUCION DEL ESTADO COLOMBIANO",
+    "ORGANIZACIÓN INTERNACIONAL",
+    "NO REPORTA",
+]
+
+_VER_OPCIONES = [
+    "Seleccione...",
+    "SI",
+    "PARCIALMENTE",
+    "NIEGA",
+    "NO REPORTA",
+]

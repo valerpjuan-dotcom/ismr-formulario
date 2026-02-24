@@ -51,6 +51,13 @@ _CABECERAS_DESPLAZAMIENTOS = [
     "Frecuencia", "Tipo de Via",
     "Analista", "Usuario Analista"
 ]
+_CABECERAS_VERIFICACIONES = [
+    "ID_Verificacion", "ID_Caso", "OT-TE",
+    "Fuente Verificacion", "Nombre Fuente",
+    "V Hechos Riesgo", "V Motivacion Amenaza",
+    "V Perfil Antiguo", "V Perfil Actual",
+    "Analista", "Usuario Analista"
+]
 
 _CABECERAS_PERFILES_ACTUALES = [
     "ID_Perfil_Actual", "ID_Caso", "OT-TE",
@@ -162,7 +169,7 @@ def conectar_sheet_casos(tipo="individual"):
     """
     db = _conectar_db()
     if db is None:
-        return None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None
 
     try:
         tab_casos              = TAB_NOMBRES[tipo]["casos"]
@@ -171,6 +178,7 @@ def conectar_sheet_casos(tipo="individual"):
         tab_antecedentes       = TAB_NOMBRES[tipo]["antecedentes"]
         tab_perfiles_actuales  = TAB_NOMBRES[tipo]["perfiles_actuales"]
         tab_desplazamientos    = TAB_NOMBRES[tipo].get("desplazamientos", f"desplazamientos_{tipo}")
+        tab_verificaciones     = TAB_NOMBRES[tipo]["verificaciones"]
 
         nombre_col_casos              = f"casos_{tab_casos.lower()}"
         nombre_col_hechos             = f"hechos_{tab_hechos.lower()}"
@@ -178,6 +186,7 @@ def conectar_sheet_casos(tipo="individual"):
         nombre_col_antecedentes       = f"antecedentes_{tab_antecedentes.lower()}"
         nombre_col_perfiles_actuales  = f"perfiles_actuales_{tab_perfiles_actuales.lower()}"
         nombre_col_desplazamientos    = f"desplazamientos_{tab_desplazamientos.lower()}"
+        nombre_col_verificaciones     = f"verificaciones_{tab_verificaciones.lower()}"
 
         col_casos             = db[nombre_col_casos]
         col_hechos            = db[nombre_col_hechos]
@@ -185,6 +194,7 @@ def conectar_sheet_casos(tipo="individual"):
         col_antecedentes      = db[nombre_col_antecedentes]
         col_perfiles_actuales = db[nombre_col_perfiles_actuales]
         col_desplazamientos   = db[nombre_col_desplazamientos]
+        col_verificaciones    = db[nombre_col_verificaciones]
 
         # Índices — idempotentes, no fallan si ya existen
         col_casos.create_index([("OT-TE", ASCENDING)], unique=True, background=True)
@@ -193,6 +203,7 @@ def conectar_sheet_casos(tipo="individual"):
         col_antecedentes.create_index([("ID_Caso", ASCENDING)], background=True)
         col_perfiles_actuales.create_index([("ID_Caso", ASCENDING)], background=True)
         col_desplazamientos.create_index([("ID_Caso", ASCENDING)], background=True)
+        col_verificaciones.create_index([("ID_Caso", ASCENDING)], background=True)
 
         proxy_casos             = WorksheetProxy(col_casos,             _CABECERAS_CASOS)
         proxy_hechos            = WorksheetProxy(col_hechos,            _CABECERAS_HECHOS)
@@ -200,14 +211,15 @@ def conectar_sheet_casos(tipo="individual"):
         proxy_antecedentes      = WorksheetProxy(col_antecedentes,      _CABECERAS_ANTECEDENTES)
         proxy_perfiles_actuales = WorksheetProxy(col_perfiles_actuales, _CABECERAS_PERFILES_ACTUALES)
         proxy_desplazamientos   = WorksheetProxy(col_desplazamientos,   _CABECERAS_DESPLAZAMIENTOS)
+        proxy_verificaciones    = WorksheetProxy(col_verificaciones,    _CABECERAS_VERIFICACIONES)
 
         uri = st.secrets["mongodb"]["uri"]
         db_url = uri.split("@")[-1] if "@" in uri else uri  # oculta credenciales
 
-        return proxy_casos, proxy_hechos, proxy_perfiles, proxy_antecedentes, proxy_perfiles_actuales, proxy_desplazamientos, db_url
+        return proxy_casos, proxy_hechos, proxy_perfiles, proxy_antecedentes, proxy_perfiles_actuales, proxy_desplazamientos, proxy_verificaciones, db_url
     except Exception as e:
         st.error(f"Error al conectar colecciones MongoDB ({tipo}): {str(e)}")
-        return None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None
 
 
 # ── Proxy de Worksheet ────────────────────────────────────────────────────────

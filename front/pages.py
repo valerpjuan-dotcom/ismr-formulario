@@ -22,6 +22,8 @@ from data.diccionarios import (
     # Desplazamientos
     _DESP_MOTIVOS, _DESP_MEDIOS_TRANSPORTE, _DESP_FRECUENCIAS,
     _DESP_TIPOS_VIA, _DESP_DEPARTAMENTOS,
+    # Verificaciones
+    _FUENTES_VERIFICACION, _VER_OPCIONES,
 )
 
 from configuration.settings import TAB_NOMBRES
@@ -427,7 +429,7 @@ def formulario_casos(tipo="individual"):
     titulo            = "Formulario Individual" if es_individual else "Formulario Colectivo"
     nombre_hoja_casos = TAB_NOMBRES[tipo]["casos"]
 
-    hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes, hoja_perfiles_actuales, hoja_desplazamientos, sheet_url = conectar_sheet_casos(tipo)
+    hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes, hoja_perfiles_actuales, hoja_desplazamientos, hoja_verificaciones, sheet_url = conectar_sheet_casos(tipo)
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets"); return
 
@@ -523,11 +525,26 @@ def formulario_casos(tipo="individual"):
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         desp_guardados += 1
+                    ver_guardados = 0
+                    for ver in st.session_state.verificaciones:
+                        id_ver = obtener_siguiente_id(hoja_verificaciones)
+                        hoja_verificaciones.append_row([
+                            id_ver, id_caso, ot_te.strip(),
+                            ver.get("fuente", ""),
+                            ver.get("nombre_fuente", ""),
+                            ver.get("v_hechos_riesgo", ""),
+                            ver.get("v_motivacion_amenaza", ""),
+                            ver.get("v_perfil_antiguo", ""),
+                            ver.get("v_perfil_actual", ""),
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+                        ver_guardados += 1
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
                     st.session_state.antecedentes = []
                     st.session_state.perfiles_actuales = []
                     st.session_state.desplazamientos = []
+                    st.session_state.verificaciones = []
                     st.session_state[_borrador_key] = True
                     st.rerun()
             st.stop()
@@ -1746,6 +1763,161 @@ def formulario_casos(tipo="individual"):
                 })
                 st.success("✅ Hecho agregado"); st.rerun()
 
+    # ── Verificaciones ────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("✅ Verificaciones")
+    st.caption("Opcional. Agrega una o varias verificaciones asociadas a este caso.")
+
+    _edit_ver_key = f"editando_verificacion_{tipo}"
+
+    for i, ver in enumerate(st.session_state.verificaciones):
+        with st.container(border=True):
+            if st.session_state.get(_edit_ver_key) == i:
+                # ── Modo edición ──────────────────────────────────────────────
+                st.markdown(f"**✏️ Editando Verificación #{i+1}**")
+                # Fila 1: Fuente de verificación
+                _ev_fuente_val = ver.get("fuente", "Seleccione...")
+                _ev_fuente_idx = _FUENTES_VERIFICACION.index(_ev_fuente_val) if _ev_fuente_val in _FUENTES_VERIFICACION else 0
+                ev_fuente = st.selectbox(
+                    "FUENTE DE VERIFICACIÓN",
+                    _FUENTES_VERIFICACION,
+                    index=_ev_fuente_idx,
+                    key=f"ev_fuente_{tipo}_{i}"
+                )
+                # Fila 2: Nombre fuente
+                ev_nombre_fuente = st.text_input(
+                    "SEÑALAR NOMBRE COMPLETO FUENTE DE VERIFICACIÓN",
+                    value=ver.get("nombre_fuente", ""),
+                    key=f"ev_nombre_{tipo}_{i}"
+                )
+                # Fila 3: Verificación Hechos de Riesgo | Motivación Amenaza
+                ev_col1, ev_col2 = st.columns(2)
+                with ev_col1:
+                    _ev_vhr_val = ver.get("v_hechos_riesgo", "Seleccione...")
+                    ev_v_hechos = st.selectbox(
+                        "VERIFICACIÓN HECHOS DE RIESGO",
+                        _VER_OPCIONES,
+                        index=_VER_OPCIONES.index(_ev_vhr_val) if _ev_vhr_val in _VER_OPCIONES else 0,
+                        key=f"ev_vhr_{tipo}_{i}"
+                    )
+                with ev_col2:
+                    _ev_vma_val = ver.get("v_motivacion_amenaza", "Seleccione...")
+                    ev_v_motivacion = st.selectbox(
+                        "VERIFICACIÓN MOTIVACIÓN AMENAZA",
+                        _VER_OPCIONES,
+                        index=_VER_OPCIONES.index(_ev_vma_val) if _ev_vma_val in _VER_OPCIONES else 0,
+                        key=f"ev_vma_{tipo}_{i}"
+                    )
+                # Fila 4: Verificación Perfil Antiguo | Verificación Perfil Actual
+                ev_col3, ev_col4 = st.columns(2)
+                with ev_col3:
+                    _ev_vpa_val = ver.get("v_perfil_antiguo", "Seleccione...")
+                    ev_v_perfil_antiguo = st.selectbox(
+                        "VERIFICACIÓN PERFIL ANTIGUO",
+                        _VER_OPCIONES,
+                        index=_VER_OPCIONES.index(_ev_vpa_val) if _ev_vpa_val in _VER_OPCIONES else 0,
+                        key=f"ev_vpa_{tipo}_{i}"
+                    )
+                with ev_col4:
+                    _ev_vpac_val = ver.get("v_perfil_actual", "Seleccione...")
+                    ev_v_perfil_actual = st.selectbox(
+                        "VERIFICACIÓN PERFIL ACTUAL",
+                        _VER_OPCIONES,
+                        index=_VER_OPCIONES.index(_ev_vpac_val) if _ev_vpac_val in _VER_OPCIONES else 0,
+                        key=f"ev_vpac_{tipo}_{i}"
+                    )
+                col_sv, col_cv = st.columns(2)
+                with col_sv:
+                    if st.button("💾 Guardar cambios", key=f"ev_save_{tipo}_{i}", type="primary", use_container_width=True):
+                        st.session_state.verificaciones[i] = {
+                            "fuente": ev_fuente if ev_fuente != "Seleccione..." else "",
+                            "nombre_fuente": ev_nombre_fuente.strip(),
+                            "v_hechos_riesgo": ev_v_hechos if ev_v_hechos != "Seleccione..." else "",
+                            "v_motivacion_amenaza": ev_v_motivacion if ev_v_motivacion != "Seleccione..." else "",
+                            "v_perfil_antiguo": ev_v_perfil_antiguo if ev_v_perfil_antiguo != "Seleccione..." else "",
+                            "v_perfil_actual": ev_v_perfil_actual if ev_v_perfil_actual != "Seleccione..." else "",
+                        }
+                        st.session_state[_edit_ver_key] = None
+                        st.rerun()
+                with col_cv:
+                    if st.button("✖ Cancelar", key=f"ev_cancel_{tipo}_{i}", type="secondary", use_container_width=True):
+                        st.session_state[_edit_ver_key] = None
+                        st.rerun()
+            else:
+                # ── Modo lectura ──────────────────────────────────────────────
+                col_vt, col_ve, col_vd = st.columns([4, 1, 1])
+                with col_vt: st.markdown(f"**Verificación #{i+1} — {ver.get('fuente', '')}**")
+                with col_ve:
+                    if st.button("✏️", key=f"edit_v_{tipo}_{i}", help="Editar"):
+                        st.session_state[_edit_ver_key] = i
+                        st.rerun()
+                with col_vd:
+                    if st.button("🗑️", key=f"del_v_{tipo}_{i}", help="Eliminar"):
+                        st.session_state.verificaciones.pop(i)
+                        st.session_state[_edit_ver_key] = None
+                        st.rerun()
+                vc1, vc2 = st.columns(2)
+                with vc1:
+                    st.write(f"🏢 **Fuente:** {ver.get('fuente', '')}")
+                    st.write(f"👤 **Nombre Fuente:** {ver.get('nombre_fuente', '')}")
+                    st.write(f"⚠️ **V. Hechos Riesgo:** {ver.get('v_hechos_riesgo', '')}")
+                    st.write(f"💬 **V. Motivación Amenaza:** {ver.get('v_motivacion_amenaza', '')}")
+                with vc2:
+                    st.write(f"📋 **V. Perfil Antiguo:** {ver.get('v_perfil_antiguo', '')}")
+                    st.write(f"🎯 **V. Perfil Actual:** {ver.get('v_perfil_actual', '')}")
+
+    with st.expander("➕ Agregar verificación", expanded=len(st.session_state.verificaciones) == 0):
+        # Fila 1
+        nv_fuente = st.selectbox(
+            "FUENTE DE VERIFICACIÓN",
+            _FUENTES_VERIFICACION,
+            key=f"nv_fuente_{tipo}"
+        )
+        # Fila 2
+        nv_nombre_fuente = st.text_input(
+            "SEÑALAR NOMBRE COMPLETO FUENTE DE VERIFICACIÓN",
+            key=f"nv_nombre_{tipo}"
+        )
+        # Fila 3
+        nv_col1, nv_col2 = st.columns(2)
+        with nv_col1:
+            nv_v_hechos = st.selectbox(
+                "VERIFICACIÓN HECHOS DE RIESGO",
+                _VER_OPCIONES,
+                key=f"nv_vhr_{tipo}"
+            )
+        with nv_col2:
+            nv_v_motivacion = st.selectbox(
+                "VERIFICACIÓN MOTIVACIÓN AMENAZA",
+                _VER_OPCIONES,
+                key=f"nv_vma_{tipo}"
+            )
+        # Fila 4
+        nv_col3, nv_col4 = st.columns(2)
+        with nv_col3:
+            nv_v_perfil_antiguo = st.selectbox(
+                "VERIFICACIÓN PERFIL ANTIGUO",
+                _VER_OPCIONES,
+                key=f"nv_vpa_{tipo}"
+            )
+        with nv_col4:
+            nv_v_perfil_actual = st.selectbox(
+                "VERIFICACIÓN PERFIL ACTUAL",
+                _VER_OPCIONES,
+                key=f"nv_vpac_{tipo}"
+            )
+        st.markdown("")
+        if st.button("➕ Agregar esta verificación", use_container_width=True, key=f"btn_add_ver_{tipo}", type="secondary"):
+            st.session_state.verificaciones.append({
+                "fuente": nv_fuente if nv_fuente != "Seleccione..." else "",
+                "nombre_fuente": nv_nombre_fuente.strip(),
+                "v_hechos_riesgo": nv_v_hechos if nv_v_hechos != "Seleccione..." else "",
+                "v_motivacion_amenaza": nv_v_motivacion if nv_v_motivacion != "Seleccione..." else "",
+                "v_perfil_antiguo": nv_v_perfil_antiguo if nv_v_perfil_antiguo != "Seleccione..." else "",
+                "v_perfil_actual": nv_v_perfil_actual if nv_v_perfil_actual != "Seleccione..." else "",
+            })
+            st.success("✅ Verificación agregada"); st.rerun()
+
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
     with col_borrador:
@@ -1795,6 +1967,7 @@ def formulario_casos(tipo="individual"):
                 "antecedentes":     st.session_state.get("antecedentes", []),
                 "perfiles_actuales": st.session_state.get("perfiles_actuales", []),
                 "desplazamientos":   st.session_state.get("desplazamientos", []),
+                "verificaciones":    st.session_state.get("verificaciones", []),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
@@ -1978,11 +2151,26 @@ def formulario_casos(tipo="individual"):
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         desp_guardados += 1
+                    ver_guardados = 0
+                    for ver in st.session_state.verificaciones:
+                        id_ver = obtener_siguiente_id(hoja_verificaciones)
+                        hoja_verificaciones.append_row([
+                            id_ver, id_caso, ot_te.strip(),
+                            ver.get("fuente", ""),
+                            ver.get("nombre_fuente", ""),
+                            ver.get("v_hechos_riesgo", ""),
+                            ver.get("v_motivacion_amenaza", ""),
+                            ver.get("v_perfil_antiguo", ""),
+                            ver.get("v_perfil_actual", ""),
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+                        ver_guardados += 1
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
                     st.session_state.antecedentes = []
                     st.session_state.perfiles_actuales = []
                     st.session_state.desplazamientos = []
+                    st.session_state.verificaciones = []
                     eliminar_borrador(st.session_state.username, tipo)
                     st.session_state[f"borrador_cargado_{tipo}"] = False
                     st.success(f"✅ Caso **{ot_te}** registrado en {label_badge}!")
@@ -1990,6 +2178,7 @@ def formulario_casos(tipo="individual"):
                     if perfiles_guardados      > 0: st.info(f"🧑‍🤝‍🧑 {perfiles_guardados} perfil(es) registrados")
                     if antecedentes_guardados  > 0: st.info(f"📁 {antecedentes_guardados} antecedente(s) registrados")
                     if desp_guardados          > 0: st.info(f"🚗 {desp_guardados} desplazamiento(s) registrados")
+                    if ver_guardados           > 0: st.info(f"✅ {ver_guardados} verificación(es) registradas")
                     st.balloons()
                     st.info(f"""
                     **Resumen:**
