@@ -1814,15 +1814,19 @@ def formulario_casos(tipo="individual"):
                 if ev_v_hechos == "SI":
                     ev_lugar_col, ev_actor_col = st.columns(2)
                     with ev_lugar_col:
-                        ev_v_lugar = st.text_input(
+                        _ev_vlhr_val = ver.get("v_lugar_hechos", "Seleccione...")
+                        ev_v_lugar = st.selectbox(
                             "V. LUGAR HECHOS DE RIESGO",
-                            value=ver.get("v_lugar_hechos", ""),
+                            _VER_OPCIONES,
+                            index=_VER_OPCIONES.index(_ev_vlhr_val) if _ev_vlhr_val in _VER_OPCIONES else 0,
                             key=f"ev_vlhr_{tipo}_{i}"
                         )
                     with ev_actor_col:
-                        ev_v_actor = st.text_input(
+                        _ev_vahr_val = ver.get("v_actor_hechos", "Seleccione...")
+                        ev_v_actor = st.selectbox(
                             "V. ACTOR HECHOS DE RIESGO",
-                            value=ver.get("v_actor_hechos", ""),
+                            _VER_OPCIONES,
+                            index=_VER_OPCIONES.index(_ev_vahr_val) if _ev_vahr_val in _VER_OPCIONES else 0,
                             key=f"ev_vahr_{tipo}_{i}"
                         )
                 else:
@@ -1853,8 +1857,8 @@ def formulario_casos(tipo="individual"):
                             "fuente": ev_fuente if ev_fuente != "Seleccione..." else "",
                             "nombre_fuente": ev_nombre_fuente.strip(),
                             "v_hechos_riesgo": ev_v_hechos if ev_v_hechos != "Seleccione..." else "",
-                            "v_lugar_hechos": ev_v_lugar.strip(),
-                            "v_actor_hechos": ev_v_actor.strip(),
+                            "v_lugar_hechos": ev_v_lugar if ev_v_lugar != "Seleccione..." else "",
+                            "v_actor_hechos": ev_v_actor if ev_v_actor != "Seleccione..." else "",
                             "v_motivacion_amenaza": ev_v_motivacion if ev_v_motivacion != "Seleccione..." else "",
                             "v_perfil_antiguo": ev_v_perfil_antiguo if ev_v_perfil_antiguo != "Seleccione..." else "",
                             "v_perfil_actual": ev_v_perfil_actual if ev_v_perfil_actual != "Seleccione..." else "",
@@ -1921,13 +1925,15 @@ def formulario_casos(tipo="individual"):
         if nv_v_hechos == "SI":
             nv_lugar_col, nv_actor_col = st.columns(2)
             with nv_lugar_col:
-                nv_v_lugar = st.text_input(
+                nv_v_lugar = st.selectbox(
                     "V. LUGAR HECHOS DE RIESGO",
+                    _VER_OPCIONES,
                     key=f"nv_vlhr_{tipo}"
                 )
             with nv_actor_col:
-                nv_v_actor = st.text_input(
+                nv_v_actor = st.selectbox(
                     "V. ACTOR HECHOS DE RIESGO",
+                    _VER_OPCIONES,
                     key=f"nv_vahr_{tipo}"
                 )
         else:
@@ -1953,8 +1959,8 @@ def formulario_casos(tipo="individual"):
                 "fuente": nv_fuente if nv_fuente != "Seleccione..." else "",
                 "nombre_fuente": nv_nombre_fuente.strip(),
                 "v_hechos_riesgo": nv_v_hechos if nv_v_hechos != "Seleccione..." else "",
-                "v_lugar_hechos": nv_v_lugar.strip(),
-                "v_actor_hechos": nv_v_actor.strip(),
+                "v_lugar_hechos": nv_v_lugar if nv_v_lugar != "Seleccione..." else "",
+                "v_actor_hechos": nv_v_actor if nv_v_actor != "Seleccione..." else "",
                 "v_motivacion_amenaza": nv_v_motivacion if nv_v_motivacion != "Seleccione..." else "",
                 "v_perfil_antiguo": nv_v_perfil_antiguo if nv_v_perfil_antiguo != "Seleccione..." else "",
                 "v_perfil_actual": nv_v_perfil_actual if nv_v_perfil_actual != "Seleccione..." else "",
