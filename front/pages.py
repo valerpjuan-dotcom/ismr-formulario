@@ -1951,7 +1951,7 @@ def panel_visualizacion():
     tab_ind, tab_col = st.tabs(["👤 Individual", "👥 Colectivo"])
     for tab, tipo in [(tab_ind, "individual"), (tab_col, "colectivo")]:
         with tab:
-            hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes_v, hoja_perfiles_actuales_v, sheet_url = conectar_sheet_casos(tipo)
+            hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes_v, hoja_perfiles_actuales_v, hoja_desplazamientos_v, sheet_url = conectar_sheet_casos(tipo)
             if hoja_casos is None: st.error(f"No se pudo conectar a la hoja {tipo}"); continue
 
             sub1, sub2, sub3, sub4, sub5 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo", "📁 Antecedentes", "🎯 Perfil Actual"])
