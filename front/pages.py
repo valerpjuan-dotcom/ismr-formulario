@@ -218,95 +218,166 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         st.text_input("¿A QUÉ CONSEJO LOCAL-MUNICIPAL ESTÁ VINCULADO?",
                       value=_v("concejo_comunes", ""), key=f"pa_concejo_{sfx}")
 
-        # Instancias del partido (multi) — siempre visibles
-        _inst_prev = [x.strip() for x in _v("instancias_partido", "").split("|") if x.strip()] if pa else []
-        st.markdown("**¿DE CUÁL INSTANCIA DE DIRECCIÓN O VIGILANCIA DEL PARTIDO COMUNES ES INTEGRANTE?**")
-        cols_inst = st.columns(2)
-        # El índice de "NO REPORTA" en _PA_INSTANCIAS_PARTIDO[1:] es el último
-        _idx_no_reporta = len(_PA_INSTANCIAS_PARTIDO) - 2  # descontando "Seleccione..."
-        for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
-            cols_inst[j % 2].checkbox(inst, value=(inst in _inst_prev), key=f"pa_inst_{j}_{sfx}")
+        # ── Multiregistro: Instancias / Roles en el Partido Comunes ──────────
+        _ic_key = f"instancias_comunes_temp_{sfx}"
+        # Inicializar lista temporal desde el perfil existente o vacía
+        if _ic_key not in st.session_state:
+            st.session_state[_ic_key] = list(_v("instancias_comunes", []) or [])
 
-        # Detectar si "NO REPORTA" está marcado
-        _no_reporta_marcado = st.session_state.get(f"pa_inst_{_idx_no_reporta}_{sfx}", False)
+        st.markdown("**PARTICIPACIÓN EN INSTANCIAS POLÍTICAS, SOCIALES O INSTITUCIONALES — PARTIDO COMUNES**")
 
-        # Roles en el partido (multi) — se ocultan si se marcó NO REPORTA
-        if not _no_reporta_marcado:
-            _roles_prev = [x.strip() for x in _v("roles_partido", "").split("|") if x.strip()] if pa else []
-            st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
-            cols_rp = st.columns(2)
-            for j, rol in enumerate(_PA_ROLES_PARTIDO[1:]):
-                cols_rp[j % 2].checkbox(rol, value=(rol in _roles_prev), key=f"pa_rol_{j}_{sfx}")
+        # Mostrar registros ya añadidos
+        for _ic_i, _ic_reg in enumerate(st.session_state[_ic_key]):
+            with st.container(border=True):
+                _ic_col_t, _ic_col_d = st.columns([5, 1])
+                with _ic_col_t:
+                    st.markdown(
+                        f"**Instancia #{_ic_i+1}:** {_ic_reg.get('instancias_partido','—')}  |  "
+                        f"**Rol:** {_ic_reg.get('roles_partido','—')}  |  "
+                        f"**Consejería:** {_ic_reg.get('consejeria_nacional','—')}"
+                    )
+                with _ic_col_d:
+                    if st.button("🗑️", key=f"del_ic_{sfx}_{_ic_i}", help="Eliminar esta instancia"):
+                        st.session_state[_ic_key].pop(_ic_i)
+                        st.rerun()
 
-        col11, col12 = st.columns(2)
-        with col11:
-            st.selectbox("ES INTEGRANTE DE CONSEJERÍA NACIONAL", _SI_NO,
-                         index=_SI_NO.index(_v("consejeria_nacional")) if _v("consejeria_nacional") in _SI_NO else 0,
-                         key=f"pa_cons_nac_{sfx}")
-        _tiene_consejeria = st.session_state.get(f"pa_cons_nac_{sfx}", "Seleccione...")
-        if _tiene_consejeria == "SI":
-            _opts_cn = _PA_CONSEJERIA_NACIONAL
-            with col12:
-                st.selectbox("¿CUÁL CONSEJERÍA?", _opts_cn,
-                             index=_opts_cn.index(_v("tipo_consejeria")) if _v("tipo_consejeria") in _opts_cn else 0,
-                             key=f"pa_tipo_cons_{sfx}")
+        # Formulario para añadir nueva instancia
+        with st.expander("➕ Agregar instancia en Partido Comunes",
+                         expanded=len(st.session_state[_ic_key]) == 0):
+            _idx_no_reporta_new = len(_PA_INSTANCIAS_PARTIDO) - 2
+            st.markdown("**¿DE CUÁL INSTANCIA DE DIRECCIÓN O VIGILANCIA DEL PARTIDO COMUNES ES INTEGRANTE?**")
+            cols_inst_new = st.columns(2)
+            for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
+                cols_inst_new[_j % 2].checkbox(_inst_n, value=False, key=f"pa_inst_{_j}_{sfx}_new")
 
-    # ── Otras Organizaciones ─────────────────────────────────────────────────
+            _no_reporta_new = st.session_state.get(f"pa_inst_{_idx_no_reporta_new}_{sfx}_new", False)
+            if not _no_reporta_new:
+                st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
+                cols_rp_new = st.columns(2)
+                for _j, _rol_n in enumerate(_PA_ROLES_PARTIDO[1:]):
+                    cols_rp_new[_j % 2].checkbox(_rol_n, value=False, key=f"pa_rol_{_j}_{sfx}_new")
+
+            col11_n, col12_n = st.columns(2)
+            with col11_n:
+                st.selectbox("ES INTEGRANTE DE CONSEJERÍA NACIONAL", _SI_NO,
+                             index=0, key=f"pa_cons_nac_{sfx}_new")
+            _tiene_cons_new = st.session_state.get(f"pa_cons_nac_{sfx}_new", "Seleccione...")
+            if _tiene_cons_new == "SI":
+                with col12_n:
+                    st.selectbox("¿CUÁL CONSEJERÍA?", _PA_CONSEJERIA_NACIONAL,
+                                 index=0, key=f"pa_tipo_cons_{sfx}_new")
+
+            if st.button("➕ Agregar esta instancia", key=f"add_ic_{sfx}",
+                         use_container_width=True, type="secondary"):
+                _new_insts = " | ".join([
+                    _inst_n for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:])
+                    if st.session_state.get(f"pa_inst_{_j}_{sfx}_new", False)
+                ])
+                _new_roles = " | ".join([
+                    _rol_n for _j, _rol_n in enumerate(_PA_ROLES_PARTIDO[1:])
+                    if st.session_state.get(f"pa_rol_{_j}_{sfx}_new", False)
+                ])
+                _new_cons_nac  = st.session_state.get(f"pa_cons_nac_{sfx}_new", "Seleccione...")
+                _new_tipo_cons = st.session_state.get(f"pa_tipo_cons_{sfx}_new", "") if _new_cons_nac == "SI" else ""
+                st.session_state[_ic_key].append({
+                    "instancias_partido":  _new_insts,
+                    "roles_partido":       _new_roles,
+                    "consejeria_nacional": _new_cons_nac if _new_cons_nac != "Seleccione..." else "",
+                    "tipo_consejeria":     _new_tipo_cons if _new_tipo_cons != "Seleccione..." else "",
+                })
+                st.rerun()
+
+
+    # ── Otras Organizaciones (multiregistro) ────────────────────────────────
     st.selectbox("¿PARTICIPA DE ALGÚN TIPO DE ORGANIZACIÓN SOCIAL, POLÍTICA O INSTANCIA INSTITUCIONAL DIFERENTE A COMUNES?", _SI_NO,
                  index=_SI_NO.index(_v("participa_otras_org")) if _v("participa_otras_org") in _SI_NO else 0,
                  key=f"pa_otras_org_{sfx}")
 
     _participa_otras = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
     if _participa_otras == "SI":
-        col_ot1, col_ot2 = st.columns(2)
-        with col_ot1:
-            _opts_to = _PA_TIPO_ORG
-            st.selectbox("TIPO DE ORGANIZACIÓN", _opts_to,
-                         index=_opts_to.index(_v("tipo_org")) if _v("tipo_org") in _opts_to else 0,
-                         key=f"pa_tipo_org_{sfx}")
-            st.text_input("NOMBRE ORGANIZACIÓN",
-                          value=_v("nombre_org", ""), key=f"pa_nombre_org_{sfx}")
-        with col_ot2:
-            _opts_esc = _PA_ESCALA_ORG
-            st.selectbox("ESCALA", _opts_esc,
-                         index=_opts_esc.index(_v("escala_org")) if _v("escala_org") in _opts_esc else 0,
-                         key=f"pa_escala_org_{sfx}")
-            st.text_input("¿QUE ROL EJERCE EN DICHA INSTANCIA?",
-                          value=_v("rol_org", ""), key=f"pa_rol_org_{sfx}")
+        _oo_key = f"otras_orgs_temp_{sfx}"
+        # Inicializar lista temporal desde perfil existente o vacía
+        if _oo_key not in st.session_state:
+            st.session_state[_oo_key] = list(_v("otras_orgs", []) or [])
 
-        col_dep_o, col_mun_o = st.columns(2)
-        with col_dep_o:
-            _dep_org_opts = ["Seleccione..."] + list(_MUNICIPIOS.keys())
-            _dep_org_cur  = _v("departamento_org")
-            st.selectbox("DEPARTAMENTO", _dep_org_opts,
-                         index=_dep_org_opts.index(_dep_org_cur) if _dep_org_cur in _dep_org_opts else 0,
-                         key=f"pa_dep_org_{sfx}")
-        with col_mun_o:
-            _dep_sel  = st.session_state.get(f"pa_dep_org_{sfx}", "Seleccione...")
-            _mun_opts = _MUNICIPIOS.get(_dep_sel, ["Seleccione..."])
-            _mun_cur  = _v("municipio_org")
-            st.selectbox("MUNICIPIO", _mun_opts,
-                         index=_mun_opts.index(_mun_cur) if _mun_cur in _mun_opts else 0,
-                         key=f"pa_mun_org_{sfx}")
+        st.markdown("**ORGANIZACIONES / INSTANCIAS REGISTRADAS**")
 
-        col_ai, col_af = st.columns(2)
-        with col_ai:
-            _anio_ini = int(_v("anio_inicio_org", 0)) if str(_v("anio_inicio_org", "")).isdigit() else None
-            st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
-                            value=_anio_ini, step=1, key=f"pa_anio_ini_org_{sfx}")
-            
-        with col_af:
-            st.text_input(
-                "AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
-                value=_v("anio_fin_org", ""),
-                key=f"pa_anio_fin_org_{sfx}"
-            )
-        # Ámbito (un solo valor — selectbox)
-        _opts_amb = ["Seleccione..."] + _PA_AMBITO_ORG
-        _amb_cur  = _v("ambito_org")
-        _amb_idx  = _opts_amb.index(_amb_cur) if _amb_cur in _opts_amb else 0
-        st.selectbox("**AMBITO DE LA ORGANIZACIÓN**", _opts_amb,
-                     index=_amb_idx, key=f"pa_amb_{sfx}")
+        # Mostrar registros ya añadidos
+        for _oo_i, _oo_reg in enumerate(st.session_state[_oo_key]):
+            with st.container(border=True):
+                _oo_col_t, _oo_col_d = st.columns([5, 1])
+                with _oo_col_t:
+                    st.markdown(
+                        f"**Org #{_oo_i+1}:** {_oo_reg.get('nombre_org','—')}  |  "
+                        f"**Tipo:** {_oo_reg.get('tipo_org','—')}  |  "
+                        f"**Rol:** {_oo_reg.get('rol_org','—')}  |  "
+                        f"**Ámbito:** {_oo_reg.get('ambito_org','—')}"
+                    )
+                with _oo_col_d:
+                    if st.button("🗑️", key=f"del_oo_{sfx}_{_oo_i}", help="Eliminar esta organización"):
+                        st.session_state[_oo_key].pop(_oo_i)
+                        st.rerun()
+
+        # Formulario para añadir nueva organización
+        with st.expander("➕ Agregar organización / instancia",
+                         expanded=len(st.session_state[_oo_key]) == 0):
+            col_ot1_n, col_ot2_n = st.columns(2)
+            with col_ot1_n:
+                st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG,
+                             index=0, key=f"pa_tipo_org_{sfx}_new")
+                st.text_input("NOMBRE ORGANIZACIÓN", value="", key=f"pa_nombre_org_{sfx}_new")
+            with col_ot2_n:
+                st.selectbox("ESCALA", _PA_ESCALA_ORG,
+                             index=0, key=f"pa_escala_org_{sfx}_new")
+                st.text_input("¿QUÉ ROL EJERCE EN DICHA INSTANCIA?", value="", key=f"pa_rol_org_{sfx}_new")
+
+            col_dep_on, col_mun_on = st.columns(2)
+            _dep_org_opts_n = ["Seleccione..."] + list(_MUNICIPIOS.keys())
+            with col_dep_on:
+                st.selectbox("DEPARTAMENTO", _dep_org_opts_n,
+                             index=0, key=f"pa_dep_org_{sfx}_new")
+            with col_mun_on:
+                _dep_sel_n  = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                _mun_opts_n = _MUNICIPIOS.get(_dep_sel_n, ["Seleccione..."])
+                st.selectbox("MUNICIPIO", _mun_opts_n,
+                             index=0, key=f"pa_mun_org_{sfx}_new")
+
+            col_ai_n, col_af_n = st.columns(2)
+            with col_ai_n:
+                st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
+                                value=None, step=1, key=f"pa_anio_ini_org_{sfx}_new")
+            with col_af_n:
+                st.text_input("AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
+                              value="", key=f"pa_anio_fin_org_{sfx}_new")
+
+            _opts_amb_n = ["Seleccione..."] + _PA_AMBITO_ORG
+            st.selectbox("**ÁMBITO DE LA ORGANIZACIÓN**", _opts_amb_n,
+                         index=0, key=f"pa_amb_{sfx}_new")
+
+            if st.button("➕ Agregar esta organización", key=f"add_oo_{sfx}",
+                         use_container_width=True, type="secondary"):
+                _oo_tipo   = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
+                _oo_nombre = st.session_state.get(f"pa_nombre_org_{sfx}_new", "")
+                _oo_escala = st.session_state.get(f"pa_escala_org_{sfx}_new", "Seleccione...")
+                _oo_rol    = st.session_state.get(f"pa_rol_org_{sfx}_new", "")
+                _oo_dep    = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                _oo_mun    = st.session_state.get(f"pa_mun_org_{sfx}_new", "Seleccione...")
+                _oo_ai     = st.session_state.get(f"pa_anio_ini_org_{sfx}_new")
+                _oo_af     = st.session_state.get(f"pa_anio_fin_org_{sfx}_new", "")
+                _oo_amb    = st.session_state.get(f"pa_amb_{sfx}_new", "Seleccione...")
+                st.session_state[_oo_key].append({
+                    "tipo_org":        _oo_tipo   if _oo_tipo   != "Seleccione..." else "",
+                    "nombre_org":      _oo_nombre,
+                    "escala_org":      _oo_escala if _oo_escala != "Seleccione..." else "",
+                    "rol_org":         _oo_rol,
+                    "departamento_org": _oo_dep   if _oo_dep    != "Seleccione..." else "",
+                    "municipio_org":   _oo_mun    if _oo_mun    != "Seleccione..." else "",
+                    "anio_inicio_org": str(int(_oo_ai)) if _oo_ai is not None else "",
+                    "anio_fin_org":    str(_oo_af),
+                    "ambito_org":      _oo_amb    if _oo_amb    != "Seleccione..." else "",
+                })
+                st.rerun()
+
 
     # ── Cargo de elección popular ─────────────────────────────────────────────
     st.markdown("**Cargo de Elección Popular**")
@@ -350,45 +421,25 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
             if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
         ])
 
-    # Partido Comunes — siempre se recogen todos los campos cuando aplica
-    instancias_partido = ""
-    roles_partido      = ""
-    consejeria_nac     = ""
-    tipo_consejeria    = ""
-    participa_comunes  = "SI"  # implícito: si mostrar_cargo_comunes es True, pertenece al partido
+    # Partido Comunes — recoger lista de instancias (multiregistro)
+    instancias_comunes = []
+    participa_comunes  = "SI"  # implícito cuando mostrar_cargo_comunes es True
     concejo_comunes    = ""
     if mostrar_cargo_comunes:
-        concejo_comunes    = st.session_state.get(f"pa_concejo_{sfx}", "Seleccione...")
-        instancias_partido = " | ".join([
-            inst for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:])
-            if st.session_state.get(f"pa_inst_{j}_{sfx}", False)
-        ])
-        roles_partido = " | ".join([
-            rol for j, rol in enumerate(_PA_ROLES_PARTIDO[1:])
-            if st.session_state.get(f"pa_rol_{j}_{sfx}", False)
-        ])
-        consejeria_nac = st.session_state.get(f"pa_cons_nac_{sfx}", "Seleccione...")
-        if consejeria_nac == "SI":
-            tipo_consejeria = st.session_state.get(f"pa_tipo_cons_{sfx}", "Seleccione...")
+        concejo_comunes    = st.session_state.get(f"pa_concejo_{sfx}", "")
+        _ic_key            = f"instancias_comunes_temp_{sfx}"
+        instancias_comunes = list(st.session_state.get(_ic_key, []))
 
-    # Otras organizaciones
+    # Otras organizaciones — recoger lista (multiregistro)
     participa_otras = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
-    tipo_org = nombre_org = ambito_org = escala_org = ""
-    dep_org = mun_org = rol_org = anio_ini = anio_fin = ""
+    otras_orgs = []
     if participa_otras == "SI":
-        tipo_org    = st.session_state.get(f"pa_tipo_org_{sfx}", "Seleccione...")
-        nombre_org  = st.session_state.get(f"pa_nombre_org_{sfx}", "")
-        escala_org  = st.session_state.get(f"pa_escala_org_{sfx}", "Seleccione...")
-        rol_org     = st.session_state.get(f"pa_rol_org_{sfx}", "")
-        dep_org     = st.session_state.get(f"pa_dep_org_{sfx}", "Seleccione...")
-        mun_org     = st.session_state.get(f"pa_mun_org_{sfx}", "Seleccione...")
-        _anio_i     = st.session_state.get(f"pa_anio_ini_org_{sfx}")
-        _anio_f     = st.session_state.get(f"pa_anio_fin_org_{sfx}")
-        anio_ini    = str(int(_anio_i)) if _anio_i is not None else ""
-        anio_fin    = str(int(_anio_f)) if _anio_f is not None else ""
-        ambito_org  = st.session_state.get(f"pa_amb_{sfx}", "Seleccione...")
-        if ambito_org == "Seleccione...":
-            ambito_org = ""
+        _oo_key    = f"otras_orgs_temp_{sfx}"
+        otras_orgs = list(st.session_state.get(_oo_key, []))
+
+    # Campos de compatibilidad plana (primer registro de la lista o vacío)
+    _ic0  = instancias_comunes[0] if instancias_comunes else {}
+    _oo0  = otras_orgs[0]         if otras_orgs         else {}
 
     return {
         "nivel_educativo":        nivel_edu,
@@ -403,24 +454,31 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         "busqueda_desaparecidos": st.session_state.get(f"pa_busq_{sfx}", "Seleccione..."),
         "participacion_pnis":     st.session_state.get(f"pa_pnis_{sfx}", "Seleccione..."),
         "desminado":              st.session_state.get(f"pa_desminado_{sfx}", "Seleccione..."),
-        "participa_comunes":      participa_comunes if participa_comunes != "Seleccione..." else "",
-        "concejo_comunes":        concejo_comunes   if concejo_comunes   != "Seleccione..." else "",
-        "instancias_partido":     instancias_partido,
-        "roles_partido":          roles_partido,
-        "consejeria_nacional":    consejeria_nac    if consejeria_nac    != "Seleccione..." else "",
-        "tipo_consejeria":        tipo_consejeria   if tipo_consejeria   != "Seleccione..." else "",
-        "participa_otras_org":    participa_otras   if participa_otras   != "Seleccione..." else "",
-        "tipo_org":               tipo_org          if tipo_org          != "Seleccione..." else "",
-        "nombre_org":             nombre_org,
-        "ambito_org":             ambito_org,
-        "escala_org":             escala_org        if escala_org        != "Seleccione..." else "",
-        "departamento_org":       dep_org           if dep_org           != "Seleccione..." else "",
-        "municipio_org":          mun_org           if mun_org           != "Seleccione..." else "",
-        "rol_org":                rol_org,
-        "anio_inicio_org":        anio_ini,
-        "anio_fin_org":           anio_fin,
+        "participa_comunes":      participa_comunes,
+        "concejo_comunes":        concejo_comunes,
+        # Multiregistro Partido Comunes
+        "instancias_comunes":     instancias_comunes,
+        # Compatibilidad plana: primer registro
+        "instancias_partido":     _ic0.get("instancias_partido", ""),
+        "roles_partido":          _ic0.get("roles_partido", ""),
+        "consejeria_nacional":    _ic0.get("consejeria_nacional", ""),
+        "tipo_consejeria":        _ic0.get("tipo_consejeria", ""),
+        # Multiregistro Otras Organizaciones
+        "participa_otras_org":    participa_otras if participa_otras != "Seleccione..." else "",
+        "otras_orgs":             otras_orgs,
+        # Compatibilidad plana: primer registro
+        "tipo_org":               _oo0.get("tipo_org", ""),
+        "nombre_org":             _oo0.get("nombre_org", ""),
+        "ambito_org":             _oo0.get("ambito_org", ""),
+        "escala_org":             _oo0.get("escala_org", ""),
+        "departamento_org":       _oo0.get("departamento_org", ""),
+        "municipio_org":          _oo0.get("municipio_org", ""),
+        "rol_org":                _oo0.get("rol_org", ""),
+        "anio_inicio_org":        _oo0.get("anio_inicio_org", ""),
+        "anio_fin_org":           _oo0.get("anio_fin_org", ""),
         "cargo_eleccion":         st.session_state.get(f"pa_cargo_{sfx}", "Seleccione..."),
     }
+
 
 
 def formulario_casos(tipo="individual"):
@@ -431,7 +489,9 @@ def formulario_casos(tipo="individual"):
     titulo            = "Formulario Individual" if es_individual else "Formulario Colectivo"
     nombre_hoja_casos = TAB_NOMBRES[tipo]["casos"]
 
-    hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes, hoja_perfiles_actuales, hoja_desplazamientos, hoja_verificaciones, sheet_url = conectar_sheet_casos(tipo)
+    (hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes,
+     hoja_perfiles_actuales, hoja_desplazamientos, hoja_verificaciones,
+     hoja_instancias_comunes, hoja_otras_orgs, sheet_url) = conectar_sheet_casos(tipo)
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets"); return
 
@@ -1205,6 +1265,10 @@ def formulario_casos(tipo="individual"):
             with col_edit_pa:
                 if st.button("✏️", key=f"edit_pa_{tipo}_{i}", help="Editar"):
                     st.session_state[_edit_pa_key] = i
+                    # Reset listas temporales para que se carguen desde el perfil editado
+                    _sfx_edit = f"{tipo}_{i}"
+                    st.session_state[f"instancias_comunes_temp_{_sfx_edit}"] = list(pa.get("instancias_comunes", []))
+                    st.session_state[f"otras_orgs_temp_{_sfx_edit}"] = list(pa.get("otras_orgs", []))
                     st.rerun()
             with col_del_pa:
                 if st.button("🗑️", key=f"del_pa_{tipo}_{i}", help="Eliminar"):
@@ -1240,6 +1304,16 @@ def formulario_casos(tipo="individual"):
                         st.write(f"🏗️ **Estado Proyecto ARN:** {pa.get('estado_proyecto_arn','')}")
                     if pa.get('actividad_economica'):
                         st.write(f"📦 **Actividad Económica:** {pa.get('actividad_economica','')}")
+                    # Instancias Comunes (multiregistro)
+                    _ic_lista = pa.get('instancias_comunes', [])
+                    if _ic_lista:
+                        st.markdown("🏛️ **Instancias Partido Comunes:**")
+                        for _ic_item in _ic_lista:
+                            st.write(
+                                f"  • {_ic_item.get('instancias_partido','—')} | "
+                                f"Rol: {_ic_item.get('roles_partido','—')} | "
+                                f"Consejería: {_ic_item.get('consejeria_nacional','—')}"
+                            )
                 with c2:
                     st.write(f"⚖️ **Comparecencia JEP:** {pa.get('comparecencia_jep','')}")
                     if pa.get('macrocasos_jep'):
@@ -1248,6 +1322,16 @@ def formulario_casos(tipo="individual"):
                     st.write(f"🔍 **Búsqueda Personas Desaparecidas:** {pa.get('busqueda_desaparecidos','')}")
                     if pa.get('cargo_eleccion'):
                         st.write(f"🗳️ **Cargo Elección Popular:** {pa.get('cargo_eleccion','')}")
+                    # Otras Organizaciones (multiregistro)
+                    _oo_lista = pa.get('otras_orgs', [])
+                    if _oo_lista:
+                        st.markdown("🤝 **Otras Organizaciones:**")
+                        for _oo_item in _oo_lista:
+                            st.write(
+                                f"  • {_oo_item.get('nombre_org','—')} | "
+                                f"Tipo: {_oo_item.get('tipo_org','—')} | "
+                                f"Rol: {_oo_item.get('rol_org','—')}"
+                            )
 
     # ── Formulario para agregar nuevo perfil actual ───────────────────────────
     with st.expander("➕ Agregar Perfil Actual", expanded=len(st.session_state.perfiles_actuales) == 0):
@@ -1258,6 +1342,10 @@ def formulario_casos(tipo="individual"):
             nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _mostrar_cargo_comunes)
             if nuevo is not None:
                 st.session_state.perfiles_actuales.append(nuevo)
+                # Limpiar listas temporales del formulario "new"
+                _sfx_new = f"{tipo}_new"
+                st.session_state.pop(f"instancias_comunes_temp_{_sfx_new}", None)
+                st.session_state.pop(f"otras_orgs_temp_{_sfx_new}", None)
                 st.success("✅ Perfil Actual agregado")
                 st.rerun()
 
@@ -2537,23 +2625,50 @@ def formulario_casos(tipo="individual"):
                             pa.get("desminado", ""),
                             pa.get("participa_comunes", ""),
                             pa.get("concejo_comunes", ""),
-                            pa.get("instancias_partido", ""),
-                            pa.get("roles_partido", ""),
-                            pa.get("consejeria_nacional", ""),
-                            pa.get("tipo_consejeria", ""),
+                            pa.get("instancias_partido", ""),   # compat: 1er registro
+                            pa.get("roles_partido", ""),        # compat: 1er registro
+                            pa.get("consejeria_nacional", ""),  # compat: 1er registro
+                            pa.get("tipo_consejeria", ""),      # compat: 1er registro
                             pa.get("participa_otras_org", ""),
-                            pa.get("tipo_org", ""),
-                            pa.get("nombre_org", ""),
-                            pa.get("ambito_org", ""),
-                            pa.get("escala_org", ""),
-                            pa.get("departamento_org", ""),
-                            pa.get("municipio_org", ""),
-                            pa.get("rol_org", ""),
-                            pa.get("anio_inicio_org", ""),
-                            pa.get("anio_fin_org", ""),
+                            pa.get("tipo_org", ""),             # compat: 1er registro
+                            pa.get("nombre_org", ""),           # compat: 1er registro
+                            pa.get("ambito_org", ""),           # compat: 1er registro
+                            pa.get("escala_org", ""),           # compat: 1er registro
+                            pa.get("departamento_org", ""),     # compat: 1er registro
+                            pa.get("municipio_org", ""),        # compat: 1er registro
+                            pa.get("rol_org", ""),              # compat: 1er registro
+                            pa.get("anio_inicio_org", ""),      # compat: 1er registro
+                            pa.get("anio_fin_org", ""),         # compat: 1er registro
                             pa.get("cargo_eleccion", ""),
                             st.session_state.nombre_completo, st.session_state.username
                         ])
+                        # ── Colección Instancias Comunes (multiregistro) ──────
+                        for ic in pa.get("instancias_comunes", []):
+                            id_ic = obtener_siguiente_id(hoja_instancias_comunes)
+                            hoja_instancias_comunes.append_row([
+                                id_ic, id_pa, id_caso, ot_te.strip(),
+                                ic.get("instancias_partido", ""),
+                                ic.get("roles_partido", ""),
+                                ic.get("consejeria_nacional", ""),
+                                ic.get("tipo_consejeria", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ])
+                        # ── Colección Otras Organizaciones (multiregistro) ────
+                        for oo in pa.get("otras_orgs", []):
+                            id_oo = obtener_siguiente_id(hoja_otras_orgs)
+                            hoja_otras_orgs.append_row([
+                                id_oo, id_pa, id_caso, ot_te.strip(),
+                                oo.get("tipo_org", ""),
+                                oo.get("nombre_org", ""),
+                                oo.get("ambito_org", ""),
+                                oo.get("escala_org", ""),
+                                oo.get("departamento_org", ""),
+                                oo.get("municipio_org", ""),
+                                oo.get("rol_org", ""),
+                                oo.get("anio_inicio_org", ""),
+                                oo.get("anio_fin_org", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ])
                         pa_guardados += 1
                     antecedentes_guardados = 0
                     for ant in st.session_state.antecedentes:
@@ -2647,10 +2762,12 @@ def panel_visualizacion():
     tab_ind, tab_col = st.tabs(["👤 Individual", "👥 Colectivo"])
     for tab, tipo in [(tab_ind, "individual"), (tab_col, "colectivo")]:
         with tab:
-            hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes_v, hoja_perfiles_actuales_v, hoja_desplazamientos_v, hoja_verificaciones_v, sheet_url = conectar_sheet_casos(tipo)
+            (hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes_v,
+             hoja_perfiles_actuales_v, hoja_desplazamientos_v, hoja_verificaciones_v,
+             hoja_instancias_comunes_v, hoja_otras_orgs_v, sheet_url) = conectar_sheet_casos(tipo)
             if hoja_casos is None: st.error(f"No se pudo conectar a la hoja {tipo}"); continue
 
-            sub1, sub2, sub3, sub4, sub5, sub6, sub7 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo", "📁 Antecedentes", "🎯 Perfil Actual", "🚗 Desplazamientos", "✅ Verificaciones"])
+            sub1, sub2, sub3, sub4, sub5, sub6, sub7, sub8, sub9 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo", "📁 Antecedentes", "🎯 Perfil Actual", "🚗 Desplazamientos", "✅ Verificaciones", "🏛️ Instancias Comunes", "🤝 Otras Orgs"])
 
             try: datos   = hoja_casos.get_all_records()
             except: datos = []
@@ -2666,6 +2783,10 @@ def panel_visualizacion():
             except: datos_d = []
             try: datos_ver = hoja_verificaciones_v.get_all_records()
             except: datos_ver = []
+            try: datos_ic  = hoja_instancias_comunes_v.get_all_records()
+            except: datos_ic = []
+            try: datos_oo  = hoja_otras_orgs_v.get_all_records()
+            except: datos_oo = []
 
             df     = pd.DataFrame(datos)     if datos     else pd.DataFrame()
             df_h   = pd.DataFrame(datos_h)   if datos_h   else pd.DataFrame()
@@ -2674,6 +2795,8 @@ def panel_visualizacion():
             df_pa  = pd.DataFrame(datos_pa)  if datos_pa  else pd.DataFrame()
             df_d   = pd.DataFrame(datos_d)   if datos_d   else pd.DataFrame()
             df_ver = pd.DataFrame(datos_ver) if datos_ver else pd.DataFrame()
+            df_ic  = pd.DataFrame(datos_ic)  if datos_ic  else pd.DataFrame()
+            df_oo  = pd.DataFrame(datos_oo)  if datos_oo  else pd.DataFrame()
 
             with sub1:
                 if not df.empty:
@@ -2749,8 +2872,29 @@ def panel_visualizacion():
                     st.dataframe(df_verf, use_container_width=True, hide_index=True)
                 else: st.info("📭 No hay verificaciones registradas")
 
+            with sub8:
+                if not df_ic.empty:
+                    c1, c2 = st.columns(2)
+                    c1.metric("Total Instancias", len(df_ic))
+                    c2.metric("Perfiles con instancias", df_ic["ID_Perfil_Actual"].nunique() if "ID_Perfil_Actual" in df_ic.columns else 0)
+                    inst_f = st.selectbox("Filtrar por Instancia", ["Todos"] + sorted(df_ic["Instancias Partido"].dropna().unique().tolist()) if "Instancias Partido" in df_ic.columns else ["Todos"], key=f"inst_f_{tipo}")
+                    df_icf = df_ic[df_ic["Instancias Partido"] == inst_f].copy() if inst_f != "Todos" else df_ic.copy()
+                    st.dataframe(df_icf, use_container_width=True, hide_index=True)
+                else: st.info("📭 No hay registros de instancias en Partido Comunes")
+
+            with sub9:
+                if not df_oo.empty:
+                    c1, c2 = st.columns(2)
+                    c1.metric("Total Organizaciones", len(df_oo))
+                    c2.metric("Perfiles con org.", df_oo["ID_Perfil_Actual"].nunique() if "ID_Perfil_Actual" in df_oo.columns else 0)
+                    tipo_org_f = st.selectbox("Filtrar por Tipo", ["Todos"] + sorted(df_oo["Tipo Org"].dropna().unique().tolist()) if "Tipo Org" in df_oo.columns else ["Todos"], key=f"tipo_org_f_{tipo}")
+                    df_oof = df_oo[df_oo["Tipo Org"] == tipo_org_f].copy() if tipo_org_f != "Todos" else df_oo.copy()
+                    st.dataframe(df_oof, use_container_width=True, hide_index=True)
+                else: st.info("📭 No hay registros de otras organizaciones")
+
+
             st.markdown("---")
-            if not df.empty or not df_h.empty or not df_p.empty or not df_a.empty or not df_pa.empty or not df_d.empty or not df_ver.empty:
+            if not df.empty or not df_h.empty or not df_p.empty or not df_a.empty or not df_pa.empty or not df_d.empty or not df_ver.empty or not df_ic.empty or not df_oo.empty:
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
                     (df_f   if not df.empty   else df).to_excel(writer, sheet_name="Casos",              index=False)
@@ -2758,6 +2902,8 @@ def panel_visualizacion():
                     df_p.to_excel(writer, sheet_name="Perfiles",          index=False)
                     df_a.to_excel(writer, sheet_name="Antecedentes",      index=False)
                     df_pa.to_excel(writer, sheet_name="Perfiles Actuales", index=False)
+                    df_ic.to_excel(writer, sheet_name="Instancias Comunes",  index=False)
+                    df_oo.to_excel(writer, sheet_name="Otras Orgs",          index=False)
                 buffer.seek(0)
                 nombre_archivo = f"ISMR_{tipo}_{datetime.now(tz=_BOGOTA).strftime('%Y%m%d_%H%M')}.xlsx"
                 st.download_button(
