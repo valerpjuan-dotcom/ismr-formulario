@@ -62,7 +62,6 @@ def verificar_password(password: str, hash_guardado: str) -> bool:
     Soporta tanto bcrypt (nuevo) como SHA-256 (legado) para migración automática.
     Retorna (es_valida, es_sha256_legado).
     """
-    # Detectar si es bcrypt por el prefijo $2b$ o $2a$
     if hash_guardado.startswith("$2b$") or hash_guardado.startswith("$2a$"):
         try:
             es_valida = bcrypt.checkpw(password.encode(), hash_guardado.encode())
@@ -70,16 +69,11 @@ def verificar_password(password: str, hash_guardado: str) -> bool:
         except Exception:
             return False, False
     else:
-        # Hash SHA-256 legado — verificar y marcar para migración
         sha_hash = hashlib.sha256(password.encode()).hexdigest()
         return sha_hash == hash_guardado, True
 
 
 def actualizar_password(username, nuevo_hash, debe_cambiar=False):
-    """
-    Actualiza password_hash. Acepta tanto hash bcrypt (str con $2b$)
-    como hash SHA-256 legado para compatibilidad durante migración.
-    """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
         return False
@@ -100,7 +94,6 @@ def actualizar_password(username, nuevo_hash, debe_cambiar=False):
 def _migrar_a_bcrypt(username: str, password: str) -> None:
     """
     Migra silenciosamente un hash SHA-256 a bcrypt al momento del login.
-    El usuario no nota ningún cambio en su experiencia.
     """
     try:
         nuevo_hash = hashear_password(password)
@@ -111,14 +104,12 @@ def _migrar_a_bcrypt(username: str, password: str) -> None:
                 {"$set": {"password_hash": nuevo_hash}}
             )
     except Exception:
-        pass  # Si falla la migración, no interrumpir el login
+        pass
 
 
 def crear_usuario(username, password_plano, nombre_completo, es_admin=False, debe_cambiar=True, email=None):
     """
     Inserta un nuevo usuario hasheando la contraseña con bcrypt.
-    Acepta la contraseña en texto plano (no el hash) para aplicar bcrypt internamente.
-    El email se infiere automáticamente del username si no se provee.
     """
     coleccion = _conectar_coleccion_usuarios()
     if coleccion is None:
@@ -127,7 +118,6 @@ def crear_usuario(username, password_plano, nombre_completo, es_admin=False, deb
         if obtener_usuario(username):
             return False
         email_final = email or f"{username.strip().lower()}@unp.gov.co"
-        # Hashear con bcrypt
         hash_bcrypt = hashear_password(password_plano)
         coleccion.insert_one({
             "username": username,
@@ -154,8 +144,76 @@ def listar_usuarios():
 
 
 def usuario_existe(username: str) -> bool:
-    """Retorna True si el username existe en la base de datos."""
     return obtener_usuario(username) is not None
+
+
+def crear_usuarios_masivo(lista_usuarios, password_plano, es_admin=False):
+    """
+    Crea múltiples usuarios de una vez a partir de una lista de dicts:
+      [{"nombre_completo": "Juan Pérez", "username": "juan.perez"}, ...]
+
+    - Hashea la contraseña una sola vez y la reutiliza para todos.
+    - Usa insert_many() para una sola llamada a MongoDB.
+    - Omite usernames que ya existen (gracias al índice único).
+
+    Retorna un dict con:
+      - creados:  lista de usernames insertados
+      - omitidos: lista de usernames que ya existían
+      - errores:  lista de dicts {"username": ..., "error": ...}
+    """
+    coleccion = _conectar_coleccion_usuarios()
+    if coleccion is None:
+        return {"creados": [], "omitidos": [], "errores": [
+            {"username": "—", "error": "No se pudo conectar a MongoDB"}
+        ]}
+
+    # Cargar usernames existentes de una sola vez
+    try:
+        existentes = {
+            doc["username"]
+            for doc in coleccion.find({}, {"username": 1, "_id": 0})
+        }
+    except Exception as e:
+        return {"creados": [], "omitidos": [], "errores": [{"username": "—", "error": str(e)}]}
+
+    # Hashear la contraseña una sola vez para todos
+    hash_bcrypt = hashear_password(password_plano)
+
+    documentos, creados, omitidos, errores = [], [], [], []
+    usernames_en_lote = set()
+
+    for usuario in lista_usuarios:
+        username        = usuario.get("username", "").strip()
+        nombre_completo = usuario.get("nombre_completo", "").strip()
+
+        if not username or not nombre_completo:
+            errores.append({"username": username or "(vacío)", "error": "Username o nombre vacío"})
+            continue
+
+        if username in existentes or username in usernames_en_lote:
+            omitidos.append(username)
+            continue
+
+        documentos.append({
+            "username":              username,
+            "password_hash":         hash_bcrypt,
+            "nombre_completo":       nombre_completo,
+            "es_admin":              "TRUE" if es_admin else "FALSE",
+            "debe_cambiar_password": "TRUE",
+            "email":                 f"{username.lower()}@unp.gov.co",
+        })
+        usernames_en_lote.add(username)
+        creados.append(username)
+
+    # Insertar todos de una sola vez
+    if documentos:
+        try:
+            coleccion.insert_many(documentos, ordered=False)
+        except Exception as e:
+            # insert_many con ordered=False inserta los que puede y reporta los que fallan
+            errores.append({"username": "lote", "error": str(e)})
+
+    return {"creados": creados, "omitidos": omitidos, "errores": errores}
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
