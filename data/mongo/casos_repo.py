@@ -80,6 +80,7 @@ _CABECERAS_VERIFICACIONES = [
 
 _CABECERAS_PERFILES_ACTUALES = [
     "ID_Perfil_Actual", "ID_Caso", "OT-TE",
+    "Familiar Parte Comunes",
     "Nivel Educativo", "Fuente Principal de Ingresos",
     "Estado Proyecto ARN", "Actividad Economica",
     "Comparecencia JEP", "Macrocasos JEP",
