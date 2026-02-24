@@ -1495,8 +1495,8 @@ def formulario_casos(tipo="individual"):
             for e in errores: st.write(f"   • {e}")
         else:
             try:
-                todas_filas   = hoja_casos.get_all_values()
-                ot_existentes = [fila[2] for fila in todas_filas[1:]]
+                registros_existentes = hoja_casos.get_all_records()
+                ot_existentes = [str(r.get("OT-TE", "")) for r in registros_existentes]
                 if ot_te.strip() in ot_existentes:
                     st.error(f"❌ El caso '{ot_te}' ya existe en esta hoja")
                 else:
