@@ -1291,13 +1291,14 @@ def formulario_casos(tipo="individual"):
                         "MUNICIPIO DEL HECHO", _eh_mun_opts,
                         index=_eh_mun_idx, key=f"eh_municipio_{tipo}_{i}"
                     )
-                _eh_tipo_actor_val = hecho.get("tipo_actor", None)
-                _eh_tipo_actor_idx = _TIPOS_ACTOR_GENERADOR.index(_eh_tipo_actor_val) if _eh_tipo_actor_val in _TIPOS_ACTOR_GENERADOR else None
+                _eh_tipo_actor_opts = ["Seleccione..."] + _TIPOS_ACTOR_GENERADOR
+                _eh_tipo_actor_val  = hecho.get("tipo_actor", "Seleccione...")
+                _eh_tipo_actor_idx  = _eh_tipo_actor_opts.index(_eh_tipo_actor_val) if _eh_tipo_actor_val in _eh_tipo_actor_opts else 0
                 ec_tipo_actor, ec_actor_gen = st.columns(2)
                 with ec_tipo_actor:
-                    eh_tipo_actor = st.radio(
+                    eh_tipo_actor = st.selectbox(
                         "TIPO ACTOR GENERADOR HECHO DE RIESGO",
-                        _TIPOS_ACTOR_GENERADOR,
+                        _eh_tipo_actor_opts,
                         index=_eh_tipo_actor_idx,
                         key=f"eh_tipo_actor_{tipo}_{i}"
                     )
@@ -1338,7 +1339,7 @@ def formulario_casos(tipo="individual"):
                                 "tipo": eh_tipo, "fecha": _fecha_eh,
                                 "departamento": eh_departamento if eh_departamento != "Seleccione..." else "",
                                 "municipio": eh_municipio if eh_municipio != "Seleccione..." else "",
-                                "tipo_actor": eh_tipo_actor or "",
+                                "tipo_actor": eh_tipo_actor if eh_tipo_actor != "Seleccione..." else "",
                                 "actor_generador": eh_actor_generador.strip(),
                                 "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
                                 "descripcion": eh_desc.strip()
@@ -1418,10 +1419,9 @@ def formulario_casos(tipo="individual"):
             )
         col_hf_tipo_actor, col_hf_actor_gen = st.columns(2)
         with col_hf_tipo_actor:
-            hecho_tipo_actor = st.radio(
+            hecho_tipo_actor = st.selectbox(
                 "TIPO ACTOR GENERADOR HECHO DE RIESGO",
-                _TIPOS_ACTOR_GENERADOR,
-                index=None,
+                ["Seleccione..."] + _TIPOS_ACTOR_GENERADOR,
                 key=f"hf_tipo_actor_{tipo}"
             )
         with col_hf_actor_gen:
@@ -1465,7 +1465,7 @@ def formulario_casos(tipo="individual"):
                     "tipo": tipo_hecho, "fecha": _fecha_hf,
                     "departamento": hecho_departamento if hecho_departamento != "Seleccione..." else "",
                     "municipio": hecho_municipio if hecho_municipio != "Seleccione..." else "",
-                    "tipo_actor": hecho_tipo_actor or "",
+                    "tipo_actor": hecho_tipo_actor if hecho_tipo_actor != "Seleccione..." else "",
                     "actor_generador": hecho_actor_generador.strip(),
                     "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
                     "descripcion": descripcion_hecho.strip()
