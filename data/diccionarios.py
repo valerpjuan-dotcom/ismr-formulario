@@ -456,3 +456,42 @@ _TIPOS_ACTOR_GENERADOR = [
     "ESTADO COLOMBIANO",
     "NO REPORTA",
 ]
+
+# ══════════════════════════════════════════════════════════════════════════════
+# DESPLAZAMIENTOS
+# ══════════════════════════════════════════════════════════════════════════════
+
+_DESP_MOTIVOS = [
+    "Seleccione...",
+    "LABORAL",
+    "PERSONAL",
+    "ACTIVIDAD ELECTORAL",
+    "ACTIVIDAD DE ORGANIZACIÓN SOCIAL, POLÍTICA, COMUNITARIA, INSTANCIA DE PARTICIPACIÓN, ONG",
+    "NO REPORTA",
+]
+
+_DESP_MEDIOS_TRANSPORTE = [
+    "BICICLETA", "VEHÍCULO BLINDADO", "VEHÍCULO CONVENCIONAL", "CARRO PARTICULAR",
+    "MOTO", "TRANSPORTE PÚBLICO", "TRANSPORTE ANIMAL", "LANCHA", "AVION", "A PIE", "NO REPORTA",
+]
+
+_DESP_FRECUENCIAS = [
+    "Seleccione...",
+    "Diario", "1 vez a la semana", "Dos o más veces a la semana",
+    "1 vez al mes", "Dos o más veces al mes",
+    "1 vez al trimestre", "1 vez al semestre", "No reporta",
+]
+
+_DESP_TIPOS_VIA = [
+    "Seleccione...", "PRIMARIA", "SECUNDARIA", "TERCIARIA", "FLUVIAL", "NO REPORTA",
+]
+
+_DESP_DEPARTAMENTOS = [
+    "Seleccione...",
+    "AMAZONAS", "ANTIOQUIA", "ARAUCA", "ATLÁNTICO", "BOLÍVAR", "BOYACÁ", "CALDAS",
+    "CAQUETÁ", "CASANARE", "CAUCA", "CESAR", "CHOCÓ", "CÓRDOBA", "CUNDINAMARCA",
+    "GUAINÍA", "GUAVIARE", "HUILA", "LA GUAJIRA", "MAGDALENA", "META", "NARIÑO",
+    "NORTE DE SANTANDER", "PUTUMAYO", "QUINDÍO", "RISARALDA", "SAN ANDRÉS Y PROVIDENCIA",
+    "SANTANDER", "SUCRE", "TOLIMA", "VALLE DEL CAUCA", "VAUPÉS", "VICHADA",
+    "BOGOTÁ D.C.", "Área en Litigio Cauca-Huila",
+]
