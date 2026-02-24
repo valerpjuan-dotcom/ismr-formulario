@@ -151,10 +151,10 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     with col1:
         _opts_edu = _PA_NIVEL_EDUCATIVO
         _idx_edu  = _opts_edu.index(_v("nivel_educativo")) if _v("nivel_educativo") in _opts_edu else 0
-        st.selectbox("Nivel Educativo *", _opts_edu,
+        st.selectbox("NIVEL DE ESCOLARIDAD", _opts_edu,
                      index=_idx_edu, key=f"pa_edu_{sfx}")
     with col2:
-        st.text_input("Fuente Principal de Ingresos",
+        st.text_input("FUENTE PRINCIPAL DE INGRESOS",
                       value=_v("fuente_ingresos", ""), key=f"pa_ingresos_{sfx}")
 
     # ── Proyecto ARN (solo reincorporados) ───────────────────────────────────
@@ -173,8 +173,7 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                          index=_idx_act, key=f"pa_arn_actividad_{sfx}")
 
     # ── JEP ─────────────────────────────────────────────────────────────────
-    st.markdown("**Jurisdicción Especial para la Paz (JEP)**")
-    st.selectbox("¿Es víctima reconocida por la JEP?", _SI_NO_REPORTA,
+    st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
                  index=_SI_NO_REPORTA.index(_v("victima_jep")) if _v("victima_jep") in _SI_NO_REPORTA else 0,
                  key=f"pa_jep_vic_{sfx}")
 
@@ -182,7 +181,6 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     _es_victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
     if _es_victima_jep:
         _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
-        st.markdown("**Macrocaso en calidad de víctima** (selecciona los que apliquen)")
         _cols_mcv = st.columns(2)
         for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
             _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
@@ -191,17 +189,17 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     st.markdown("**Compromisos del Proceso de Paz**")
     col7, col8 = st.columns(2)
     with col7:
-        st.selectbox("¿Ha participado en TOAR?", _SI_NO_REPORTA,
+        st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR", _SI_NO_REPORTA,
                      index=_SI_NO_REPORTA.index(_v("participacion_toar")) if _v("participacion_toar") in _SI_NO_REPORTA else 0,
                      key=f"pa_toar_{sfx}")
-        st.selectbox("¿Participa en el Programa PNIS?", _SI_NO_REPORTA,
+        st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
                      index=_SI_NO_REPORTA.index(_v("participacion_pnis")) if _v("participacion_pnis") in _SI_NO_REPORTA else 0,
                      key=f"pa_pnis_{sfx}")
     with col8:
-        st.selectbox("¿Participa en búsqueda de personas desaparecidas?", _SI_NO_REPORTA,
+        st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS", _SI_NO_REPORTA,
                      index=_SI_NO_REPORTA.index(_v("busqueda_desaparecidos")) if _v("busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
                      key=f"pa_busq_{sfx}")
-        st.selectbox("¿Participa en desminado humanitario?", _SI_NO_REPORTA,
+        st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
                      index=_SI_NO_REPORTA.index(_v("desminado")) if _v("desminado") in _SI_NO_REPORTA else 0,
                      key=f"pa_desminado_{sfx}")
 
