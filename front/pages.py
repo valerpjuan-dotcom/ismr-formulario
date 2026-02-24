@@ -288,10 +288,12 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
             st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
                             value=_anio_ini, step=1, key=f"pa_anio_ini_org_{sfx}")
             
-        with col_af: _anio_fin = int(_v("anio_fin_org", 0)) if str(_v("anio_fin_org", "")).isdigit() else None 
-            st.number_input("AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)", 
-                            min_value=1990, max_value=2099, value=_anio_fin, step=1, 
-                            key=f"pa_anio_fin_org_{sfx}")
+        with col_af:
+            st.text_input(
+                "AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
+                value=_v("anio_fin_org", ""),
+                key=f"pa_anio_fin_org_{sfx}"
+            )
         # Ámbito (un solo valor — selectbox)
         _opts_amb = ["Seleccione..."] + _PA_AMBITO_ORG
         _amb_cur  = _v("ambito_org")
