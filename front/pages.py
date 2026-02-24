@@ -1511,7 +1511,6 @@ def formulario_casos(tipo="individual"):
                         key=f"eh_tipo_actor_{tipo}_{i}"
                     )
                 with ec_actor_gen:
-                    st.caption("Escribir en mayúscula sostenida")
                     eh_actor_generador = st.text_input(
                         "ACTOR GENERADOR HECHO RIESGO",
                         value=hecho.get("actor_generador", ""),
@@ -1633,7 +1632,6 @@ def formulario_casos(tipo="individual"):
                 key=f"hf_tipo_actor_{tipo}"
             )
         with col_hf_actor_gen:
-            st.caption("Escribir en mayúscula sostenida")
             hecho_actor_generador = st.text_input(
                 "ACTOR GENERADOR HECHO RIESGO",
                 key=f"hf_actor_gen_{tipo}"
