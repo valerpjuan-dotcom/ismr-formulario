@@ -212,15 +212,21 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         _inst_prev = [x.strip() for x in _v("instancias_partido", "").split("|") if x.strip()] if pa else []
         st.markdown("**¿DE CUÁL INSTANCIA DE DIRECCIÓN O VIGILANCIA DEL PARTIDO COMUNES ES INTEGRANTE?**")
         cols_inst = st.columns(2)
+        # El índice de "NO REPORTA" en _PA_INSTANCIAS_PARTIDO[1:] es el último
+        _idx_no_reporta = len(_PA_INSTANCIAS_PARTIDO) - 2  # descontando "Seleccione..."
         for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
             cols_inst[j % 2].checkbox(inst, value=(inst in _inst_prev), key=f"pa_inst_{j}_{sfx}")
 
-        # Roles en el partido (multi) — siempre visibles
-        _roles_prev = [x.strip() for x in _v("roles_partido", "").split("|") if x.strip()] if pa else []
-        st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
-        cols_rp = st.columns(2)
-        for j, rol in enumerate(_PA_ROLES_PARTIDO[1:]):
-            cols_rp[j % 2].checkbox(rol, value=(rol in _roles_prev), key=f"pa_rol_{j}_{sfx}")
+        # Detectar si "NO REPORTA" está marcado
+        _no_reporta_marcado = st.session_state.get(f"pa_inst_{_idx_no_reporta}_{sfx}", False)
+
+        # Roles en el partido (multi) — se ocultan si se marcó NO REPORTA
+        if not _no_reporta_marcado:
+            _roles_prev = [x.strip() for x in _v("roles_partido", "").split("|") if x.strip()] if pa else []
+            st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
+            cols_rp = st.columns(2)
+            for j, rol in enumerate(_PA_ROLES_PARTIDO[1:]):
+                cols_rp[j % 2].checkbox(rol, value=(rol in _roles_prev), key=f"pa_rol_{j}_{sfx}")
 
         col11, col12 = st.columns(2)
         with col11:
