@@ -19,6 +19,9 @@ from data.diccionarios import (
     _PA_CARGO_ELECCION,
     # Hechos de Riesgo
     _TIPOS_ACTOR_GENERADOR,
+    # Desplazamientos
+    _DESP_MOTIVOS, _DESP_DESP_MEDIOS_TRANSPORTE, _DESP_FRECUENCIAS,
+    _DESP_DESP_TIPOS_VIA, _DESP_DEPARTAMENTOS,
 )
 
 from configuration.settings import TAB_NOMBRES
@@ -1249,37 +1252,6 @@ def formulario_casos(tipo="individual"):
     if "desplazamientos" not in st.session_state:
         st.session_state.desplazamientos = []
 
-    _MOTIVOS_DESP = [
-        "Seleccione...",
-        "LABORAL",
-        "PERSONAL",
-        "ACTIVIDAD ELECTORAL",
-        "ACTIVIDAD DE ORGANIZACIÓN SOCIAL, POLÍTICA, COMUNITARIA, INSTANCIA DE PARTICIPACIÓN, ONG",
-        "NO REPORTA",
-    ]
-    _MEDIOS_TRANSPORTE = [
-        "BICICLETA", "VEHÍCULO BLINDADO", "VEHÍCULO CONVENCIONAL", "CARRO PARTICULAR",
-        "MOTO", "TRANSPORTE PÚBLICO", "TRANSPORTE ANIMAL", "LANCHA", "AVION", "A PIE", "NO REPORTA",
-    ]
-    _FRECUENCIAS_DESP = [
-        "Seleccione...",
-        "Diario", "1 vez a la semana", "Dos o más veces a la semana",
-        "1 vez al mes", "Dos o más veces al mes",
-        "1 vez al trimestre", "1 vez al semestre", "No reporta",
-    ]
-    _TIPOS_VIA = [
-        "Seleccione...", "PRIMARIA", "SECUNDARIA", "TERCIARIA", "FLUVIAL", "NO REPORTA",
-    ]
-    _DEPTOS_COLOMBIA = [
-        "Seleccione...",
-        "AMAZONAS", "ANTIOQUIA", "ARAUCA", "ATLÁNTICO", "BOLÍVAR", "BOYACÁ", "CALDAS",
-        "CAQUETÁ", "CASANARE", "CAUCA", "CESAR", "CHOCÓ", "CÓRDOBA", "CUNDINAMARCA",
-        "GUAINÍA", "GUAVIARE", "HUILA", "LA GUAJIRA", "MAGDALENA", "META", "NARIÑO",
-        "NORTE DE SANTANDER", "PUTUMAYO", "QUINDÍO", "RISARALDA", "SAN ANDRÉS Y PROVIDENCIA",
-        "SANTANDER", "SUCRE", "TOLIMA", "VALLE DEL CAUCA", "VAUPÉS", "VICHADA",
-        "BOGOTÁ D.C.", "Área en Litigio Cauca-Huila",
-    ]
-
     def _render_desp_form(desp, tipo, idx):
         """Renderiza el formulario de un desplazamiento."""
         sfx = f"{tipo}_{idx}"
@@ -1288,8 +1260,8 @@ def formulario_casos(tipo="individual"):
 
         # Motivo (siempre visible)
         motivo = st.selectbox(
-            "MOTIVO DESPLAZAMIENTO *", _MOTIVOS_DESP,
-            index=_MOTIVOS_DESP.index(_dv("motivo")) if _dv("motivo") in _MOTIVOS_DESP else 0,
+            "MOTIVO DESPLAZAMIENTO *", _DESP_MOTIVOS,
+            index=_DESP_MOTIVOS.index(_dv("motivo")) if _dv("motivo") in _DESP_MOTIVOS else 0,
             key=f"desp_motivo_{sfx}"
         )
 
@@ -1300,15 +1272,15 @@ def formulario_casos(tipo="individual"):
             _medios_prev = [x.strip() for x in _dv("medios_transporte", "").split("|") if x.strip()] if desp else []
             st.markdown("**MEDIO DE TRANSPORTE UTILIZADO EN LOS DESPLAZAMIENTOS**")
             cols_med = st.columns(3)
-            for j, medio in enumerate(_MEDIOS_TRANSPORTE):
+            for j, medio in enumerate(_DESP_MEDIOS_TRANSPORTE):
                 cols_med[j % 3].checkbox(medio, value=(medio in _medios_prev), key=f"desp_medio_{j}_{sfx}")
 
             # ── Origen ────────────────────────────────────────────────────────
             col_do, col_mo = st.columns(2)
             with col_do:
                 dep_origen = st.selectbox(
-                    "DEPARTAMENTO ORIGEN", _DEPTOS_COLOMBIA,
-                    index=_DEPTOS_COLOMBIA.index(_dv("dep_origen")) if _dv("dep_origen") in _DEPTOS_COLOMBIA else 0,
+                    "DEPARTAMENTO ORIGEN", _DESP_DEPARTAMENTOS,
+                    index=_DESP_DEPARTAMENTOS.index(_dv("dep_origen")) if _dv("dep_origen") in _DESP_DEPARTAMENTOS else 0,
                     key=f"desp_dep_origen_{sfx}"
                 )
             with col_mo:
@@ -1327,8 +1299,8 @@ def formulario_casos(tipo="individual"):
             col_dd, col_md = st.columns(2)
             with col_dd:
                 dep_destino = st.selectbox(
-                    "DEPARTAMENTO DESTINO", _DEPTOS_COLOMBIA,
-                    index=_DEPTOS_COLOMBIA.index(_dv("dep_destino")) if _dv("dep_destino") in _DEPTOS_COLOMBIA else 0,
+                    "DEPARTAMENTO DESTINO", _DESP_DEPARTAMENTOS,
+                    index=_DESP_DEPARTAMENTOS.index(_dv("dep_destino")) if _dv("dep_destino") in _DESP_DEPARTAMENTOS else 0,
                     key=f"desp_dep_destino_{sfx}"
                 )
             with col_md:
@@ -1347,14 +1319,14 @@ def formulario_casos(tipo="individual"):
             col_fr, col_via = st.columns(2)
             with col_fr:
                 st.selectbox(
-                    "FRECUENCIA DE DESPLAZAMIENTOS", _FRECUENCIAS_DESP,
-                    index=_FRECUENCIAS_DESP.index(_dv("frecuencia")) if _dv("frecuencia") in _FRECUENCIAS_DESP else 0,
+                    "FRECUENCIA DE DESPLAZAMIENTOS", _DESP_FRECUENCIAS,
+                    index=_DESP_FRECUENCIAS.index(_dv("frecuencia")) if _dv("frecuencia") in _DESP_FRECUENCIAS else 0,
                     key=f"desp_frecuencia_{sfx}"
                 )
             with col_via:
                 st.selectbox(
-                    "TIPO DE VÍA CON MAYOR DURACIÓN EN EL DESPLAZAMIENTO", _TIPOS_VIA,
-                    index=_TIPOS_VIA.index(_dv("tipo_via")) if _dv("tipo_via") in _TIPOS_VIA else 0,
+                    "TIPO DE VÍA CON MAYOR DURACIÓN EN EL DESPLAZAMIENTO", _DESP_TIPOS_VIA,
+                    index=_DESP_TIPOS_VIA.index(_dv("tipo_via")) if _dv("tipo_via") in _DESP_TIPOS_VIA else 0,
                     key=f"desp_tipo_via_{sfx}"
                 )
 
@@ -1374,7 +1346,7 @@ def formulario_casos(tipo="individual"):
 
         if not _es_no_reporta:
             medios = " | ".join([
-                medio for j, medio in enumerate(_MEDIOS_TRANSPORTE)
+                medio for j, medio in enumerate(_DESP_MEDIOS_TRANSPORTE)
                 if st.session_state.get(f"desp_medio_{j}_{sfx}", False)
             ])
             dep_origen  = st.session_state.get(f"desp_dep_origen_{sfx}", "Seleccione...")
