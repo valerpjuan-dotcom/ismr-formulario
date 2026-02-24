@@ -537,7 +537,12 @@ def formulario_casos(tipo="individual"):
                             ver.get("v_actor_hechos", ""),
                             ver.get("v_motivacion_amenaza", ""),
                             ver.get("v_perfil_antiguo", ""),
+                            ver.get("v_modo_participacion", ""),
+                            ver.get("v_rol_perfil_antiguo", ""),
+                            ver.get("v_frente_columna", ""),
                             ver.get("v_perfil_actual", ""),
+                            ver.get("v_organizacion", ""),
+                            ver.get("v_rol_perfil_actual", ""),
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         ver_guardados += 1
@@ -1850,6 +1855,59 @@ def formulario_casos(tipo="individual"):
                         index=_VER_OPCIONES.index(_ev_vpac_val) if _ev_vpac_val in _VER_OPCIONES else 0,
                         key=f"ev_vpac_{tipo}_{i}"
                     )
+                # Subcampos condicionales de Verificación Perfil Antiguo
+                if ev_v_perfil_antiguo == "SI":
+                    ev_pa_col1, ev_pa_col2, ev_pa_col3 = st.columns(3)
+                    with ev_pa_col1:
+                        _ev_vmp_val = ver.get("v_modo_participacion", "Seleccione...")
+                        ev_v_modo_participacion = st.selectbox(
+                            "V. MODO DE PARTICIPACIÓN",
+                            _VER_OPCIONES,
+                            index=_VER_OPCIONES.index(_ev_vmp_val) if _ev_vmp_val in _VER_OPCIONES else 0,
+                            key=f"ev_vmp_{tipo}_{i}"
+                        )
+                    with ev_pa_col2:
+                        _ev_vrpa_val = ver.get("v_rol_perfil_antiguo", "Seleccione...")
+                        ev_v_rol_perfil_antiguo = st.selectbox(
+                            "V. ROL - PERFIL ANTIGUO",
+                            _VER_OPCIONES,
+                            index=_VER_OPCIONES.index(_ev_vrpa_val) if _ev_vrpa_val in _VER_OPCIONES else 0,
+                            key=f"ev_vrpa_{tipo}_{i}"
+                        )
+                    with ev_pa_col3:
+                        _ev_vfc_val = ver.get("v_frente_columna", "Seleccione...")
+                        ev_v_frente_columna = st.selectbox(
+                            "V. FRENTE/COMPAÑÍA/COLUMNA",
+                            _VER_OPCIONES,
+                            index=_VER_OPCIONES.index(_ev_vfc_val) if _ev_vfc_val in _VER_OPCIONES else 0,
+                            key=f"ev_vfc_{tipo}_{i}"
+                        )
+                else:
+                    ev_v_modo_participacion = ""
+                    ev_v_rol_perfil_antiguo = ""
+                    ev_v_frente_columna = ""
+                # Subcampos condicionales de Verificación Perfil Actual
+                if ev_v_perfil_actual == "SI":
+                    ev_pac_col1, ev_pac_col2 = st.columns(2)
+                    with ev_pac_col1:
+                        _ev_vorg_val = ver.get("v_organizacion", "Seleccione...")
+                        ev_v_organizacion = st.selectbox(
+                            "V. ORGANIZACIÓN",
+                            _VER_OPCIONES,
+                            index=_VER_OPCIONES.index(_ev_vorg_val) if _ev_vorg_val in _VER_OPCIONES else 0,
+                            key=f"ev_vorg_{tipo}_{i}"
+                        )
+                    with ev_pac_col2:
+                        _ev_vrol_val = ver.get("v_rol_perfil_actual", "Seleccione...")
+                        ev_v_rol_perfil_actual = st.selectbox(
+                            "V. ROL",
+                            _VER_OPCIONES,
+                            index=_VER_OPCIONES.index(_ev_vrol_val) if _ev_vrol_val in _VER_OPCIONES else 0,
+                            key=f"ev_vrol_{tipo}_{i}"
+                        )
+                else:
+                    ev_v_organizacion = ""
+                    ev_v_rol_perfil_actual = ""
                 col_sv, col_cv = st.columns(2)
                 with col_sv:
                     if st.button("💾 Guardar cambios", key=f"ev_save_{tipo}_{i}", type="primary", use_container_width=True):
@@ -1861,7 +1919,12 @@ def formulario_casos(tipo="individual"):
                             "v_actor_hechos": ev_v_actor if ev_v_actor != "Seleccione..." else "",
                             "v_motivacion_amenaza": ev_v_motivacion if ev_v_motivacion != "Seleccione..." else "",
                             "v_perfil_antiguo": ev_v_perfil_antiguo if ev_v_perfil_antiguo != "Seleccione..." else "",
+                            "v_modo_participacion": ev_v_modo_participacion if ev_v_modo_participacion != "Seleccione..." else "",
+                            "v_rol_perfil_antiguo": ev_v_rol_perfil_antiguo if ev_v_rol_perfil_antiguo != "Seleccione..." else "",
+                            "v_frente_columna": ev_v_frente_columna if ev_v_frente_columna != "Seleccione..." else "",
                             "v_perfil_actual": ev_v_perfil_actual if ev_v_perfil_actual != "Seleccione..." else "",
+                            "v_organizacion": ev_v_organizacion if ev_v_organizacion != "Seleccione..." else "",
+                            "v_rol_perfil_actual": ev_v_rol_perfil_actual if ev_v_rol_perfil_actual != "Seleccione..." else "",
                         }
                         st.session_state[_edit_ver_key] = None
                         st.rerun()
@@ -1893,7 +1956,14 @@ def formulario_casos(tipo="individual"):
                     st.write(f"💬 **V. Motivación Amenaza:** {ver.get('v_motivacion_amenaza', '')}")
                 with vc2:
                     st.write(f"📋 **V. Perfil Antiguo:** {ver.get('v_perfil_antiguo', '')}")
+                    if ver.get("v_perfil_antiguo") == "SI":
+                        st.write(f"🤝 **V. Modo Participación:** {ver.get('v_modo_participacion', '')}")
+                        st.write(f"🏷️ **V. Rol Perfil Antiguo:** {ver.get('v_rol_perfil_antiguo', '')}")
+                        st.write(f"🪖 **V. Frente/Compañía/Columna:** {ver.get('v_frente_columna', '')}")
                     st.write(f"🎯 **V. Perfil Actual:** {ver.get('v_perfil_actual', '')}")
+                    if ver.get("v_perfil_actual") == "SI":
+                        st.write(f"🏢 **V. Organización:** {ver.get('v_organizacion', '')}")
+                        st.write(f"🏷️ **V. Rol:** {ver.get('v_rol_perfil_actual', '')}")
 
     with st.expander("➕ Agregar verificación", expanded=len(st.session_state.verificaciones) == 0):
         # Fila 1
@@ -1953,6 +2023,49 @@ def formulario_casos(tipo="individual"):
                 _VER_OPCIONES,
                 key=f"nv_vpac_{tipo}"
             )
+        # Subcampos condicionales de Verificación Perfil Antiguo
+        if nv_v_perfil_antiguo == "SI":
+            nv_pa_col1, nv_pa_col2, nv_pa_col3 = st.columns(3)
+            with nv_pa_col1:
+                nv_v_modo_participacion = st.selectbox(
+                    "V. MODO DE PARTICIPACIÓN",
+                    _VER_OPCIONES,
+                    key=f"nv_vmp_{tipo}"
+                )
+            with nv_pa_col2:
+                nv_v_rol_perfil_antiguo = st.selectbox(
+                    "V. ROL - PERFIL ANTIGUO",
+                    _VER_OPCIONES,
+                    key=f"nv_vrpa_{tipo}"
+                )
+            with nv_pa_col3:
+                nv_v_frente_columna = st.selectbox(
+                    "V. FRENTE/COMPAÑÍA/COLUMNA",
+                    _VER_OPCIONES,
+                    key=f"nv_vfc_{tipo}"
+                )
+        else:
+            nv_v_modo_participacion = ""
+            nv_v_rol_perfil_antiguo = ""
+            nv_v_frente_columna = ""
+        # Subcampos condicionales de Verificación Perfil Actual
+        if nv_v_perfil_actual == "SI":
+            nv_pac_col1, nv_pac_col2 = st.columns(2)
+            with nv_pac_col1:
+                nv_v_organizacion = st.selectbox(
+                    "V. ORGANIZACIÓN",
+                    _VER_OPCIONES,
+                    key=f"nv_vorg_{tipo}"
+                )
+            with nv_pac_col2:
+                nv_v_rol_perfil_actual = st.selectbox(
+                    "V. ROL",
+                    _VER_OPCIONES,
+                    key=f"nv_vrol_{tipo}"
+                )
+        else:
+            nv_v_organizacion = ""
+            nv_v_rol_perfil_actual = ""
         st.markdown("")
         if st.button("➕ Agregar esta verificación", use_container_width=True, key=f"btn_add_ver_{tipo}", type="secondary"):
             st.session_state.verificaciones.append({
@@ -1963,7 +2076,12 @@ def formulario_casos(tipo="individual"):
                 "v_actor_hechos": nv_v_actor if nv_v_actor != "Seleccione..." else "",
                 "v_motivacion_amenaza": nv_v_motivacion if nv_v_motivacion != "Seleccione..." else "",
                 "v_perfil_antiguo": nv_v_perfil_antiguo if nv_v_perfil_antiguo != "Seleccione..." else "",
+                "v_modo_participacion": nv_v_modo_participacion if nv_v_modo_participacion != "Seleccione..." else "",
+                "v_rol_perfil_antiguo": nv_v_rol_perfil_antiguo if nv_v_rol_perfil_antiguo != "Seleccione..." else "",
+                "v_frente_columna": nv_v_frente_columna if nv_v_frente_columna != "Seleccione..." else "",
                 "v_perfil_actual": nv_v_perfil_actual if nv_v_perfil_actual != "Seleccione..." else "",
+                "v_organizacion": nv_v_organizacion if nv_v_organizacion != "Seleccione..." else "",
+                "v_rol_perfil_actual": nv_v_rol_perfil_actual if nv_v_rol_perfil_actual != "Seleccione..." else "",
             })
             st.success("✅ Verificación agregada"); st.rerun()
 
@@ -2212,7 +2330,12 @@ def formulario_casos(tipo="individual"):
                             ver.get("v_actor_hechos", ""),
                             ver.get("v_motivacion_amenaza", ""),
                             ver.get("v_perfil_antiguo", ""),
+                            ver.get("v_modo_participacion", ""),
+                            ver.get("v_rol_perfil_antiguo", ""),
+                            ver.get("v_frente_columna", ""),
                             ver.get("v_perfil_actual", ""),
+                            ver.get("v_organizacion", ""),
+                            ver.get("v_rol_perfil_actual", ""),
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         ver_guardados += 1

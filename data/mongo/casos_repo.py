@@ -55,7 +55,8 @@ _CABECERAS_VERIFICACIONES = [
     "ID_Verificacion", "ID_Caso", "OT-TE",
     "Fuente Verificacion", "Nombre Fuente",
     "V Hechos Riesgo", "V Lugar Hechos Riesgo", "V Actor Hechos Riesgo", "V Motivacion Amenaza",
-    "V Perfil Antiguo", "V Perfil Actual",
+    "V Perfil Antiguo", "V Modo Participacion", "V Rol Perfil Antiguo", "V Frente Columna",
+    "V Perfil Actual", "V Organizacion", "V Rol Perfil Actual",
     "Analista", "Usuario Analista"
 ]
 
