@@ -21,7 +21,7 @@ _CABECERAS_CASOS = [
 ]
 _CABECERAS_HECHOS = [
     "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
-    "Fecha del Hecho", "Lugar", "Autor", "Descripcion",
+    "Fecha del Hecho", "Departamento", "Municipio", "Lugar", "Autor", "Descripcion",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_ANTECEDENTES = [

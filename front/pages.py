@@ -1272,6 +1272,23 @@ def formulario_casos(tipo="individual"):
                         "DÍA DEL HECHO", min_value=1, max_value=_eh_max_dia,
                         value=_eh_dia_val, step=1, key=_eh_dia_key
                     )
+                _eh_dep_opts = ["Seleccione..."] + list(_MUNICIPIOS.keys())
+                _eh_dep_val  = hecho.get("departamento", "Seleccione...")
+                _eh_dep_idx  = _eh_dep_opts.index(_eh_dep_val) if _eh_dep_val in _eh_dep_opts else 0
+                ec_dep, ec_mun = st.columns(2)
+                with ec_dep:
+                    eh_departamento = st.selectbox(
+                        "DEPARTAMENTO DEL HECHO", _eh_dep_opts,
+                        index=_eh_dep_idx, key=f"eh_departamento_{tipo}_{i}"
+                    )
+                _eh_mun_opts = _MUNICIPIOS.get(eh_departamento, ["Seleccione..."])
+                _eh_mun_val  = hecho.get("municipio", "Seleccione...")
+                _eh_mun_idx  = _eh_mun_opts.index(_eh_mun_val) if _eh_mun_val in _eh_mun_opts else 0
+                with ec_mun:
+                    eh_municipio = st.selectbox(
+                        "MUNICIPIO DEL HECHO", _eh_mun_opts,
+                        index=_eh_mun_idx, key=f"eh_municipio_{tipo}_{i}"
+                    )
                 ec1, ec2 = st.columns(2)
                 with ec1:
                     eh_tipo  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
@@ -1300,6 +1317,8 @@ def formulario_casos(tipo="individual"):
                                     _fecha_eh = ""
                             st.session_state.hechos[i] = {
                                 "tipo": eh_tipo, "fecha": _fecha_eh,
+                                "departamento": eh_departamento if eh_departamento != "Seleccione..." else "",
+                                "municipio": eh_municipio if eh_municipio != "Seleccione..." else "",
                                 "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
                                 "descripcion": eh_desc.strip()
                             }
@@ -1325,6 +1344,8 @@ def formulario_casos(tipo="individual"):
                 c1, c2 = st.columns(2)
                 with c1:
                     st.write(f"📅 **Fecha:** {hecho['fecha']}")
+                    st.write(f"🗺️ **Departamento:** {hecho.get('departamento', '')}")
+                    st.write(f"🏙️ **Municipio:** {hecho.get('municipio', '')}")
                     st.write(f"📍 **Lugar:** {hecho['lugar']}")
                 with c2:
                     st.write(f"👤 **Autor:** {hecho['autor']}")
@@ -1359,6 +1380,19 @@ def formulario_casos(tipo="individual"):
                 "DÍA DEL HECHO", min_value=1, max_value=_max_dia_hf,
                 value=None, step=1, key=_hf_dia_key
             )
+        col_hf_dep, col_hf_mun = st.columns(2)
+        with col_hf_dep:
+            hecho_departamento = st.selectbox(
+                "DEPARTAMENTO DEL HECHO",
+                ["Seleccione..."] + list(_MUNICIPIOS.keys()),
+                key=f"hf_departamento_{tipo}"
+            )
+        with col_hf_mun:
+            hecho_municipio = st.selectbox(
+                "MUNICIPIO DEL HECHO",
+                _MUNICIPIOS.get(hecho_departamento, ["Seleccione..."]),
+                key=f"hf_municipio_{tipo}"
+            )
         c1, c2 = st.columns(2)
         with c1:
             tipo_hecho  = st.selectbox("Tipo de Hecho *", [
@@ -1392,6 +1426,8 @@ def formulario_casos(tipo="individual"):
                         _fecha_hf = ""
                 st.session_state.hechos.append({
                     "tipo": tipo_hecho, "fecha": _fecha_hf,
+                    "departamento": hecho_departamento if hecho_departamento != "Seleccione..." else "",
+                    "municipio": hecho_municipio if hecho_municipio != "Seleccione..." else "",
                     "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
                     "descripcion": descripcion_hecho.strip()
                 })
@@ -1534,7 +1570,9 @@ def formulario_casos(tipo="individual"):
                         id_hecho = obtener_siguiente_id(hoja_hechos)
                         hoja_hechos.append_row([
                             id_hecho, id_caso, ot_te.strip(),
-                            hecho["tipo"], hecho["fecha"], hecho["lugar"],
+                            hecho["tipo"], hecho["fecha"],
+                            hecho.get("departamento", ""), hecho.get("municipio", ""),
+                            hecho["lugar"],
                             hecho["autor"], hecho["descripcion"],
                             st.session_state.nombre_completo, st.session_state.username
                         ])
