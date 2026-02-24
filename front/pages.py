@@ -2650,7 +2650,7 @@ def panel_visualizacion():
             hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes_v, hoja_perfiles_actuales_v, hoja_desplazamientos_v, hoja_verificaciones_v, sheet_url = conectar_sheet_casos(tipo)
             if hoja_casos is None: st.error(f"No se pudo conectar a la hoja {tipo}"); continue
 
-            sub1, sub2, sub3, sub4, sub5 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo", "📁 Antecedentes", "🎯 Perfil Actual"])
+            sub1, sub2, sub3, sub4, sub5, sub6, sub7 = st.tabs(["📋 Casos", "⚠️ Hechos de Riesgo", "🧑‍🤝‍🧑 Perfil Antiguo", "📁 Antecedentes", "🎯 Perfil Actual", "🚗 Desplazamientos", "✅ Verificaciones"])
 
             try: datos   = hoja_casos.get_all_records()
             except: datos = []
@@ -2662,12 +2662,18 @@ def panel_visualizacion():
             except: datos_a = []
             try: datos_pa = hoja_perfiles_actuales_v.get_all_records()
             except: datos_pa = []
+            try: datos_d = hoja_desplazamientos_v.get_all_records()
+            except: datos_d = []
+            try: datos_ver = hoja_verificaciones_v.get_all_records()
+            except: datos_ver = []
 
-            df    = pd.DataFrame(datos)    if datos    else pd.DataFrame()
-            df_h  = pd.DataFrame(datos_h)  if datos_h  else pd.DataFrame()
-            df_p  = pd.DataFrame(datos_p)  if datos_p  else pd.DataFrame()
-            df_a  = pd.DataFrame(datos_a)  if datos_a  else pd.DataFrame()
-            df_pa = pd.DataFrame(datos_pa) if datos_pa else pd.DataFrame()
+            df     = pd.DataFrame(datos)     if datos     else pd.DataFrame()
+            df_h   = pd.DataFrame(datos_h)   if datos_h   else pd.DataFrame()
+            df_p   = pd.DataFrame(datos_p)   if datos_p   else pd.DataFrame()
+            df_a   = pd.DataFrame(datos_a)   if datos_a   else pd.DataFrame()
+            df_pa  = pd.DataFrame(datos_pa)  if datos_pa  else pd.DataFrame()
+            df_d   = pd.DataFrame(datos_d)   if datos_d   else pd.DataFrame()
+            df_ver = pd.DataFrame(datos_ver) if datos_ver else pd.DataFrame()
 
             with sub1:
                 if not df.empty:
@@ -2723,8 +2729,28 @@ def panel_visualizacion():
                     st.dataframe(df_pa, use_container_width=True, hide_index=True)
                 else: st.info("📭 No hay perfiles actuales registrados")
 
+            with sub6:
+                if not df_d.empty:
+                    c1, c2 = st.columns(2)
+                    c1.metric("Total Desplazamientos", len(df_d))
+                    c2.metric("Casos con desplazamiento", df_d["ID_Caso"].nunique() if "ID_Caso" in df_d.columns else 0)
+                    motivo_f = st.selectbox("Filtrar por Motivo", ["Todos"] + sorted(df_d["Motivo Desplazamiento"].unique().tolist()) if "Motivo Desplazamiento" in df_d.columns else ["Todos"], key=f"motivo_desp_{tipo}")
+                    df_df = df_d[df_d["Motivo Desplazamiento"] == motivo_f].copy() if motivo_f != "Todos" else df_d.copy()
+                    st.dataframe(df_df, use_container_width=True, hide_index=True)
+                else: st.info("📭 No hay desplazamientos registrados")
+
+            with sub7:
+                if not df_ver.empty:
+                    c1, c2 = st.columns(2)
+                    c1.metric("Total Verificaciones", len(df_ver))
+                    c2.metric("Casos con verificación", df_ver["ID_Caso"].nunique() if "ID_Caso" in df_ver.columns else 0)
+                    fuente_f = st.selectbox("Filtrar por Fuente", ["Todos"] + sorted(df_ver["Fuente Verificacion"].unique().tolist()) if "Fuente Verificacion" in df_ver.columns else ["Todos"], key=f"fuente_ver_{tipo}")
+                    df_verf = df_ver[df_ver["Fuente Verificacion"] == fuente_f].copy() if fuente_f != "Todos" else df_ver.copy()
+                    st.dataframe(df_verf, use_container_width=True, hide_index=True)
+                else: st.info("📭 No hay verificaciones registradas")
+
             st.markdown("---")
-            if not df.empty or not df_h.empty or not df_p.empty or not df_a.empty or not df_pa.empty:
+            if not df.empty or not df_h.empty or not df_p.empty or not df_a.empty or not df_pa.empty or not df_d.empty or not df_ver.empty:
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
                     (df_f   if not df.empty   else df).to_excel(writer, sheet_name="Casos",              index=False)
