@@ -768,7 +768,7 @@ def formulario_casos(tipo="individual"):
                           if ant.get("registra_resoluciones","") in _REGISTRA_RES else 0,
                     key=f"ea_reg_res_{tipo}_{i}"
                 )
-                col_a1, col_a2 = st.columns(2)
+                col_a1, col_a2, col_a3 = st.columns(3)
                 with col_a1:
                     ea_anio = st.number_input(
                         "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
@@ -789,10 +789,11 @@ def formulario_casos(tipo="individual"):
                             st.session_state[_e_dia_key] = _e_max_dia
                     except Exception:
                         _e_max_dia = 31
-                ea_dia = st.number_input(
-                    "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_e_max_dia,
-                    value=_dia_val_e, step=1, key=_e_dia_key
-                )
+                with col_a3:
+                    ea_dia = st.number_input(
+                        "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_e_max_dia,
+                        value=_dia_val_e, step=1, key=_e_dia_key
+                    )
                 col_save_a, col_cancel_a = st.columns(2)
                 with col_save_a:
                     if st.button("💾 Guardar cambios", key=f"ea_save_{tipo}_{i}",
@@ -855,7 +856,7 @@ def formulario_casos(tipo="individual"):
             _REGISTRA_RES,
             key=f"ant_reg_res_{tipo}"
         )
-        col_anio_ant, col_mes_ant = st.columns(2)
+        col_anio_ant, col_mes_ant, col_dia_ant = st.columns(3)
         with col_anio_ant:
             ant_anio = st.number_input(
                 "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
@@ -876,10 +877,11 @@ def formulario_casos(tipo="individual"):
                     st.session_state[_dia_ant_key] = _max_dia_ant
             except Exception:
                 _max_dia_ant = 31
-        ant_dia = st.number_input(
-            "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_max_dia_ant,
-            value=None, step=1, key=_dia_ant_key
-        )
+        with col_dia_ant:
+            ant_dia = st.number_input(
+                "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_max_dia_ant,
+                value=None, step=1, key=_dia_ant_key
+            )
         st.markdown("")
         if st.button("➕ Agregar este antecedente", use_container_width=True,
                      key=f"btn_add_ant_{tipo}", type="secondary"):
@@ -897,108 +899,6 @@ def formulario_casos(tipo="individual"):
                     "dia_resolucion":        str(int(ant_dia))  if ant_dia  is not None else "",
                 })
                 st.success("✅ Antecedente agregado"); st.rerun()
-
-    # ── Hechos de Riesgo ──────────────────────────────────────────────────────
-    st.markdown("---")
-    st.subheader("⚠️ Hechos de Riesgo")
-    st.caption("Opcional. Agrega uno o varios hechos de riesgo asociados a este caso.")
-
-    _edit_hecho_key = f"editando_hecho_{tipo}"
-    _TIPOS_HECHO = ["Seleccione...", "Amenaza", "Atentado", "Desplazamiento forzado",
-                    "Homicidio", "Secuestro", "Extorsión", "Reclutamiento forzado",
-                    "Violencia sexual", "Confinamiento", "Otro"]
-
-    for i, hecho in enumerate(st.session_state.hechos):
-        with st.container(border=True):
-            if st.session_state.get(_edit_hecho_key) == i:
-                # ── Modo edición ──────────────────────────────────────────────
-                st.markdown(f"**✏️ Editando Hecho #{i+1}**")
-                ec1, ec2 = st.columns(2)
-                with ec1:
-                    eh_tipo  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
-                        index=_TIPOS_HECHO.index(hecho["tipo"]) if hecho["tipo"] in _TIPOS_HECHO else 0,
-                        key=f"eh_tipo_{tipo}_{i}")
-                    try:
-                        _fecha_val = datetime.strptime(hecho["fecha"], "%Y-%m-%d").date()
-                    except Exception:
-                        _fecha_val = None
-                    eh_fecha = st.date_input("Fecha del Hecho *", value=_fecha_val, key=f"eh_fecha_{tipo}_{i}")
-                    eh_lugar = st.text_input("Lugar donde ocurrió *", value=hecho["lugar"], key=f"eh_lugar_{tipo}_{i}")
-                with ec2:
-                    eh_autor = st.text_input("Autor *", value=hecho["autor"], key=f"eh_autor_{tipo}_{i}")
-                    eh_desc  = st.text_area("Descripción *", value=hecho["descripcion"], height=122, key=f"eh_desc_{tipo}_{i}")
-                col_save, col_cancel = st.columns(2)
-                with col_save:
-                    if st.button("💾 Guardar cambios", key=f"eh_save_{tipo}_{i}", type="primary", use_container_width=True):
-                        err_e = []
-                        if eh_tipo == "Seleccione...": err_e.append("Selecciona el tipo de hecho")
-                        if not eh_lugar.strip():       err_e.append("El lugar es obligatorio")
-                        if not eh_autor.strip():       err_e.append("El autor es obligatorio")
-                        if not eh_desc.strip():        err_e.append("La descripción es obligatoria")
-                        if err_e:
-                            for e in err_e: st.error(f"• {e}")
-                        else:
-                            st.session_state.hechos[i] = {
-                                "tipo": eh_tipo, "fecha": str(eh_fecha),
-                                "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
-                                "descripcion": eh_desc.strip()
-                            }
-                            st.session_state[_edit_hecho_key] = None
-                            st.rerun()
-                with col_cancel:
-                    if st.button("✖ Cancelar", key=f"eh_cancel_{tipo}_{i}", type="secondary", use_container_width=True):
-                        st.session_state[_edit_hecho_key] = None
-                        st.rerun()
-            else:
-                # ── Modo lectura ──────────────────────────────────────────────
-                col_tit, col_edit, col_del = st.columns([4, 1, 1])
-                with col_tit: st.markdown(f"**Hecho #{i+1} — {hecho['tipo']}**")
-                with col_edit:
-                    if st.button("✏️", key=f"edit_h_{tipo}_{i}", help="Editar este hecho"):
-                        st.session_state[_edit_hecho_key] = i
-                        st.rerun()
-                with col_del:
-                    if st.button("🗑️", key=f"del_{tipo}_{i}", help="Eliminar este hecho"):
-                        st.session_state.hechos.pop(i)
-                        st.session_state[_edit_hecho_key] = None
-                        st.rerun()
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.write(f"📅 **Fecha:** {hecho['fecha']}")
-                    st.write(f"📍 **Lugar:** {hecho['lugar']}")
-                with c2:
-                    st.write(f"👤 **Autor:** {hecho['autor']}")
-                st.write(f"📄 **Descripción:** {hecho['descripcion']}")
-
-    with st.expander("➕ Agregar hecho de riesgo", expanded=len(st.session_state.hechos) == 0):
-        with st.form(f"form_hecho_{tipo}", clear_on_submit=True):
-            c1, c2 = st.columns(2)
-            with c1:
-                tipo_hecho  = st.selectbox("Tipo de Hecho *", [
-                    "Seleccione...", "Amenaza", "Atentado", "Desplazamiento forzado",
-                    "Homicidio", "Secuestro", "Extorsión", "Reclutamiento forzado",
-                    "Violencia sexual", "Confinamiento", "Otro"])
-                fecha_hecho = st.date_input("Fecha del Hecho *")
-                lugar_hecho = st.text_input("Lugar donde ocurrió *", placeholder="Municipio, vereda, barrio...")
-            with c2:
-                autor_hecho       = st.text_input("Autor *", placeholder="Grupo armado, persona, etc.")
-                descripcion_hecho = st.text_area("Descripción *",
-                                                 placeholder="Describe brevemente el hecho...", height=122)
-            if st.form_submit_button("➕ Agregar este hecho", use_container_width=True):
-                err_h = []
-                if tipo_hecho == "Seleccione...": err_h.append("Selecciona el tipo de hecho")
-                if not lugar_hecho.strip():        err_h.append("El lugar es obligatorio")
-                if not autor_hecho.strip():        err_h.append("El autor es obligatorio")
-                if not descripcion_hecho.strip():  err_h.append("La descripción es obligatoria")
-                if err_h:
-                    for e in err_h: st.error(f"• {e}")
-                else:
-                    st.session_state.hechos.append({
-                        "tipo": tipo_hecho, "fecha": str(fecha_hecho),
-                        "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
-                        "descripcion": descripcion_hecho.strip()
-                    })
-                    st.success("✅ Hecho agregado"); st.rerun()
 
     # ── Perfil Antiguo (solo si aplica según tipo de población) ─────────────
     if _mostrar_perfil_antiguo:
@@ -1319,6 +1219,183 @@ def formulario_casos(tipo="individual"):
                 st.session_state.perfiles_actuales.append(nuevo)
                 st.success("✅ Perfil Actual agregado")
                 st.rerun()
+
+    # ── Hechos de Riesgo ──────────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("⚠️ Hechos de Riesgo")
+    st.caption("Opcional. Agrega uno o varios hechos de riesgo asociados a este caso.")
+
+    _edit_hecho_key = f"editando_hecho_{tipo}"
+    _TIPOS_HECHO = ["Seleccione...", "Amenaza", "Atentado", "Desplazamiento forzado",
+                    "Homicidio", "Secuestro", "Extorsión", "Reclutamiento forzado",
+                    "Violencia sexual", "Confinamiento", "Otro"]
+
+    for i, hecho in enumerate(st.session_state.hechos):
+        with st.container(border=True):
+            if st.session_state.get(_edit_hecho_key) == i:
+                # ── Modo edición ──────────────────────────────────────────────
+                st.markdown(f"**✏️ Editando Hecho #{i+1}**")
+                try:
+                    _eh_fecha_parts = datetime.strptime(hecho["fecha"], "%Y-%m-%d")
+                    _eh_anio_val = _eh_fecha_parts.year
+                    _eh_mes_val  = _eh_fecha_parts.month
+                    _eh_dia_val  = _eh_fecha_parts.day
+                except Exception:
+                    _eh_anio_val = None
+                    _eh_mes_val  = None
+                    _eh_dia_val  = None
+                _eh_anio_key = f"eh_anio_{tipo}_{i}"
+                _eh_mes_key  = f"eh_mes_{tipo}_{i}"
+                _eh_dia_key  = f"eh_dia_{tipo}_{i}"
+                ec_anio, ec_mes, ec_dia = st.columns(3)
+                with ec_anio:
+                    eh_anio = st.number_input(
+                        "AÑO DEL HECHO", min_value=1900, max_value=2099,
+                        value=_eh_anio_val, step=1, key=_eh_anio_key
+                    )
+                with ec_mes:
+                    eh_mes = st.number_input(
+                        "MES DEL HECHO", min_value=1, max_value=12,
+                        value=_eh_mes_val, step=1, key=_eh_mes_key
+                    )
+                _eh_max_dia = 31
+                if eh_anio is not None and eh_mes is not None:
+                    try:
+                        _eh_max_dia = calendar.monthrange(int(eh_anio), int(eh_mes))[1]
+                        _eh_dia_cur = st.session_state.get(_eh_dia_key)
+                        if _eh_dia_cur is not None and _eh_dia_cur > _eh_max_dia:
+                            st.session_state[_eh_dia_key] = _eh_max_dia
+                    except Exception:
+                        _eh_max_dia = 31
+                with ec_dia:
+                    eh_dia = st.number_input(
+                        "DÍA DEL HECHO", min_value=1, max_value=_eh_max_dia,
+                        value=_eh_dia_val, step=1, key=_eh_dia_key
+                    )
+                ec1, ec2 = st.columns(2)
+                with ec1:
+                    eh_tipo  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
+                        index=_TIPOS_HECHO.index(hecho["tipo"]) if hecho["tipo"] in _TIPOS_HECHO else 0,
+                        key=f"eh_tipo_{tipo}_{i}")
+                    eh_lugar = st.text_input("Lugar donde ocurrió *", value=hecho["lugar"], key=f"eh_lugar_{tipo}_{i}")
+                with ec2:
+                    eh_autor = st.text_input("Autor *", value=hecho["autor"], key=f"eh_autor_{tipo}_{i}")
+                    eh_desc  = st.text_area("Descripción *", value=hecho["descripcion"], height=122, key=f"eh_desc_{tipo}_{i}")
+                col_save, col_cancel = st.columns(2)
+                with col_save:
+                    if st.button("💾 Guardar cambios", key=f"eh_save_{tipo}_{i}", type="primary", use_container_width=True):
+                        err_e = []
+                        if eh_tipo == "Seleccione...": err_e.append("Selecciona el tipo de hecho")
+                        if not eh_lugar.strip():       err_e.append("El lugar es obligatorio")
+                        if not eh_autor.strip():       err_e.append("El autor es obligatorio")
+                        if not eh_desc.strip():        err_e.append("La descripción es obligatoria")
+                        if err_e:
+                            for e in err_e: st.error(f"• {e}")
+                        else:
+                            _fecha_eh = ""
+                            if eh_anio is not None and eh_mes is not None and eh_dia is not None:
+                                try:
+                                    _fecha_eh = f"{int(eh_anio):04d}-{int(eh_mes):02d}-{int(eh_dia):02d}"
+                                except Exception:
+                                    _fecha_eh = ""
+                            st.session_state.hechos[i] = {
+                                "tipo": eh_tipo, "fecha": _fecha_eh,
+                                "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
+                                "descripcion": eh_desc.strip()
+                            }
+                            st.session_state[_edit_hecho_key] = None
+                            st.rerun()
+                with col_cancel:
+                    if st.button("✖ Cancelar", key=f"eh_cancel_{tipo}_{i}", type="secondary", use_container_width=True):
+                        st.session_state[_edit_hecho_key] = None
+                        st.rerun()
+            else:
+                # ── Modo lectura ──────────────────────────────────────────────
+                col_tit, col_edit, col_del = st.columns([4, 1, 1])
+                with col_tit: st.markdown(f"**Hecho #{i+1} — {hecho['tipo']}**")
+                with col_edit:
+                    if st.button("✏️", key=f"edit_h_{tipo}_{i}", help="Editar este hecho"):
+                        st.session_state[_edit_hecho_key] = i
+                        st.rerun()
+                with col_del:
+                    if st.button("🗑️", key=f"del_{tipo}_{i}", help="Eliminar este hecho"):
+                        st.session_state.hechos.pop(i)
+                        st.session_state[_edit_hecho_key] = None
+                        st.rerun()
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.write(f"📅 **Fecha:** {hecho['fecha']}")
+                    st.write(f"📍 **Lugar:** {hecho['lugar']}")
+                with c2:
+                    st.write(f"👤 **Autor:** {hecho['autor']}")
+                st.write(f"📄 **Descripción:** {hecho['descripcion']}")
+
+    with st.expander("➕ Agregar hecho de riesgo", expanded=len(st.session_state.hechos) == 0):
+        _hf_anio_key = f"hecho_anio_{tipo}"
+        _hf_mes_key  = f"hecho_mes_{tipo}"
+        _hf_dia_key  = f"hecho_dia_{tipo}"
+        col_hf_anio, col_hf_mes, col_hf_dia = st.columns(3)
+        with col_hf_anio:
+            hecho_anio = st.number_input(
+                "AÑO DEL HECHO", min_value=1900, max_value=2099,
+                value=None, step=1, key=_hf_anio_key
+            )
+        with col_hf_mes:
+            hecho_mes = st.number_input(
+                "MES DEL HECHO", min_value=1, max_value=12,
+                value=None, step=1, key=_hf_mes_key
+            )
+        _max_dia_hf = 31
+        if hecho_anio is not None and hecho_mes is not None:
+            try:
+                _max_dia_hf = calendar.monthrange(int(hecho_anio), int(hecho_mes))[1]
+                _dia_cur_hf = st.session_state.get(_hf_dia_key)
+                if _dia_cur_hf is not None and _dia_cur_hf > _max_dia_hf:
+                    st.session_state[_hf_dia_key] = _max_dia_hf
+            except Exception:
+                _max_dia_hf = 31
+        with col_hf_dia:
+            hecho_dia = st.number_input(
+                "DÍA DEL HECHO", min_value=1, max_value=_max_dia_hf,
+                value=None, step=1, key=_hf_dia_key
+            )
+        c1, c2 = st.columns(2)
+        with c1:
+            tipo_hecho  = st.selectbox("Tipo de Hecho *", [
+                "Seleccione...", "Amenaza", "Atentado", "Desplazamiento forzado",
+                "Homicidio", "Secuestro", "Extorsión", "Reclutamiento forzado",
+                "Violencia sexual", "Confinamiento", "Otro"],
+                key=f"hf_tipo_{tipo}")
+            lugar_hecho = st.text_input("Lugar donde ocurrió *", placeholder="Municipio, vereda, barrio...",
+                                        key=f"hf_lugar_{tipo}")
+        with c2:
+            autor_hecho       = st.text_input("Autor *", placeholder="Grupo armado, persona, etc.",
+                                              key=f"hf_autor_{tipo}")
+            descripcion_hecho = st.text_area("Descripción *",
+                                             placeholder="Describe brevemente el hecho...", height=122,
+                                             key=f"hf_desc_{tipo}")
+        st.markdown("")
+        if st.button("➕ Agregar este hecho", use_container_width=True, key=f"btn_add_hecho_{tipo}", type="secondary"):
+            err_h = []
+            if tipo_hecho == "Seleccione...": err_h.append("Selecciona el tipo de hecho")
+            if not lugar_hecho.strip():        err_h.append("El lugar es obligatorio")
+            if not autor_hecho.strip():        err_h.append("El autor es obligatorio")
+            if not descripcion_hecho.strip():  err_h.append("La descripción es obligatoria")
+            if err_h:
+                for e in err_h: st.error(f"• {e}")
+            else:
+                _fecha_hf = ""
+                if hecho_anio is not None and hecho_mes is not None and hecho_dia is not None:
+                    try:
+                        _fecha_hf = f"{int(hecho_anio):04d}-{int(hecho_mes):02d}-{int(hecho_dia):02d}"
+                    except Exception:
+                        _fecha_hf = ""
+                st.session_state.hechos.append({
+                    "tipo": tipo_hecho, "fecha": _fecha_hf,
+                    "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
+                    "descripcion": descripcion_hecho.strip()
+                })
+                st.success("✅ Hecho agregado"); st.rerun()
 
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
