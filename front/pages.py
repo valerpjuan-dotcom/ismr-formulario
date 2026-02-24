@@ -205,11 +205,8 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
     # ── Partido Comunes (solo si tipo de población corresponde) ──────────────
     if mostrar_cargo_comunes:
         st.markdown("PARTIDO COMUNES")
-        col9, col10 = st.columns(2)
-        with col9:
-            st.selectbox("¿Pertenece a un Concejo Municipal Comunes?", _SI_NO,
-                         index=_SI_NO.index(_v("concejo_comunes")) if _v("concejo_comunes") in _SI_NO else 0,
-                         key=f"pa_concejo_{sfx}")
+        st.text_input("¿A QUÉ CONSEJO LOCAL-MUNICIPAL ESTÁ VINCULADO?",
+                      value=_v("concejo_comunes", ""), key=f"pa_concejo_{sfx}")
 
         # Instancias del partido (multi) — siempre visibles
         _inst_prev = [x.strip() for x in _v("instancias_partido", "").split("|") if x.strip()] if pa else []
