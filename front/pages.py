@@ -13,7 +13,7 @@ from data.diccionarios import (
     _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA, _CUIDADOR,
     _VICTIMA_CONFLICTO_ARMADO, _LIDER_SOCIAL_DDHH,
     # Perfil Actual
-    _PA_NIVEL_EDUCATIVO, _PA_ESTADO_PROYECTO_ARN, _PA_ACTIVIDAD_ECONOMICA,
+    _PA_NIVEL_EDUCATIVO, _PA_FUENTE_INGRESOS, _PA_ESTADO_PROYECTO_ARN, _PA_ACTIVIDAD_ECONOMICA,
     _PA_MACROCASOS_JEP, _PA_INSTANCIAS_PARTIDO, _PA_ROLES_PARTIDO,
     _PA_CONSEJERIA_NACIONAL, _PA_TIPO_ORG, _PA_AMBITO_ORG, _PA_ESCALA_ORG,
     _PA_CARGO_ELECCION,
@@ -140,93 +140,233 @@ def pantalla_selector():
         if st.button("🚪 Cerrar sesión", use_container_width=True, type="secondary"): logout()
 
 
-def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
+def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado,
+                    es_familiar_comunes, mostrar_cargo_comunes):
     """
-    Renderiza los campos de Perfil Actual.
-    - pa:  dict con valores previos (edición) o None (nuevo)
-    - idx: índice del perfil o "new"
-    - es_reincorporado: bool — muestra campos ARN/JEP/compromisos
-    - mostrar_cargo_comunes: bool — muestra bloque Partido Comunes
+    Renderiza los campos de Perfil Actual según tipo de población.
+
+    Lógica de visibilidad:
+    - REINCORPORADO/A            → es_reincorporado=True
+    - FAMILIAR DE REINCORPORADO/A → es_familiar_reincorporado=True
+    - INTEGRANTE DEL PARTIDO     → mostrar_cargo_comunes=True
+    - FAMILIAR DE INTEGRANTE     → es_familiar_comunes=True, mostrar_cargo_comunes=True
+
+    Sección de perfil completa (educación, ARN, JEP, TOAR, organizaciones):
+      visible si es_reincorporado OR es_familiar_reincorporado OR es_familiar_comunes
+    ARN y Actividad Económica:
+      visible solo si es_reincorporado OR es_familiar_reincorporado
+    Concejo Comunes:
+      visible si mostrar_cargo_comunes OR (es_familiar_reincorporado AND familiar_parte_comunes==SI)
     """
-    sfx = f"{tipo}_{idx}"  # sufijo único de keys
+    sfx = f"{tipo}_{idx}"
 
     def _v(campo, defecto="Seleccione..."):
         return pa.get(campo, defecto) if pa else defecto
 
-    # ── Educación e Ingresos ─────────────────────────────────────────────────
-    col1, col2 = st.columns(2)
-    with col1:
-        _opts_edu = _PA_NIVEL_EDUCATIVO
-        _idx_edu  = _opts_edu.index(_v("nivel_educativo")) if _v("nivel_educativo") in _opts_edu else 0
-        st.selectbox("NIVEL DE ESCOLARIDAD", _opts_edu,
-                     index=_idx_edu, key=f"pa_edu_{sfx}")
-    with col2:
-        st.text_input("FUENTE PRINCIPAL DE INGRESOS",
-                      value=_v("fuente_ingresos", ""), key=f"pa_ingresos_{sfx}")
-
-    # ── JEP ─────────────────────────────────────────────────────────────────
+    _mostrar_perfil = es_reincorporado or es_familiar_reincorporado or es_familiar_comunes
+    _mostrar_arn    = es_reincorporado or es_familiar_reincorporado
     _opts_si_no_rep = ["Seleccione...", "SI", "NO REPORTA"]
 
-    # Comparecencia ante la JEP
-    st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_si_no_rep,
-                 index=_opts_si_no_rep.index(_v("comparecencia_jep")) if _v("comparecencia_jep") in _opts_si_no_rep else 0,
-                 key=f"pa_jep_comp_{sfx}")
+    # ── FAMILIAR HACE PARTE DEL PARTIDO COMUNES ───────────────────────────────
+    # Solo visible cuando es_familiar_reincorporado
+    _familiar_parte_comunes = ""
+    if es_familiar_reincorporado:
+        st.selectbox(
+            "FAMILIAR HACE PARTE DEL PARTIDO COMUNES",
+            ["Seleccione...", "SI", "NO REPORTA"],
+            index=["Seleccione...", "SI", "NO REPORTA"].index(_v("familiar_parte_comunes"))
+                  if _v("familiar_parte_comunes") in ["Seleccione...", "SI", "NO REPORTA"] else 0,
+            key=f"pa_familiar_parte_{sfx}"
+        )
+        _familiar_parte_comunes = st.session_state.get(f"pa_familiar_parte_{sfx}", "Seleccione...")
 
-    # Macrocaso compareciente — solo si respondió SI
-    _es_compareciente = st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...") == "SI"
-    if _es_compareciente:
-        _mcc_prev = [m.strip() for m in _v("macrocasos_jep", "").split("|") if m.strip()] if pa else []
-        st.markdown("**MACROCASO COMPARECIENTE**")
-        _cols_mcc = st.columns(2)
-        for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
-            _cols_mcc[_j % 2].checkbox(_mc, value=(_mc in _mcc_prev), key=f"pa_mcc_{_j}_{sfx}")
+    # ── Sección de perfil (condicionada) ─────────────────────────────────────
+    if _mostrar_perfil:
+        st.markdown("---")
+        st.markdown("**PERFIL DE REINCORPORACIÓN / PARTICIPACIÓN**")
 
-    # Víctima ante la JEP
-    st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
-                 index=_SI_NO_REPORTA.index(_v("victima_jep")) if _v("victima_jep") in _SI_NO_REPORTA else 0,
-                 key=f"pa_jep_vic_{sfx}")
+        # Educación e Ingresos
+        col1, col2 = st.columns(2)
+        with col1:
+            _opts_edu = _PA_NIVEL_EDUCATIVO
+            st.selectbox("NIVEL DE ESCOLARIDAD", _opts_edu,
+                         index=_opts_edu.index(_v("nivel_educativo")) if _v("nivel_educativo") in _opts_edu else 0,
+                         key=f"pa_edu_{sfx}")
+        with col2:
+            st.selectbox("FUENTE PRINCIPAL DE INGRESOS", _PA_FUENTE_INGRESOS,
+                         index=_PA_FUENTE_INGRESOS.index(_v("fuente_ingresos")) if _v("fuente_ingresos") in _PA_FUENTE_INGRESOS else 0,
+                         key=f"pa_ingresos_{sfx}")
 
-    # Macrocaso en calidad de víctima — solo si respondió SI
-    _es_victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
-    if _es_victima_jep:
-        _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
-        st.markdown("**MACROCASO VÍCTIMA**")
-        _cols_mcv = st.columns(2)
-        for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
-            _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
+        # ARN y Actividad Económica — solo reincorporados
+        if _mostrar_arn:
+            col3, col4 = st.columns(2)
+            with col3:
+                st.selectbox("PROYECTO PRODUCTIVO REINCORPORACIÓN ARN",
+                             _PA_ESTADO_PROYECTO_ARN,
+                             index=_PA_ESTADO_PROYECTO_ARN.index(_v("estado_proyecto_arn"))
+                                   if _v("estado_proyecto_arn") in _PA_ESTADO_PROYECTO_ARN else 0,
+                             key=f"pa_arn_{sfx}")
+            with col4:
+                st.selectbox("ACTIVIDAD ECONÓMICA REINCORPORACIÓN",
+                             _PA_ACTIVIDAD_ECONOMICA,
+                             index=_PA_ACTIVIDAD_ECONOMICA.index(_v("actividad_economica"))
+                                   if _v("actividad_economica") in _PA_ACTIVIDAD_ECONOMICA else 0,
+                             key=f"pa_act_eco_{sfx}")
 
-    # ── Compromisos del proceso de paz ───────────────────────────────────────
-    col7, col8 = st.columns(2)
-    with col7:
-        st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("participacion_toar")) if _v("participacion_toar") in _SI_NO_REPORTA else 0,
-                     key=f"pa_toar_{sfx}")
-        st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("participacion_pnis")) if _v("participacion_pnis") in _SI_NO_REPORTA else 0,
-                     key=f"pa_pnis_{sfx}")
-    with col8:
-        st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("busqueda_desaparecidos")) if _v("busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
-                     key=f"pa_busq_{sfx}")
-        st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("desminado")) if _v("desminado") in _SI_NO_REPORTA else 0,
-                     key=f"pa_desminado_{sfx}")
+        # JEP — Comparecencia
+        st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_si_no_rep,
+                     index=_opts_si_no_rep.index(_v("comparecencia_jep"))
+                           if _v("comparecencia_jep") in _opts_si_no_rep else 0,
+                     key=f"pa_jep_comp_{sfx}")
+        if st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...") == "SI":
+            _mcc_prev = [m.strip() for m in _v("macrocasos_jep", "").split("|") if m.strip()] if pa else []
+            st.markdown("**MACROCASO COMPARECIENTE**")
+            _cols_mcc = st.columns(2)
+            for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+                _cols_mcc[_j % 2].checkbox(_mc, value=(_mc in _mcc_prev), key=f"pa_mcc_{_j}_{sfx}")
 
-    # ── Partido Comunes (solo si tipo de población corresponde) ──────────────
-    if mostrar_cargo_comunes:
-        st.markdown("PARTIDO COMUNES")
+        # JEP — Víctima
+        st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
+                     index=_SI_NO_REPORTA.index(_v("victima_jep"))
+                           if _v("victima_jep") in _SI_NO_REPORTA else 0,
+                     key=f"pa_jep_vic_{sfx}")
+        if st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI":
+            _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
+            st.markdown("**MACROCASO VÍCTIMA**")
+            _cols_mcv = st.columns(2)
+            for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+                _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
+
+        # Compromisos del proceso de paz
+        col7, col8 = st.columns(2)
+        with col7:
+            st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR",
+                         _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("participacion_toar"))
+                               if _v("participacion_toar") in _SI_NO_REPORTA else 0,
+                         key=f"pa_toar_{sfx}")
+            st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("participacion_pnis"))
+                               if _v("participacion_pnis") in _SI_NO_REPORTA else 0,
+                         key=f"pa_pnis_{sfx}")
+        with col8:
+            st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS",
+                         _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("busqueda_desaparecidos"))
+                               if _v("busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
+                         key=f"pa_busq_{sfx}")
+            st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("desminado"))
+                               if _v("desminado") in _SI_NO_REPORTA else 0,
+                         key=f"pa_desminado_{sfx}")
+
+        # Otras organizaciones (multiregistro)
+        st.selectbox(
+            "¿PARTICIPA DE ALGÚN TIPO DE ORGANIZACIÓN SOCIAL, POLÍTICA O INSTANCIA INSTITUCIONAL DIFERENTE A COMUNES?",
+            _SI_NO,
+            index=_SI_NO.index(_v("participa_otras_org")) if _v("participa_otras_org") in _SI_NO else 0,
+            key=f"pa_otras_org_{sfx}"
+        )
+        _participa_otras = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
+        if _participa_otras == "SI":
+            _oo_key = f"otras_orgs_temp_{sfx}"
+            if _oo_key not in st.session_state:
+                st.session_state[_oo_key] = list(_v("otras_orgs", []) or [])
+
+            st.markdown("**ORGANIZACIONES / INSTANCIAS REGISTRADAS**")
+            for _oo_i, _oo_reg in enumerate(st.session_state[_oo_key]):
+                with st.container(border=True):
+                    _oo_col_t, _oo_col_d = st.columns([5, 1])
+                    with _oo_col_t:
+                        st.markdown(
+                            f"**Org #{_oo_i+1}:** {_oo_reg.get('nombre_org','—')}  |  "
+                            f"**Tipo:** {_oo_reg.get('tipo_org','—')}  |  "
+                            f"**Rol:** {_oo_reg.get('rol_org','—')}  |  "
+                            f"**Ámbito:** {_oo_reg.get('ambito_org','—')}"
+                        )
+                    with _oo_col_d:
+                        if st.button("🗑️", key=f"del_oo_{sfx}_{_oo_i}", help="Eliminar esta organización"):
+                            st.session_state[_oo_key].pop(_oo_i)
+                            st.rerun()
+
+            _oo_show_key = f"show_oo_form_{sfx}"
+            if _oo_show_key not in st.session_state:
+                st.session_state[_oo_show_key] = len(st.session_state[_oo_key]) == 0
+            _oo_btn_label = "🔼 Ocultar formulario de organización" if st.session_state[_oo_show_key] else "➕ Agregar organización / instancia"
+            if st.button(_oo_btn_label, key=f"toggle_oo_{sfx}", use_container_width=True, type="secondary"):
+                st.session_state[_oo_show_key] = not st.session_state[_oo_show_key]
+                st.rerun()
+
+            if st.session_state[_oo_show_key]:
+                with st.container(border=True):
+                    col_ot1_n, col_ot2_n = st.columns(2)
+                    with col_ot1_n:
+                        st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG, index=0, key=f"pa_tipo_org_{sfx}_new")
+                        st.text_input("NOMBRE ORGANIZACIÓN", value="", key=f"pa_nombre_org_{sfx}_new")
+                    with col_ot2_n:
+                        st.selectbox("ESCALA", _PA_ESCALA_ORG, index=0, key=f"pa_escala_org_{sfx}_new")
+                        st.text_input("¿QUÉ ROL EJERCE EN DICHA INSTANCIA?", value="", key=f"pa_rol_org_{sfx}_new")
+                    col_dep_on, col_mun_on = st.columns(2)
+                    _dep_org_opts_n = ["Seleccione..."] + list(_MUNICIPIOS.keys())
+                    with col_dep_on:
+                        st.selectbox("DEPARTAMENTO", _dep_org_opts_n, index=0, key=f"pa_dep_org_{sfx}_new")
+                    with col_mun_on:
+                        _dep_sel_n  = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                        _mun_opts_n = _MUNICIPIOS.get(_dep_sel_n, ["Seleccione..."])
+                        st.selectbox("MUNICIPIO", _mun_opts_n, index=0, key=f"pa_mun_org_{sfx}_new")
+                    col_ai_n, col_af_n = st.columns(2)
+                    with col_ai_n:
+                        st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
+                                        value=None, step=1, key=f"pa_anio_ini_org_{sfx}_new")
+                    with col_af_n:
+                        st.text_input("AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
+                                      value="", key=f"pa_anio_fin_org_{sfx}_new")
+                    _opts_amb_n = ["Seleccione..."] + _PA_AMBITO_ORG
+                    st.selectbox("**ÁMBITO DE LA ORGANIZACIÓN**", _opts_amb_n, index=0, key=f"pa_amb_{sfx}_new")
+                    if st.button("✅ Guardar organización", key=f"add_oo_{sfx}", use_container_width=True, type="primary"):
+                        _oo_tipo   = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
+                        _oo_nombre = st.session_state.get(f"pa_nombre_org_{sfx}_new", "")
+                        _oo_escala = st.session_state.get(f"pa_escala_org_{sfx}_new", "Seleccione...")
+                        _oo_rol    = st.session_state.get(f"pa_rol_org_{sfx}_new", "")
+                        _oo_dep    = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                        _oo_mun    = st.session_state.get(f"pa_mun_org_{sfx}_new", "Seleccione...")
+                        _oo_ai     = st.session_state.get(f"pa_anio_ini_org_{sfx}_new")
+                        _oo_af     = st.session_state.get(f"pa_anio_fin_org_{sfx}_new", "")
+                        _oo_amb    = st.session_state.get(f"pa_amb_{sfx}_new", "Seleccione...")
+                        st.session_state[_oo_key].append({
+                            "tipo_org":         _oo_tipo   if _oo_tipo   != "Seleccione..." else "",
+                            "nombre_org":       _oo_nombre,
+                            "escala_org":       _oo_escala if _oo_escala != "Seleccione..." else "",
+                            "rol_org":          _oo_rol,
+                            "departamento_org": _oo_dep    if _oo_dep    != "Seleccione..." else "",
+                            "municipio_org":    _oo_mun    if _oo_mun    != "Seleccione..." else "",
+                            "anio_inicio_org":  str(int(_oo_ai)) if _oo_ai is not None else "",
+                            "anio_fin_org":     str(_oo_af),
+                            "ambito_org":       _oo_amb    if _oo_amb    != "Seleccione..." else "",
+                        })
+                        st.session_state[_oo_show_key] = False
+                        st.rerun()
+
+    # ── Partido Comunes ───────────────────────────────────────────────────────
+    # Concejo visible si: tipo comunes/familiar_comunes, O si familiar_reincorporado
+    # marcó familiar_parte_comunes == SI
+    _mostrar_concejo = mostrar_cargo_comunes or (
+        es_familiar_reincorporado and _familiar_parte_comunes == "SI"
+    )
+
+    if _mostrar_concejo:
+        st.markdown("---")
+        st.markdown("**PARTIDO COMUNES**")
         st.text_input("¿A QUÉ CONSEJO LOCAL-MUNICIPAL ESTÁ VINCULADO?",
                       value=_v("concejo_comunes", ""), key=f"pa_concejo_{sfx}")
 
-        # ── Multiregistro: Instancias / Roles en el Partido Comunes ──────────
+    if mostrar_cargo_comunes:
+        # Multiregistro instancias del partido
         _ic_key = f"instancias_comunes_temp_{sfx}"
-        # Inicializar lista temporal desde el perfil existente o vacía
         if _ic_key not in st.session_state:
             st.session_state[_ic_key] = list(_v("instancias_comunes", []) or [])
 
         st.markdown("**PARTICIPACIÓN EN INSTANCIAS POLÍTICAS, SOCIALES O INSTITUCIONALES — PARTIDO COMUNES**")
-
-        # Mostrar registros ya añadidos
         for _ic_i, _ic_reg in enumerate(st.session_state[_ic_key]):
             with st.container(border=True):
                 _ic_col_t, _ic_col_d = st.columns([5, 1])
@@ -241,11 +381,9 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                         st.session_state[_ic_key].pop(_ic_i)
                         st.rerun()
 
-        # Formulario para añadir nueva instancia (sin expander — no se permite anidar)
         _ic_show_key = f"show_ic_form_{sfx}"
         if _ic_show_key not in st.session_state:
             st.session_state[_ic_show_key] = len(st.session_state[_ic_key]) == 0
-
         _ic_btn_label = "🔼 Ocultar formulario de instancia" if st.session_state[_ic_show_key] else "➕ Agregar instancia en Partido Comunes"
         if st.button(_ic_btn_label, key=f"toggle_ic_{sfx}", use_container_width=True, type="secondary"):
             st.session_state[_ic_show_key] = not st.session_state[_ic_show_key]
@@ -258,14 +396,12 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                 cols_inst_new = st.columns(2)
                 for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
                     cols_inst_new[_j % 2].checkbox(_inst_n, value=False, key=f"pa_inst_{_j}_{sfx}_new")
-
                 _no_reporta_new = st.session_state.get(f"pa_inst_{_idx_no_reporta_new}_{sfx}_new", False)
                 if not _no_reporta_new:
                     st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
                     cols_rp_new = st.columns(2)
                     for _j, _rol_n in enumerate(_PA_ROLES_PARTIDO[1:]):
                         cols_rp_new[_j % 2].checkbox(_rol_n, value=False, key=f"pa_rol_{_j}_{sfx}_new")
-
                 col11_n, col12_n = st.columns(2)
                 with col11_n:
                     st.selectbox("ES INTEGRANTE DE CONSEJERÍA NACIONAL", _SI_NO,
@@ -275,9 +411,7 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                     with col12_n:
                         st.selectbox("¿CUÁL CONSEJERÍA?", _PA_CONSEJERIA_NACIONAL,
                                      index=0, key=f"pa_tipo_cons_{sfx}_new")
-
-                if st.button("✅ Guardar instancia", key=f"add_ic_{sfx}",
-                             use_container_width=True, type="primary"):
+                if st.button("✅ Guardar instancia", key=f"add_ic_{sfx}", use_container_width=True, type="primary"):
                     _new_insts = " | ".join([
                         _inst_n for _j, _inst_n in enumerate(_PA_INSTANCIAS_PARTIDO[1:])
                         if st.session_state.get(f"pa_inst_{_j}_{sfx}_new", False)
@@ -297,196 +431,117 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                     st.session_state[_ic_show_key] = False
                     st.rerun()
 
-
-    # ── Otras Organizaciones (multiregistro) ────────────────────────────────
-    st.selectbox("¿PARTICIPA DE ALGÚN TIPO DE ORGANIZACIÓN SOCIAL, POLÍTICA O INSTANCIA INSTITUCIONAL DIFERENTE A COMUNES?", _SI_NO,
-                 index=_SI_NO.index(_v("participa_otras_org")) if _v("participa_otras_org") in _SI_NO else 0,
-                 key=f"pa_otras_org_{sfx}")
-
-    _participa_otras = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
-    if _participa_otras == "SI":
-        _oo_key = f"otras_orgs_temp_{sfx}"
-        # Inicializar lista temporal desde perfil existente o vacía
-        if _oo_key not in st.session_state:
-            st.session_state[_oo_key] = list(_v("otras_orgs", []) or [])
-
-        st.markdown("**ORGANIZACIONES / INSTANCIAS REGISTRADAS**")
-
-        # Mostrar registros ya añadidos
-        for _oo_i, _oo_reg in enumerate(st.session_state[_oo_key]):
-            with st.container(border=True):
-                _oo_col_t, _oo_col_d = st.columns([5, 1])
-                with _oo_col_t:
-                    st.markdown(
-                        f"**Org #{_oo_i+1}:** {_oo_reg.get('nombre_org','—')}  |  "
-                        f"**Tipo:** {_oo_reg.get('tipo_org','—')}  |  "
-                        f"**Rol:** {_oo_reg.get('rol_org','—')}  |  "
-                        f"**Ámbito:** {_oo_reg.get('ambito_org','—')}"
-                    )
-                with _oo_col_d:
-                    if st.button("🗑️", key=f"del_oo_{sfx}_{_oo_i}", help="Eliminar esta organización"):
-                        st.session_state[_oo_key].pop(_oo_i)
-                        st.rerun()
-
-        # Formulario para añadir nueva organización (sin expander — no se permite anidar)
-        _oo_show_key = f"show_oo_form_{sfx}"
-        if _oo_show_key not in st.session_state:
-            st.session_state[_oo_show_key] = len(st.session_state[_oo_key]) == 0
-
-        _oo_btn_label = "🔼 Ocultar formulario de organización" if st.session_state[_oo_show_key] else "➕ Agregar organización / instancia"
-        if st.button(_oo_btn_label, key=f"toggle_oo_{sfx}", use_container_width=True, type="secondary"):
-            st.session_state[_oo_show_key] = not st.session_state[_oo_show_key]
-            st.rerun()
-
-        if st.session_state[_oo_show_key]:
-            with st.container(border=True):
-                col_ot1_n, col_ot2_n = st.columns(2)
-                with col_ot1_n:
-                    st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG,
-                                 index=0, key=f"pa_tipo_org_{sfx}_new")
-                    st.text_input("NOMBRE ORGANIZACIÓN", value="", key=f"pa_nombre_org_{sfx}_new")
-                with col_ot2_n:
-                    st.selectbox("ESCALA", _PA_ESCALA_ORG,
-                                 index=0, key=f"pa_escala_org_{sfx}_new")
-                    st.text_input("¿QUÉ ROL EJERCE EN DICHA INSTANCIA?", value="", key=f"pa_rol_org_{sfx}_new")
-
-                col_dep_on, col_mun_on = st.columns(2)
-                _dep_org_opts_n = ["Seleccione..."] + list(_MUNICIPIOS.keys())
-                with col_dep_on:
-                    st.selectbox("DEPARTAMENTO", _dep_org_opts_n,
-                                 index=0, key=f"pa_dep_org_{sfx}_new")
-                with col_mun_on:
-                    _dep_sel_n  = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
-                    _mun_opts_n = _MUNICIPIOS.get(_dep_sel_n, ["Seleccione..."])
-                    st.selectbox("MUNICIPIO", _mun_opts_n,
-                                 index=0, key=f"pa_mun_org_{sfx}_new")
-
-                col_ai_n, col_af_n = st.columns(2)
-                with col_ai_n:
-                    st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
-                                    value=None, step=1, key=f"pa_anio_ini_org_{sfx}_new")
-                with col_af_n:
-                    st.text_input("AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
-                                  value="", key=f"pa_anio_fin_org_{sfx}_new")
-
-                _opts_amb_n = ["Seleccione..."] + _PA_AMBITO_ORG
-                st.selectbox("**ÁMBITO DE LA ORGANIZACIÓN**", _opts_amb_n,
-                             index=0, key=f"pa_amb_{sfx}_new")
-
-                if st.button("✅ Guardar organización", key=f"add_oo_{sfx}",
-                             use_container_width=True, type="primary"):
-                    _oo_tipo   = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
-                    _oo_nombre = st.session_state.get(f"pa_nombre_org_{sfx}_new", "")
-                    _oo_escala = st.session_state.get(f"pa_escala_org_{sfx}_new", "Seleccione...")
-                    _oo_rol    = st.session_state.get(f"pa_rol_org_{sfx}_new", "")
-                    _oo_dep    = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
-                    _oo_mun    = st.session_state.get(f"pa_mun_org_{sfx}_new", "Seleccione...")
-                    _oo_ai     = st.session_state.get(f"pa_anio_ini_org_{sfx}_new")
-                    _oo_af     = st.session_state.get(f"pa_anio_fin_org_{sfx}_new", "")
-                    _oo_amb    = st.session_state.get(f"pa_amb_{sfx}_new", "Seleccione...")
-                    st.session_state[_oo_key].append({
-                        "tipo_org":         _oo_tipo   if _oo_tipo   != "Seleccione..." else "",
-                        "nombre_org":       _oo_nombre,
-                        "escala_org":       _oo_escala if _oo_escala != "Seleccione..." else "",
-                        "rol_org":          _oo_rol,
-                        "departamento_org": _oo_dep    if _oo_dep    != "Seleccione..." else "",
-                        "municipio_org":    _oo_mun    if _oo_mun    != "Seleccione..." else "",
-                        "anio_inicio_org":  str(int(_oo_ai)) if _oo_ai is not None else "",
-                        "anio_fin_org":     str(_oo_af),
-                        "ambito_org":       _oo_amb    if _oo_amb    != "Seleccione..." else "",
-                    })
-                    st.session_state[_oo_show_key] = False
-                    st.rerun()
-
-
-    # ── Cargo de elección popular ─────────────────────────────────────────────
+    # ── Cargo de elección popular (siempre visible) ───────────────────────────
+    st.markdown("---")
     st.markdown("**Cargo de Elección Popular**")
-    _opts_ce = _PA_CARGO_ELECCION
-    st.selectbox("¿Ocupa o ha ocupado cargo de elección popular?", _opts_ce,
-                 index=_opts_ce.index(_v("cargo_eleccion")) if _v("cargo_eleccion") in _opts_ce else 0,
+    st.selectbox("¿Ocupa o ha ocupado cargo de elección popular?", _PA_CARGO_ELECCION,
+                 index=_PA_CARGO_ELECCION.index(_v("cargo_eleccion"))
+                       if _v("cargo_eleccion") in _PA_CARGO_ELECCION else 0,
                  key=f"pa_cargo_{sfx}")
 
 
-def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
+def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
+                es_familiar_comunes, mostrar_cargo_comunes):
     """
     Lee el estado de los widgets del Perfil Actual y retorna un dict,
     o None si hay errores de validación.
     """
-    import streamlit as st
     sfx = f"{tipo}_{idx}"
+    _mostrar_perfil = es_reincorporado or es_familiar_reincorporado or es_familiar_comunes
+    _mostrar_arn    = es_reincorporado or es_familiar_reincorporado
 
-    nivel_edu = st.session_state.get(f"pa_edu_{sfx}", "Seleccione...")
-    errores = []
-    if nivel_edu == "Seleccione...":
-        errores.append("El Nivel Educativo es obligatorio")
-    if errores:
-        for e in errores:
-            st.error(f"• {e}")
-        return None
+    # Familiar parte comunes
+    familiar_parte_comunes = ""
+    if es_familiar_reincorporado:
+        familiar_parte_comunes = st.session_state.get(f"pa_familiar_parte_{sfx}", "Seleccione...")
+        if familiar_parte_comunes == "Seleccione...":
+            familiar_parte_comunes = ""
 
-    # Macrocasos JEP — compareciente y víctima (ambos condicionales)
-    _es_compareciente_r = st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...") == "SI"
-    macrocaso_comp = ""
-    if _es_compareciente_r:
-        macrocaso_comp = " | ".join([
-            mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
-            if st.session_state.get(f"pa_mcc_{j}_{sfx}", False)
-        ])
+    # Validación obligatoria: nivel educativo solo si aplica sección
+    nivel_edu = ""
+    fuente_ingresos = ""
+    estado_arn = ""
+    actividad_eco = ""
+    if _mostrar_perfil:
+        nivel_edu = st.session_state.get(f"pa_edu_{sfx}", "Seleccione...")
+        if nivel_edu == "Seleccione...":
+            st.error("• El Nivel Educativo es obligatorio")
+            return None
+        fuente_ingresos = st.session_state.get(f"pa_ingresos_{sfx}", "Seleccione...")
+        if fuente_ingresos == "Seleccione...":
+            fuente_ingresos = ""
+        if _mostrar_arn:
+            estado_arn  = st.session_state.get(f"pa_arn_{sfx}", "Seleccione...")
+            actividad_eco = st.session_state.get(f"pa_act_eco_{sfx}", "Seleccione...")
+            if estado_arn    == "Seleccione...": estado_arn    = ""
+            if actividad_eco == "Seleccione...": actividad_eco = ""
 
-    _es_victima = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI"
-    macrocaso_vic = ""
-    if _es_victima:
-        macrocaso_vic = " | ".join([
-            mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
-            if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
-        ])
-
-    # Partido Comunes — recoger lista de instancias (multiregistro)
-    instancias_comunes = []
-    participa_comunes  = "SI"  # implícito cuando mostrar_cargo_comunes es True
-    concejo_comunes    = ""
-    if mostrar_cargo_comunes:
-        concejo_comunes    = st.session_state.get(f"pa_concejo_{sfx}", "")
-        _ic_key            = f"instancias_comunes_temp_{sfx}"
-        instancias_comunes = list(st.session_state.get(_ic_key, []))
-
-    # Otras organizaciones — recoger lista (multiregistro)
-    participa_otras = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
+    # Macrocasos JEP
+    comparecencia_jep = macrocaso_comp = ""
+    victima_jep = macrocaso_vic = ""
+    participacion_toar = busqueda_desaparecidos = participacion_pnis = desminado = ""
+    participa_otras = ""
     otras_orgs = []
-    if participa_otras == "SI":
-        _oo_key    = f"otras_orgs_temp_{sfx}"
-        otras_orgs = list(st.session_state.get(_oo_key, []))
 
-    # Campos de compatibilidad plana (primer registro de la lista o vacío)
-    _ic0  = instancias_comunes[0] if instancias_comunes else {}
-    _oo0  = otras_orgs[0]         if otras_orgs         else {}
+    if _mostrar_perfil:
+        comparecencia_jep = st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...")
+        if comparecencia_jep == "SI":
+            macrocaso_comp = " | ".join([
+                mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+                if st.session_state.get(f"pa_mcc_{j}_{sfx}", False)
+            ])
+        victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...")
+        if victima_jep == "SI":
+            macrocaso_vic = " | ".join([
+                mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+                if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
+            ])
+        participacion_toar       = st.session_state.get(f"pa_toar_{sfx}", "Seleccione...")
+        busqueda_desaparecidos   = st.session_state.get(f"pa_busq_{sfx}", "Seleccione...")
+        participacion_pnis       = st.session_state.get(f"pa_pnis_{sfx}", "Seleccione...")
+        desminado                = st.session_state.get(f"pa_desminado_{sfx}", "Seleccione...")
+        participa_otras          = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
+        if participa_otras == "SI":
+            otras_orgs = list(st.session_state.get(f"otras_orgs_temp_{sfx}", []))
+
+    # Partido Comunes
+    instancias_comunes = []
+    participa_comunes  = "SI" if mostrar_cargo_comunes else ""
+    concejo_comunes    = ""
+    _familiar_parte_si = es_familiar_reincorporado and familiar_parte_comunes == "SI"
+    if mostrar_cargo_comunes or _familiar_parte_si:
+        concejo_comunes = st.session_state.get(f"pa_concejo_{sfx}", "")
+    if mostrar_cargo_comunes:
+        instancias_comunes = list(st.session_state.get(f"instancias_comunes_temp_{sfx}", []))
+
+    _ic0 = instancias_comunes[0] if instancias_comunes else {}
+    _oo0 = otras_orgs[0]         if otras_orgs         else {}
+
+    def _clean(v): return v if v and v != "Seleccione..." else ""
 
     return {
+        "familiar_parte_comunes": familiar_parte_comunes,
         "nivel_educativo":        nivel_edu,
-        "fuente_ingresos":        st.session_state.get(f"pa_ingresos_{sfx}", ""),
-        "estado_proyecto_arn":    "",
-        "actividad_economica":    "",
-        "comparecencia_jep":      st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione..."),
+        "fuente_ingresos":        _clean(fuente_ingresos),
+        "estado_proyecto_arn":    _clean(estado_arn),
+        "actividad_economica":    _clean(actividad_eco),
+        "comparecencia_jep":      _clean(comparecencia_jep),
         "macrocasos_jep":         macrocaso_comp,
-        "victima_jep":            st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione..."),
+        "victima_jep":            _clean(victima_jep),
         "macrocaso_victima":      macrocaso_vic,
-        "participacion_toar":     st.session_state.get(f"pa_toar_{sfx}", "Seleccione..."),
-        "busqueda_desaparecidos": st.session_state.get(f"pa_busq_{sfx}", "Seleccione..."),
-        "participacion_pnis":     st.session_state.get(f"pa_pnis_{sfx}", "Seleccione..."),
-        "desminado":              st.session_state.get(f"pa_desminado_{sfx}", "Seleccione..."),
+        "participacion_toar":     _clean(participacion_toar),
+        "busqueda_desaparecidos": _clean(busqueda_desaparecidos),
+        "participacion_pnis":     _clean(participacion_pnis),
+        "desminado":              _clean(desminado),
         "participa_comunes":      participa_comunes,
         "concejo_comunes":        concejo_comunes,
-        # Multiregistro Partido Comunes
         "instancias_comunes":     instancias_comunes,
-        # Compatibilidad plana: primer registro
         "instancias_partido":     _ic0.get("instancias_partido", ""),
         "roles_partido":          _ic0.get("roles_partido", ""),
         "consejeria_nacional":    _ic0.get("consejeria_nacional", ""),
         "tipo_consejeria":        _ic0.get("tipo_consejeria", ""),
-        # Multiregistro Otras Organizaciones
-        "participa_otras_org":    participa_otras if participa_otras != "Seleccione..." else "",
+        "participa_otras_org":    _clean(participa_otras),
         "otras_orgs":             otras_orgs,
-        # Compatibilidad plana: primer registro
         "tipo_org":               _oo0.get("tipo_org", ""),
         "nombre_org":             _oo0.get("nombre_org", ""),
         "ambito_org":             _oo0.get("ambito_org", ""),
@@ -496,8 +551,9 @@ def _recoger_pa(tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         "rol_org":                _oo0.get("rol_org", ""),
         "anio_inicio_org":        _oo0.get("anio_inicio_org", ""),
         "anio_fin_org":           _oo0.get("anio_fin_org", ""),
-        "cargo_eleccion":         st.session_state.get(f"pa_cargo_{sfx}", "Seleccione..."),
+        "cargo_eleccion":         _clean(st.session_state.get(f"pa_cargo_{sfx}", "Seleccione...")),
     }
+
 
 
 
@@ -1263,7 +1319,8 @@ def formulario_casos(tipo="individual"):
         st.session_state.perfiles_actuales = []
 
     # Banderas de condicionales basadas en tipo de población
-    _es_reincorporado      = tipo_poblacion in ("REINCORPORADO/A",)
+    _es_reincorporado           = tipo_poblacion == "REINCORPORADO/A"
+    _es_familiar_reincorporado  = tipo_poblacion == "FAMILIAR DE REINCORPORADO/A"
     _es_comunes            = tipo_poblacion in (
         "INTEGRANTE DEL PARTIDO COMUNES",
         "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES",
@@ -1299,12 +1356,12 @@ def formulario_casos(tipo="individual"):
             if st.session_state.get(_edit_pa_key) == i:
                 # ── Modo edición ──────────────────────────────────────────────
                 st.markdown(f"**✏️ Editando Perfil Actual #{i+1}**")
-                _render_pa_form(pa, tipo, i, _es_reincorporado, _mostrar_cargo_comunes)
+                _render_pa_form(pa, tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
                 col_sv, col_cx = st.columns(2)
                 with col_sv:
                     if st.button("💾 Guardar cambios", key=f"pa_save_{tipo}_{i}",
                                  type="primary", use_container_width=True):
-                        nuevo = _recoger_pa(tipo, i, _es_reincorporado, _mostrar_cargo_comunes)
+                        nuevo = _recoger_pa(tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
                         if nuevo is not None:
                             st.session_state.perfiles_actuales[i] = nuevo
                             st.session_state[_edit_pa_key] = None
@@ -1356,11 +1413,11 @@ def formulario_casos(tipo="individual"):
     # ── Perfil Actual — solo se permite uno ─────────────────────────────────
     if len(st.session_state.perfiles_actuales) == 0:
         with st.expander("➕ Agregar Perfil Actual", expanded=True):
-            _render_pa_form(None, tipo, "new", _es_reincorporado, _mostrar_cargo_comunes)
+            _render_pa_form(None, tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
             st.markdown("")
             if st.button("✅ Guardar Perfil Actual", use_container_width=True,
                          key=f"btn_add_pa_{tipo}", type="primary"):
-                nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _mostrar_cargo_comunes)
+                nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
                 if nuevo is not None:
                     st.session_state.perfiles_actuales.append(nuevo)
                     # Limpiar listas temporales del formulario "new"
@@ -2636,6 +2693,7 @@ def formulario_casos(tipo="individual"):
                         id_pa = obtener_siguiente_id(hoja_perfiles_actuales)
                         hoja_perfiles_actuales.append_row([
                             id_pa, id_caso, ot_te.strip(),
+                            pa.get("familiar_parte_comunes", ""),
                             pa.get("nivel_educativo", ""),
                             pa.get("fuente_ingresos", ""),
                             pa.get("estado_proyecto_arn", ""),
