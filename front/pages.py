@@ -424,7 +424,7 @@ def formulario_casos(tipo="individual"):
     titulo            = "Formulario Individual" if es_individual else "Formulario Colectivo"
     nombre_hoja_casos = TAB_NOMBRES[tipo]["casos"]
 
-    hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes, hoja_perfiles_actuales, sheet_url = conectar_sheet_casos(tipo)
+    hoja_casos, hoja_hechos, hoja_perfiles, hoja_antecedentes, hoja_perfiles_actuales, hoja_desplazamientos, sheet_url = conectar_sheet_casos(tipo)
     if hoja_casos is None:
         st.error("⚠️ No se pudo conectar a Google Sheets"); return
 
@@ -477,6 +477,7 @@ def formulario_casos(tipo="individual"):
                     st.session_state.perfiles      = borrador.get("perfiles", [])
                     st.session_state.antecedentes  = borrador.get("antecedentes", [])
                     st.session_state.perfiles_actuales = borrador.get("perfiles_actuales", [])
+                    st.session_state.desplazamientos   = borrador.get("desplazamientos", [])
                     st.session_state[_borrador_key] = True
                     st.rerun()
             with col_des:
@@ -503,10 +504,27 @@ def formulario_casos(tipo="individual"):
                         *[f"lider_{i}_{tipo}" for i in range(len(_LIDER_SOCIAL_DDHH))],
                     ]:
                         st.session_state.pop(_campo, None)
+                    desp_guardados = 0
+                    for desp in st.session_state.desplazamientos:
+                        id_desp = obtener_siguiente_id(hoja_desplazamientos)
+                        hoja_desplazamientos.append_row([
+                            id_desp, id_caso, ot_te.strip(),
+                            desp.get("motivo", ""),
+                            desp.get("medios_transporte", ""),
+                            desp.get("dep_origen", ""),
+                            desp.get("mun_origen", ""),
+                            desp.get("dep_destino", ""),
+                            desp.get("mun_destino", ""),
+                            desp.get("frecuencia", ""),
+                            desp.get("tipo_via", ""),
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+                        desp_guardados += 1
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
                     st.session_state.antecedentes = []
                     st.session_state.perfiles_actuales = []
+                    st.session_state.desplazamientos = []
                     st.session_state[_borrador_key] = True
                     st.rerun()
             st.stop()
@@ -1221,6 +1239,225 @@ def formulario_casos(tipo="individual"):
                 st.success("✅ Perfil Actual agregado")
                 st.rerun()
 
+
+    # 8. DESPLAZAMIENTOS
+    # ══════════════════════════════════════════════════════════════════════════
+    st.markdown("---")
+    st.subheader("🚗 DESPLAZAMIENTOS")
+    st.caption("Opcional. Agrega uno o varios desplazamientos asociados a este caso.")
+
+    if "desplazamientos" not in st.session_state:
+        st.session_state.desplazamientos = []
+
+    _MOTIVOS_DESP = [
+        "Seleccione...",
+        "LABORAL",
+        "PERSONAL",
+        "ACTIVIDAD ELECTORAL",
+        "ACTIVIDAD DE ORGANIZACIÓN SOCIAL, POLÍTICA, COMUNITARIA, INSTANCIA DE PARTICIPACIÓN, ONG",
+        "NO REPORTA",
+    ]
+    _MEDIOS_TRANSPORTE = [
+        "BICICLETA", "VEHÍCULO BLINDADO", "VEHÍCULO CONVENCIONAL", "CARRO PARTICULAR",
+        "MOTO", "TRANSPORTE PÚBLICO", "TRANSPORTE ANIMAL", "LANCHA", "AVION", "A PIE", "NO REPORTA",
+    ]
+    _FRECUENCIAS_DESP = [
+        "Seleccione...",
+        "Diario", "1 vez a la semana", "Dos o más veces a la semana",
+        "1 vez al mes", "Dos o más veces al mes",
+        "1 vez al trimestre", "1 vez al semestre", "No reporta",
+    ]
+    _TIPOS_VIA = [
+        "Seleccione...", "PRIMARIA", "SECUNDARIA", "TERCIARIA", "FLUVIAL", "NO REPORTA",
+    ]
+    _DEPTOS_COLOMBIA = [
+        "Seleccione...",
+        "AMAZONAS", "ANTIOQUIA", "ARAUCA", "ATLÁNTICO", "BOLÍVAR", "BOYACÁ", "CALDAS",
+        "CAQUETÁ", "CASANARE", "CAUCA", "CESAR", "CHOCÓ", "CÓRDOBA", "CUNDINAMARCA",
+        "GUAINÍA", "GUAVIARE", "HUILA", "LA GUAJIRA", "MAGDALENA", "META", "NARIÑO",
+        "NORTE DE SANTANDER", "PUTUMAYO", "QUINDÍO", "RISARALDA", "SAN ANDRÉS Y PROVIDENCIA",
+        "SANTANDER", "SUCRE", "TOLIMA", "VALLE DEL CAUCA", "VAUPÉS", "VICHADA",
+        "BOGOTÁ D.C.", "Área en Litigio Cauca-Huila",
+    ]
+
+    def _render_desp_form(desp, tipo, idx):
+        """Renderiza el formulario de un desplazamiento."""
+        sfx = f"{tipo}_{idx}"
+        def _dv(campo, defecto="Seleccione..."):
+            return desp.get(campo, defecto) if desp else defecto
+
+        # Motivo (siempre visible)
+        motivo = st.selectbox(
+            "MOTIVO DESPLAZAMIENTO *", _MOTIVOS_DESP,
+            index=_MOTIVOS_DESP.index(_dv("motivo")) if _dv("motivo") in _MOTIVOS_DESP else 0,
+            key=f"desp_motivo_{sfx}"
+        )
+
+        _es_no_reporta = motivo == "NO REPORTA"
+
+        if not _es_no_reporta and motivo != "Seleccione...":
+            # ── Medios de transporte (checkboxes multi) ───────────────────────
+            _medios_prev = [x.strip() for x in _dv("medios_transporte", "").split("|") if x.strip()] if desp else []
+            st.markdown("**MEDIO DE TRANSPORTE UTILIZADO EN LOS DESPLAZAMIENTOS**")
+            cols_med = st.columns(3)
+            for j, medio in enumerate(_MEDIOS_TRANSPORTE):
+                cols_med[j % 3].checkbox(medio, value=(medio in _medios_prev), key=f"desp_medio_{j}_{sfx}")
+
+            # ── Origen ────────────────────────────────────────────────────────
+            col_do, col_mo = st.columns(2)
+            with col_do:
+                dep_origen = st.selectbox(
+                    "DEPARTAMENTO ORIGEN", _DEPTOS_COLOMBIA,
+                    index=_DEPTOS_COLOMBIA.index(_dv("dep_origen")) if _dv("dep_origen") in _DEPTOS_COLOMBIA else 0,
+                    key=f"desp_dep_origen_{sfx}"
+                )
+            with col_mo:
+                _muns_origen = _MUNICIPIOS.get(dep_origen, ["Seleccione..."])
+                if "Seleccione..." not in _muns_origen:
+                    _muns_origen = ["Seleccione..."] + _muns_origen
+                mun_origen_cur = _dv("mun_origen")
+                st.selectbox(
+                    "MUNICIPIO ORIGEN",
+                    _muns_origen,
+                    index=_muns_origen.index(mun_origen_cur) if mun_origen_cur in _muns_origen else 0,
+                    key=f"desp_mun_origen_{sfx}"
+                )
+
+            # ── Destino ───────────────────────────────────────────────────────
+            col_dd, col_md = st.columns(2)
+            with col_dd:
+                dep_destino = st.selectbox(
+                    "DEPARTAMENTO DESTINO", _DEPTOS_COLOMBIA,
+                    index=_DEPTOS_COLOMBIA.index(_dv("dep_destino")) if _dv("dep_destino") in _DEPTOS_COLOMBIA else 0,
+                    key=f"desp_dep_destino_{sfx}"
+                )
+            with col_md:
+                _muns_destino = _MUNICIPIOS.get(dep_destino, ["Seleccione..."])
+                if "Seleccione..." not in _muns_destino:
+                    _muns_destino = ["Seleccione..."] + _muns_destino
+                mun_destino_cur = _dv("mun_destino")
+                st.selectbox(
+                    "MUNICIPIO DESTINO",
+                    _muns_destino,
+                    index=_muns_destino.index(mun_destino_cur) if mun_destino_cur in _muns_destino else 0,
+                    key=f"desp_mun_destino_{sfx}"
+                )
+
+            # ── Frecuencia y Tipo de vía ──────────────────────────────────────
+            col_fr, col_via = st.columns(2)
+            with col_fr:
+                st.selectbox(
+                    "FRECUENCIA DE DESPLAZAMIENTOS", _FRECUENCIAS_DESP,
+                    index=_FRECUENCIAS_DESP.index(_dv("frecuencia")) if _dv("frecuencia") in _FRECUENCIAS_DESP else 0,
+                    key=f"desp_frecuencia_{sfx}"
+                )
+            with col_via:
+                st.selectbox(
+                    "TIPO DE VÍA CON MAYOR DURACIÓN EN EL DESPLAZAMIENTO", _TIPOS_VIA,
+                    index=_TIPOS_VIA.index(_dv("tipo_via")) if _dv("tipo_via") in _TIPOS_VIA else 0,
+                    key=f"desp_tipo_via_{sfx}"
+                )
+
+    def _recoger_desp(tipo, idx):
+        """Lee el estado de los widgets de Desplazamiento y retorna un dict."""
+        sfx = f"{tipo}_{idx}"
+        motivo = st.session_state.get(f"desp_motivo_{sfx}", "Seleccione...")
+        if motivo == "Seleccione...":
+            st.error("• El motivo del desplazamiento es obligatorio")
+            return None
+
+        _es_no_reporta = motivo == "NO REPORTA"
+
+        medios = ""
+        dep_origen = mun_origen = dep_destino = mun_destino = ""
+        frecuencia = tipo_via = ""
+
+        if not _es_no_reporta:
+            medios = " | ".join([
+                medio for j, medio in enumerate(_MEDIOS_TRANSPORTE)
+                if st.session_state.get(f"desp_medio_{j}_{sfx}", False)
+            ])
+            dep_origen  = st.session_state.get(f"desp_dep_origen_{sfx}", "Seleccione...")
+            mun_origen  = st.session_state.get(f"desp_mun_origen_{sfx}", "Seleccione...")
+            dep_destino = st.session_state.get(f"desp_dep_destino_{sfx}", "Seleccione...")
+            mun_destino = st.session_state.get(f"desp_mun_destino_{sfx}", "Seleccione...")
+            frecuencia  = st.session_state.get(f"desp_frecuencia_{sfx}", "Seleccione...")
+            tipo_via    = st.session_state.get(f"desp_tipo_via_{sfx}", "Seleccione...")
+
+        return {
+            "motivo":           motivo,
+            "medios_transporte": medios,
+            "dep_origen":       dep_origen  if dep_origen  != "Seleccione..." else "",
+            "mun_origen":       mun_origen  if mun_origen  != "Seleccione..." else "",
+            "dep_destino":      dep_destino if dep_destino != "Seleccione..." else "",
+            "mun_destino":      mun_destino if mun_destino != "Seleccione..." else "",
+            "frecuencia":       frecuencia  if frecuencia  != "Seleccione..." else "",
+            "tipo_via":         tipo_via    if tipo_via    != "Seleccione..." else "",
+        }
+
+    _edit_desp_key = f"editando_desp_{tipo}"
+
+    # ── Listado de desplazamientos ya agregados ───────────────────────────────
+    for i, desp in enumerate(st.session_state.desplazamientos):
+        with st.container(border=True):
+            col_tit_d, col_edit_d, col_del_d = st.columns([4, 1, 1])
+            with col_tit_d:
+                st.markdown(f"**Desplazamiento #{i+1} — {desp.get('motivo','')}**")
+            with col_edit_d:
+                if st.button("✏️", key=f"edit_desp_{tipo}_{i}", help="Editar"):
+                    st.session_state[_edit_desp_key] = i
+                    st.rerun()
+            with col_del_d:
+                if st.button("🗑️", key=f"del_desp_{tipo}_{i}", help="Eliminar"):
+                    st.session_state.desplazamientos.pop(i)
+                    st.session_state[_edit_desp_key] = None
+                    st.rerun()
+
+            if st.session_state.get(_edit_desp_key) == i:
+                st.markdown(f"**✏️ Editando Desplazamiento #{i+1}**")
+                _render_desp_form(desp, tipo, i)
+                col_sv, col_cx = st.columns(2)
+                with col_sv:
+                    if st.button("💾 Guardar cambios", key=f"desp_save_{tipo}_{i}",
+                                 type="primary", use_container_width=True):
+                        nuevo = _recoger_desp(tipo, i)
+                        if nuevo is not None:
+                            st.session_state.desplazamientos[i] = nuevo
+                            st.session_state[_edit_desp_key] = None
+                            st.rerun()
+                with col_cx:
+                    if st.button("✖ Cancelar", key=f"desp_cancel_{tipo}_{i}",
+                                 type="secondary", use_container_width=True):
+                        st.session_state[_edit_desp_key] = None
+                        st.rerun()
+            else:
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.write(f"🎯 **Motivo:** {desp.get('motivo','')}")
+                    if desp.get('dep_origen'):
+                        st.write(f"📍 **Origen:** {desp.get('mun_origen','')} — {desp.get('dep_origen','')}")
+                    if desp.get('dep_destino'):
+                        st.write(f"🏁 **Destino:** {desp.get('mun_destino','')} — {desp.get('dep_destino','')}")
+                with c2:
+                    if desp.get('medios_transporte'):
+                        st.write(f"🚌 **Medios:** {desp.get('medios_transporte','')}")
+                    if desp.get('frecuencia'):
+                        st.write(f"🔁 **Frecuencia:** {desp.get('frecuencia','')}")
+                    if desp.get('tipo_via'):
+                        st.write(f"🛣️ **Tipo de Vía:** {desp.get('tipo_via','')}")
+
+    # ── Formulario para agregar nuevo desplazamiento ──────────────────────────
+    with st.expander("➕ Agregar Desplazamiento", expanded=len(st.session_state.desplazamientos) == 0):
+        _render_desp_form(None, tipo, "new")
+        st.markdown("")
+        if st.button("➕ Agregar este Desplazamiento", use_container_width=True,
+                     key=f"btn_add_desp_{tipo}", type="secondary"):
+            nuevo = _recoger_desp(tipo, "new")
+            if nuevo is not None:
+                st.session_state.desplazamientos.append(nuevo)
+                st.success("✅ Desplazamiento agregado")
+                st.rerun()
+
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
     st.subheader("⚠️ Hechos de Riesgo")
@@ -1519,6 +1756,7 @@ def formulario_casos(tipo="individual"):
                 "perfiles":         st.session_state.get("perfiles", []),
                 "antecedentes":     st.session_state.get("antecedentes", []),
                 "perfiles_actuales": st.session_state.get("perfiles_actuales", []),
+                "desplazamientos":   st.session_state.get("desplazamientos", []),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
@@ -1685,16 +1923,34 @@ def formulario_casos(tipo="individual"):
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         antecedentes_guardados += 1
+                    desp_guardados = 0
+                    for desp in st.session_state.desplazamientos:
+                        id_desp = obtener_siguiente_id(hoja_desplazamientos)
+                        hoja_desplazamientos.append_row([
+                            id_desp, id_caso, ot_te.strip(),
+                            desp.get("motivo", ""),
+                            desp.get("medios_transporte", ""),
+                            desp.get("dep_origen", ""),
+                            desp.get("mun_origen", ""),
+                            desp.get("dep_destino", ""),
+                            desp.get("mun_destino", ""),
+                            desp.get("frecuencia", ""),
+                            desp.get("tipo_via", ""),
+                            st.session_state.nombre_completo, st.session_state.username
+                        ])
+                        desp_guardados += 1
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
                     st.session_state.antecedentes = []
                     st.session_state.perfiles_actuales = []
+                    st.session_state.desplazamientos = []
                     eliminar_borrador(st.session_state.username, tipo)
                     st.session_state[f"borrador_cargado_{tipo}"] = False
                     st.success(f"✅ Caso **{ot_te}** registrado en {label_badge}!")
                     if hechos_guardados        > 0: st.info(f"⚠️ {hechos_guardados} hecho(s) de riesgo registrados")
                     if perfiles_guardados      > 0: st.info(f"🧑‍🤝‍🧑 {perfiles_guardados} perfil(es) registrados")
                     if antecedentes_guardados  > 0: st.info(f"📁 {antecedentes_guardados} antecedente(s) registrados")
+                    if desp_guardados          > 0: st.info(f"🚗 {desp_guardados} desplazamiento(s) registrados")
                     st.balloons()
                     st.info(f"""
                     **Resumen:**
