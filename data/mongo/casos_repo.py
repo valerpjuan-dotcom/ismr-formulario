@@ -26,6 +26,10 @@ _CABECERAS_CASOS = [
     "Imp Soc Traslado Violencia", "Imp Soc Confinamiento",
     "Imp Soc Restriccion Movilidad", "Imp Soc Desarraigo Cultural",
     "Imp Soc Normalizacion Violencia", "Imp Soc Libertad Seguridad",
+    # Impacto Consecuencial - Esfera Político-Institucional
+    "Imp Pol Restriccion Participacion", "Imp Pol Desarticulacion Liderazgos",
+    "Imp Pol Oferta Institucional", "Imp Pol Derechos Politicos",
+    "Imp Pol Estigmatizacion", "Imp Pol Confianza Instituciones",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [

@@ -2192,6 +2192,53 @@ def formulario_casos(tipo="individual"):
                 if st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
 
+    st.markdown("**IMPACTO EN LA ESFERA POLÍTICO-INSTITUCIONAL**")
+    imp_pol_col1, imp_pol_col2 = st.columns(2)
+    with imp_pol_col1:
+        imp_pol_participacion = st.selectbox(
+            "RESTRICCIÓN EN LA PARTICIPACIÓN POLÍTICA",
+            _IMPACTO_SI_NR,
+            key=f"imp_pol_participacion_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_participacion_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_pol_participacion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_pol_oferta = st.selectbox(
+            "EXPOSICIÓN POR FALENCIAS EN LA IMPLEMENTACIÓN DE LA OFERTA INSTITUCIONAL",
+            _IMPACTO_SI_NR,
+            key=f"imp_pol_oferta_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_oferta_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_pol_oferta_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_pol_estigmatizacion = st.selectbox(
+            "ESTIGMATIZACIÓN",
+            _IMPACTO_SI_NR,
+            key=f"imp_pol_estigmatizacion_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_estigmatizacion_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_pol_estigmatizacion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+    with imp_pol_col2:
+        imp_pol_liderazgos = st.selectbox(
+            "DESARTICULACIÓN EN LOS LIDERAZGOS",
+            _IMPACTO_SI_NR,
+            key=f"imp_pol_liderazgos_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_liderazgos_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_pol_liderazgos_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_pol_derechos = st.selectbox(
+            "AFECTACIÓN EN EL GOCE DE SUS DERECHOS POLÍTICOS",
+            _IMPACTO_SI_NR,
+            key=f"imp_pol_derechos_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_pol_confianza = st.selectbox(
+            "PÉRDIDA DE CONFIANZA EN LAS INSTITUCIONES",
+            _IMPACTO_SI_NR,
+            key=f"imp_pol_confianza_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
     with col_borrador:
@@ -2255,6 +2302,12 @@ def formulario_casos(tipo="individual"):
                 f"imp_soc_desarraigo_{tipo}":   st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione..."),
                 f"imp_soc_normalizacion_{tipo}": st.session_state.get(f"imp_soc_normalizacion_{tipo}", "Seleccione..."),
                 f"imp_soc_libertad_{tipo}":     st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione..."),
+                f"imp_pol_participacion_{tipo}": st.session_state.get(f"imp_pol_participacion_{tipo}", "Seleccione..."),
+                f"imp_pol_liderazgos_{tipo}":    st.session_state.get(f"imp_pol_liderazgos_{tipo}", "Seleccione..."),
+                f"imp_pol_oferta_{tipo}":        st.session_state.get(f"imp_pol_oferta_{tipo}", "Seleccione..."),
+                f"imp_pol_derechos_{tipo}":      st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione..."),
+                f"imp_pol_estigmatizacion_{tipo}": st.session_state.get(f"imp_pol_estigmatizacion_{tipo}", "Seleccione..."),
+                f"imp_pol_confianza_{tipo}":     st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione..."),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
@@ -2350,6 +2403,12 @@ def formulario_casos(tipo="individual"):
                         imp_soc_desarraigo if imp_soc_desarraigo != "Seleccione..." else "",
                         imp_soc_normalizacion if imp_soc_normalizacion != "Seleccione..." else "",
                         imp_soc_libertad if imp_soc_libertad != "Seleccione..." else "",
+                        imp_pol_participacion if imp_pol_participacion != "Seleccione..." else "",
+                        imp_pol_liderazgos if imp_pol_liderazgos != "Seleccione..." else "",
+                        imp_pol_oferta if imp_pol_oferta != "Seleccione..." else "",
+                        imp_pol_derechos if imp_pol_derechos != "Seleccione..." else "",
+                        imp_pol_estigmatizacion if imp_pol_estigmatizacion != "Seleccione..." else "",
+                        imp_pol_confianza if imp_pol_confianza != "Seleccione..." else "",
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0
