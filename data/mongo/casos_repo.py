@@ -98,6 +98,25 @@ _CABECERAS_PERFILES_ACTUALES = [
 ]
 
 
+_CABECERAS_INSTANCIAS_COMUNES = [
+    "ID_Instancia_Comunes", "ID_Perfil_Actual", "ID_Caso", "OT-TE",
+    "Instancias Partido",
+    "Roles Partido",
+    "Consejeria Nacional", "Tipo Consejeria",
+    "Analista", "Usuario Analista"
+]
+
+_CABECERAS_OTRAS_ORGS = [
+    "ID_Otra_Org", "ID_Perfil_Actual", "ID_Caso", "OT-TE",
+    "Tipo Org", "Nombre Org",
+    "Ambito Org", "Escala Org",
+    "Departamento Org", "Municipio Org",
+    "Rol Org",
+    "Anio Inicio Org", "Anio Fin Org",
+    "Analista", "Usuario Analista"
+]
+
+
 def _conectar_db():
     """Retorna la base de datos MongoDB usando el cliente singleton."""
     try:
@@ -188,7 +207,7 @@ def conectar_sheet_casos(tipo="individual"):
     """
     db = _conectar_db()
     if db is None:
-        return None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None, None
 
     try:
         tab_casos              = TAB_NOMBRES[tipo]["casos"]
@@ -224,21 +243,37 @@ def conectar_sheet_casos(tipo="individual"):
         col_desplazamientos.create_index([("ID_Caso", ASCENDING)], background=True)
         col_verificaciones.create_index([("ID_Caso", ASCENDING)], background=True)
 
-        proxy_casos             = WorksheetProxy(col_casos,             _CABECERAS_CASOS)
-        proxy_hechos            = WorksheetProxy(col_hechos,            _CABECERAS_HECHOS)
-        proxy_perfiles          = WorksheetProxy(col_perfiles,          _CABECERAS_PERFILES)
-        proxy_antecedentes      = WorksheetProxy(col_antecedentes,      _CABECERAS_ANTECEDENTES)
-        proxy_perfiles_actuales = WorksheetProxy(col_perfiles_actuales, _CABECERAS_PERFILES_ACTUALES)
-        proxy_desplazamientos   = WorksheetProxy(col_desplazamientos,   _CABECERAS_DESPLAZAMIENTOS)
-        proxy_verificaciones    = WorksheetProxy(col_verificaciones,    _CABECERAS_VERIFICACIONES)
+        tab_instancias_comunes = TAB_NOMBRES[tipo].get("instancias_comunes", f"instancias_comunes_{tipo}")
+        tab_otras_orgs         = TAB_NOMBRES[tipo].get("otras_orgs",         f"otras_orgs_{tipo}")
+
+        nombre_col_instancias_comunes = f"instancias_comunes_{tab_instancias_comunes.lower()}"
+        nombre_col_otras_orgs         = f"otras_orgs_{tab_otras_orgs.lower()}"
+
+        col_instancias_comunes = db[nombre_col_instancias_comunes]
+        col_otras_orgs         = db[nombre_col_otras_orgs]
+
+        col_instancias_comunes.create_index([("ID_Perfil_Actual", ASCENDING)], background=True)
+        col_otras_orgs.create_index([("ID_Perfil_Actual", ASCENDING)],         background=True)
+
+        proxy_casos               = WorksheetProxy(col_casos,               _CABECERAS_CASOS)
+        proxy_hechos              = WorksheetProxy(col_hechos,              _CABECERAS_HECHOS)
+        proxy_perfiles            = WorksheetProxy(col_perfiles,            _CABECERAS_PERFILES)
+        proxy_antecedentes        = WorksheetProxy(col_antecedentes,        _CABECERAS_ANTECEDENTES)
+        proxy_perfiles_actuales   = WorksheetProxy(col_perfiles_actuales,   _CABECERAS_PERFILES_ACTUALES)
+        proxy_desplazamientos     = WorksheetProxy(col_desplazamientos,     _CABECERAS_DESPLAZAMIENTOS)
+        proxy_verificaciones      = WorksheetProxy(col_verificaciones,      _CABECERAS_VERIFICACIONES)
+        proxy_instancias_comunes  = WorksheetProxy(col_instancias_comunes,  _CABECERAS_INSTANCIAS_COMUNES)
+        proxy_otras_orgs          = WorksheetProxy(col_otras_orgs,          _CABECERAS_OTRAS_ORGS)
 
         uri = st.secrets["mongodb"]["uri"]
         db_url = uri.split("@")[-1] if "@" in uri else uri  # oculta credenciales
 
-        return proxy_casos, proxy_hechos, proxy_perfiles, proxy_antecedentes, proxy_perfiles_actuales, proxy_desplazamientos, proxy_verificaciones, db_url
+        return (proxy_casos, proxy_hechos, proxy_perfiles, proxy_antecedentes,
+                proxy_perfiles_actuales, proxy_desplazamientos, proxy_verificaciones,
+                proxy_instancias_comunes, proxy_otras_orgs, db_url)
     except Exception as e:
         st.error(f"Error al conectar colecciones MongoDB ({tipo}): {str(e)}")
-        return None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None, None
 
 
 # ── Proxy de Worksheet ────────────────────────────────────────────────────────
