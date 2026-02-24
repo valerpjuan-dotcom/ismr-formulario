@@ -533,6 +533,8 @@ def formulario_casos(tipo="individual"):
                             ver.get("fuente", ""),
                             ver.get("nombre_fuente", ""),
                             ver.get("v_hechos_riesgo", ""),
+                            ver.get("v_lugar_hechos", ""),
+                            ver.get("v_actor_hechos", ""),
                             ver.get("v_motivacion_amenaza", ""),
                             ver.get("v_perfil_antiguo", ""),
                             ver.get("v_perfil_actual", ""),
@@ -1808,6 +1810,24 @@ def formulario_casos(tipo="individual"):
                         index=_VER_OPCIONES.index(_ev_vma_val) if _ev_vma_val in _VER_OPCIONES else 0,
                         key=f"ev_vma_{tipo}_{i}"
                     )
+                # Subcampos condicionales de Verificación Hechos de Riesgo
+                if ev_v_hechos == "SI":
+                    ev_lugar_col, ev_actor_col = st.columns(2)
+                    with ev_lugar_col:
+                        ev_v_lugar = st.text_input(
+                            "V. LUGAR HECHOS DE RIESGO",
+                            value=ver.get("v_lugar_hechos", ""),
+                            key=f"ev_vlhr_{tipo}_{i}"
+                        )
+                    with ev_actor_col:
+                        ev_v_actor = st.text_input(
+                            "V. ACTOR HECHOS DE RIESGO",
+                            value=ver.get("v_actor_hechos", ""),
+                            key=f"ev_vahr_{tipo}_{i}"
+                        )
+                else:
+                    ev_v_lugar = ""
+                    ev_v_actor = ""
                 # Fila 4: Verificación Perfil Antiguo | Verificación Perfil Actual
                 ev_col3, ev_col4 = st.columns(2)
                 with ev_col3:
@@ -1833,6 +1853,8 @@ def formulario_casos(tipo="individual"):
                             "fuente": ev_fuente if ev_fuente != "Seleccione..." else "",
                             "nombre_fuente": ev_nombre_fuente.strip(),
                             "v_hechos_riesgo": ev_v_hechos if ev_v_hechos != "Seleccione..." else "",
+                            "v_lugar_hechos": ev_v_lugar.strip(),
+                            "v_actor_hechos": ev_v_actor.strip(),
                             "v_motivacion_amenaza": ev_v_motivacion if ev_v_motivacion != "Seleccione..." else "",
                             "v_perfil_antiguo": ev_v_perfil_antiguo if ev_v_perfil_antiguo != "Seleccione..." else "",
                             "v_perfil_actual": ev_v_perfil_actual if ev_v_perfil_actual != "Seleccione..." else "",
@@ -1861,6 +1883,9 @@ def formulario_casos(tipo="individual"):
                     st.write(f"🏢 **Fuente:** {ver.get('fuente', '')}")
                     st.write(f"👤 **Nombre Fuente:** {ver.get('nombre_fuente', '')}")
                     st.write(f"⚠️ **V. Hechos Riesgo:** {ver.get('v_hechos_riesgo', '')}")
+                    if ver.get("v_hechos_riesgo") == "SI":
+                        st.write(f"📍 **V. Lugar Hechos Riesgo:** {ver.get('v_lugar_hechos', '')}")
+                        st.write(f"🎭 **V. Actor Hechos Riesgo:** {ver.get('v_actor_hechos', '')}")
                     st.write(f"💬 **V. Motivación Amenaza:** {ver.get('v_motivacion_amenaza', '')}")
                 with vc2:
                     st.write(f"📋 **V. Perfil Antiguo:** {ver.get('v_perfil_antiguo', '')}")
@@ -1892,6 +1917,22 @@ def formulario_casos(tipo="individual"):
                 _VER_OPCIONES,
                 key=f"nv_vma_{tipo}"
             )
+        # Subcampos condicionales de Verificación Hechos de Riesgo
+        if nv_v_hechos == "SI":
+            nv_lugar_col, nv_actor_col = st.columns(2)
+            with nv_lugar_col:
+                nv_v_lugar = st.text_input(
+                    "V. LUGAR HECHOS DE RIESGO",
+                    key=f"nv_vlhr_{tipo}"
+                )
+            with nv_actor_col:
+                nv_v_actor = st.text_input(
+                    "V. ACTOR HECHOS DE RIESGO",
+                    key=f"nv_vahr_{tipo}"
+                )
+        else:
+            nv_v_lugar = ""
+            nv_v_actor = ""
         # Fila 4
         nv_col3, nv_col4 = st.columns(2)
         with nv_col3:
@@ -1912,6 +1953,8 @@ def formulario_casos(tipo="individual"):
                 "fuente": nv_fuente if nv_fuente != "Seleccione..." else "",
                 "nombre_fuente": nv_nombre_fuente.strip(),
                 "v_hechos_riesgo": nv_v_hechos if nv_v_hechos != "Seleccione..." else "",
+                "v_lugar_hechos": nv_v_lugar.strip(),
+                "v_actor_hechos": nv_v_actor.strip(),
                 "v_motivacion_amenaza": nv_v_motivacion if nv_v_motivacion != "Seleccione..." else "",
                 "v_perfil_antiguo": nv_v_perfil_antiguo if nv_v_perfil_antiguo != "Seleccione..." else "",
                 "v_perfil_actual": nv_v_perfil_actual if nv_v_perfil_actual != "Seleccione..." else "",
@@ -2159,6 +2202,8 @@ def formulario_casos(tipo="individual"):
                             ver.get("fuente", ""),
                             ver.get("nombre_fuente", ""),
                             ver.get("v_hechos_riesgo", ""),
+                            ver.get("v_lugar_hechos", ""),
+                            ver.get("v_actor_hechos", ""),
                             ver.get("v_motivacion_amenaza", ""),
                             ver.get("v_perfil_antiguo", ""),
                             ver.get("v_perfil_actual", ""),

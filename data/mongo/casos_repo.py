@@ -54,7 +54,7 @@ _CABECERAS_DESPLAZAMIENTOS = [
 _CABECERAS_VERIFICACIONES = [
     "ID_Verificacion", "ID_Caso", "OT-TE",
     "Fuente Verificacion", "Nombre Fuente",
-    "V Hechos Riesgo", "V Motivacion Amenaza",
+    "V Hechos Riesgo", "V Lugar Hechos Riesgo", "V Actor Hechos Riesgo", "V Motivacion Amenaza",
     "V Perfil Antiguo", "V Perfil Actual",
     "Analista", "Usuario Analista"
 ]
