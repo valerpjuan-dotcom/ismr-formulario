@@ -687,14 +687,6 @@ def formulario_casos(tipo="individual"):
         zona_rural = ""
         zona_reserva = ""
 
-    # ── Fila: Nivel de Riesgo ─────────────────────────────────────────────────
-    nivel_riesgo = st.selectbox("Nivel de Riesgo *",
-                                ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"],
-                                key=f"caso_nivel_riesgo_{tipo}")
-
-    # ── Observaciones (ancho completo) ────────────────────────────────────────
-    observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
-
     # ── Composición Núcleo Familiar (solo individual) ─────────────────────────
     if es_individual:
         st.markdown("---")
@@ -2292,6 +2284,19 @@ def formulario_casos(tipo="individual"):
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
+
+    # ── Nivel de Riesgo ───────────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("⚠️ Nivel de Riesgo")
+    nivel_riesgo = st.selectbox(
+        "Nivel de Riesgo *",
+        ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"],
+        key=f"caso_nivel_riesgo_{tipo}"
+    )
+
+    # ── Observaciones ─────────────────────────────────────────────────────────
+    st.markdown("---")
+    observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
