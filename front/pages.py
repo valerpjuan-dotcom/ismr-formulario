@@ -20,8 +20,8 @@ from data.diccionarios import (
     # Hechos de Riesgo
     _TIPOS_ACTOR_GENERADOR,
     # Desplazamientos
-    _DESP_MOTIVOS, _DESP_DESP_MEDIOS_TRANSPORTE, _DESP_FRECUENCIAS,
-    _DESP_DESP_TIPOS_VIA, _DESP_DEPARTAMENTOS,
+    _DESP_MOTIVOS, _DESP_MEDIOS_TRANSPORTE, _DESP_FRECUENCIAS,
+    _DESP_TIPOS_VIA, _DESP_DEPARTAMENTOS,
 )
 
 from configuration.settings import TAB_NOMBRES
