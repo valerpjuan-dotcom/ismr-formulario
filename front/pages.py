@@ -186,7 +186,6 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
             _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
 
     # ── Compromisos del proceso de paz ───────────────────────────────────────
-    st.markdown("**Compromisos del Proceso de Paz**")
     col7, col8 = st.columns(2)
     with col7:
         st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR", _SI_NO_REPORTA,
@@ -205,7 +204,7 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
 
     # ── Partido Comunes (solo si tipo de población corresponde) ──────────────
     if mostrar_cargo_comunes:
-        st.markdown("**Participación en el Partido Comunes**")
+        st.markdown("PARTIDO COMUNES")
         col9, col10 = st.columns(2)
         with col9:
             st.selectbox("¿Hace parte del Partido Comunes?", _SI_NO,
@@ -246,8 +245,7 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
                                  key=f"pa_tipo_cons_{sfx}")
 
     # ── Otras Organizaciones ─────────────────────────────────────────────────
-    st.markdown("**Participación en otras organizaciones o espacios**")
-    st.selectbox("¿Participa en otras organizaciones?", _SI_NO,
+    st.selectbox("¿PARTICIPA DE ALGÚN TIPO DE ORGANIZACIÓN SOCIAL, POLÍTICA O INSTANCIA INSTITUCIONAL DIFERENTE A COMUNES?", _SI_NO,
                  index=_SI_NO.index(_v("participa_otras_org")) if _v("participa_otras_org") in _SI_NO else 0,
                  key=f"pa_otras_org_{sfx}")
 
@@ -256,50 +254,53 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
         col_ot1, col_ot2 = st.columns(2)
         with col_ot1:
             _opts_to = _PA_TIPO_ORG
-            st.selectbox("Tipo de Organización", _opts_to,
+            st.selectbox("TIPO DE ORGANIZACIÓN", _opts_to,
                          index=_opts_to.index(_v("tipo_org")) if _v("tipo_org") in _opts_to else 0,
                          key=f"pa_tipo_org_{sfx}")
-            st.text_input("Nombre de la Organización",
+            st.text_input("NOMBRE ORGANIZACIÓN",
                           value=_v("nombre_org", ""), key=f"pa_nombre_org_{sfx}")
         with col_ot2:
             _opts_esc = _PA_ESCALA_ORG
-            st.selectbox("Escala / Alcance", _opts_esc,
+            st.selectbox("ESCALA", _opts_esc,
                          index=_opts_esc.index(_v("escala_org")) if _v("escala_org") in _opts_esc else 0,
                          key=f"pa_escala_org_{sfx}")
-            st.text_input("Rol en la Organización",
+            st.text_input("¿QUE ROL EJERCE EN DICHA INSTANCIA?",
                           value=_v("rol_org", ""), key=f"pa_rol_org_{sfx}")
 
         col_dep_o, col_mun_o = st.columns(2)
         with col_dep_o:
             _dep_org_opts = ["Seleccione..."] + list(_MUNICIPIOS.keys())
             _dep_org_cur  = _v("departamento_org")
-            st.selectbox("Departamento", _dep_org_opts,
+            st.selectbox("DEPARTAMENTO", _dep_org_opts,
                          index=_dep_org_opts.index(_dep_org_cur) if _dep_org_cur in _dep_org_opts else 0,
                          key=f"pa_dep_org_{sfx}")
         with col_mun_o:
             _dep_sel  = st.session_state.get(f"pa_dep_org_{sfx}", "Seleccione...")
             _mun_opts = _MUNICIPIOS.get(_dep_sel, ["Seleccione..."])
             _mun_cur  = _v("municipio_org")
-            st.selectbox("Municipio", _mun_opts,
+            st.selectbox("MUNICIPIO", _mun_opts,
                          index=_mun_opts.index(_mun_cur) if _mun_cur in _mun_opts else 0,
                          key=f"pa_mun_org_{sfx}")
 
         col_ai, col_af = st.columns(2)
         with col_ai:
             _anio_ini = int(_v("anio_inicio_org", 0)) if str(_v("anio_inicio_org", "")).isdigit() else None
-            st.number_input("Año de inicio", min_value=1990, max_value=2099,
+            st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
                             value=_anio_ini, step=1, key=f"pa_anio_ini_org_{sfx}")
         with col_af:
-            _anio_fin = int(_v("anio_fin_org", 0)) if str(_v("anio_fin_org", "")).isdigit() else None
-            st.number_input("Año de finalización (dejar vacío si vigente)",
-                            min_value=1990, max_value=2099,
-                            value=_anio_fin, step=1, key=f"pa_anio_fin_org_{sfx}")
+    _anio_fin = str(_v("anio_fin_org", ""))  # Lo tratamos siempre como texto
+    
+    st.text_input(
+        "AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
+        value=_anio_fin,
+        key=f"pa_anio_fin_org_{sfx}"
+    )
 
         # Ámbito (un solo valor — selectbox)
         _opts_amb = ["Seleccione..."] + _PA_AMBITO_ORG
         _amb_cur  = _v("ambito_org")
         _amb_idx  = _opts_amb.index(_amb_cur) if _amb_cur in _opts_amb else 0
-        st.selectbox("**Ámbito / temática de la organización**", _opts_amb,
+        st.selectbox("**AMBITO DE LA ORGANIZACIÓN**", _opts_amb,
                      index=_amb_idx, key=f"pa_amb_{sfx}")
 
     # ── Cargo de elección popular ─────────────────────────────────────────────
