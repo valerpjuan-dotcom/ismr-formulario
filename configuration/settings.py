@@ -6,17 +6,13 @@ defaults = {
 
 TAB_NOMBRES = {
     "individual": {
-        "casos": "Individual",
-        "hechos": "Hechos_Individual",
-        "perfiles": "Perfiles_Individual",
-        "antecedentes": "Antecedentes_Individual",
-        "perfiles_actuales": "PerfilesActuales_Individual",
+        "casos": "Individual", "hechos": "Hechos_Individual",
+        "perfiles": "Perfiles_Individual", "antecedentes": "Antecedentes_Individual",
+        "perfiles_actuales": "Perfiles_Actuales_Individual",
     },
     "colectivo": {
-        "casos": "Colectivo",
-        "hechos": "Hechos_Colectivo",
-        "perfiles": "Perfiles_Colectivo",
-        "antecedentes": "Antecedentes_Colectivo",
-        "perfiles_actuales": "PerfilesActuales_Colectivo",
+        "casos": "Colectivo", "hechos": "Hechos_Colectivo",
+        "perfiles": "Perfiles_Colectivo", "antecedentes": "Antecedentes_Colectivo",
+        "perfiles_actuales": "Perfiles_Actuales_Colectivo",
     },
 }
