@@ -457,6 +457,34 @@ _TIPOS_ACTOR_GENERADOR = [
     "NO REPORTA",
 ]
 
+_MEDIOS_HECHO = [
+    "Seleccione...",
+    "REDES SOCIALES",
+    "MENSAJE DE TEXTO - APLICACIÓN DE MENSAJERIA INSTANTANEA",
+    "LLAMADA",
+    "PANFLETO",
+    "MISIVA INTIMIDATORIA",
+    "TERCEROS",
+    "CARTAS",
+    "PRESENCIAL",
+    "CORREO ELECTRONICO",
+    "NO REPORTA",
+]
+
+_VICTIMAS_SITUACION_HECHO = [
+    "Seleccione...",
+    "EVALUADO",
+    "FAMILIAR",
+    "INTEGRANTE DE COLECTIVO",
+]
+
+_TIPOS_AMENAZA = [
+    "Seleccione...",
+    "DIRECTA",
+    "POTENCIAL",
+    "DAÑO CONSUMADO",
+]
+
 # ══════════════════════════════════════════════════════════════════════════════
 # DESPLAZAMIENTOS
 # ══════════════════════════════════════════════════════════════════════════════

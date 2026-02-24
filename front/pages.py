@@ -18,7 +18,7 @@ from data.diccionarios import (
     _PA_CONSEJERIA_NACIONAL, _PA_TIPO_ORG, _PA_AMBITO_ORG, _PA_ESCALA_ORG,
     _PA_CARGO_ELECCION,
     # Hechos de Riesgo
-    _TIPOS_ACTOR_GENERADOR,
+    _TIPOS_ACTOR_GENERADOR, _MEDIOS_HECHO, _VICTIMAS_SITUACION_HECHO, _TIPOS_AMENAZA,
     # Desplazamientos
     _DESP_MOTIVOS, _DESP_MEDIOS_TRANSPORTE, _DESP_FRECUENCIAS,
     _DESP_TIPOS_VIA, _DESP_DEPARTAMENTOS,
@@ -1516,6 +1516,31 @@ def formulario_casos(tipo="individual"):
                         value=hecho.get("actor_generador", ""),
                         key=f"eh_actor_gen_{tipo}_{i}"
                     )
+                ec_medio, ec_victima, ec_amenaza = st.columns(3)
+                with ec_medio:
+                    _eh_medio_val = hecho.get("medio", "Seleccione...")
+                    eh_medio = st.selectbox(
+                        "MEDIO HECHO DE RIESGO",
+                        _MEDIOS_HECHO,
+                        index=_MEDIOS_HECHO.index(_eh_medio_val) if _eh_medio_val in _MEDIOS_HECHO else 0,
+                        key=f"eh_medio_{tipo}_{i}"
+                    )
+                with ec_victima:
+                    _eh_victima_val = hecho.get("victima_situacion", "Seleccione...")
+                    eh_victima_situacion = st.selectbox(
+                        "VÍCTIMA DE LA SITUACIÓN HECHO DE RIESGO",
+                        _VICTIMAS_SITUACION_HECHO,
+                        index=_VICTIMAS_SITUACION_HECHO.index(_eh_victima_val) if _eh_victima_val in _VICTIMAS_SITUACION_HECHO else 0,
+                        key=f"eh_victima_{tipo}_{i}"
+                    )
+                with ec_amenaza:
+                    _eh_amenaza_val = hecho.get("tipo_amenaza", "Seleccione...")
+                    eh_tipo_amenaza = st.selectbox(
+                        "TIPO DE AMENAZA",
+                        _TIPOS_AMENAZA,
+                        index=_TIPOS_AMENAZA.index(_eh_amenaza_val) if _eh_amenaza_val in _TIPOS_AMENAZA else 0,
+                        key=f"eh_tipo_amenaza_{tipo}_{i}"
+                    )
                 ec1, ec2 = st.columns(2)
                 with ec1:
                     eh_tipo  = st.selectbox("Tipo de Hecho *", _TIPOS_HECHO,
@@ -1548,6 +1573,9 @@ def formulario_casos(tipo="individual"):
                                 "municipio": eh_municipio if eh_municipio != "Seleccione..." else "",
                                 "tipo_actor": eh_tipo_actor if eh_tipo_actor != "Seleccione..." else "",
                                 "actor_generador": eh_actor_generador.strip(),
+                                "medio": eh_medio if eh_medio != "Seleccione..." else "",
+                                "victima_situacion": eh_victima_situacion if eh_victima_situacion != "Seleccione..." else "",
+                                "tipo_amenaza": eh_tipo_amenaza if eh_tipo_amenaza != "Seleccione..." else "",
                                 "lugar": eh_lugar.strip(), "autor": eh_autor.strip(),
                                 "descripcion": eh_desc.strip()
                             }
@@ -1580,6 +1608,9 @@ def formulario_casos(tipo="individual"):
                     st.write(f"👤 **Autor:** {hecho['autor']}")
                     st.write(f"⚡ **Tipo Actor:** {hecho.get('tipo_actor', '')}")
                     st.write(f"🔫 **Actor Generador:** {hecho.get('actor_generador', '')}")
+                    st.write(f"📡 **Medio:** {hecho.get('medio', '')}")
+                    st.write(f"🎯 **Víctima Situación:** {hecho.get('victima_situacion', '')}")
+                    st.write(f"⚠️ **Tipo Amenaza:** {hecho.get('tipo_amenaza', '')}")
                 st.write(f"📄 **Descripción:** {hecho['descripcion']}")
 
     with st.expander("➕ Agregar hecho de riesgo", expanded=len(st.session_state.hechos) == 0):
@@ -1636,6 +1667,25 @@ def formulario_casos(tipo="individual"):
                 "ACTOR GENERADOR HECHO RIESGO",
                 key=f"hf_actor_gen_{tipo}"
             )
+        col_hf_medio, col_hf_victima, col_hf_amenaza = st.columns(3)
+        with col_hf_medio:
+            hecho_medio = st.selectbox(
+                "MEDIO HECHO DE RIESGO",
+                _MEDIOS_HECHO,
+                key=f"hf_medio_{tipo}"
+            )
+        with col_hf_victima:
+            hecho_victima_situacion = st.selectbox(
+                "VÍCTIMA DE LA SITUACIÓN HECHO DE RIESGO",
+                _VICTIMAS_SITUACION_HECHO,
+                key=f"hf_victima_{tipo}"
+            )
+        with col_hf_amenaza:
+            hecho_tipo_amenaza = st.selectbox(
+                "TIPO DE AMENAZA",
+                _TIPOS_AMENAZA,
+                key=f"hf_tipo_amenaza_{tipo}"
+            )
         c1, c2 = st.columns(2)
         with c1:
             tipo_hecho  = st.selectbox("Tipo de Hecho *", [
@@ -1673,6 +1723,9 @@ def formulario_casos(tipo="individual"):
                     "municipio": hecho_municipio if hecho_municipio != "Seleccione..." else "",
                     "tipo_actor": hecho_tipo_actor if hecho_tipo_actor != "Seleccione..." else "",
                     "actor_generador": hecho_actor_generador.strip(),
+                    "medio": hecho_medio if hecho_medio != "Seleccione..." else "",
+                    "victima_situacion": hecho_victima_situacion if hecho_victima_situacion != "Seleccione..." else "",
+                    "tipo_amenaza": hecho_tipo_amenaza if hecho_tipo_amenaza != "Seleccione..." else "",
                     "lugar": lugar_hecho.strip(), "autor": autor_hecho.strip(),
                     "descripcion": descripcion_hecho.strip()
                 })
@@ -1819,6 +1872,7 @@ def formulario_casos(tipo="individual"):
                             hecho["tipo"], hecho["fecha"],
                             hecho.get("departamento", ""), hecho.get("municipio", ""),
                             hecho.get("tipo_actor", ""), hecho.get("actor_generador", ""),
+                            hecho.get("medio", ""), hecho.get("victima_situacion", ""), hecho.get("tipo_amenaza", ""),
                             hecho["lugar"],
                             hecho["autor"], hecho["descripcion"],
                             st.session_state.nombre_completo, st.session_state.username

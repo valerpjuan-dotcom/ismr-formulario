@@ -23,6 +23,7 @@ _CABECERAS_HECHOS = [
     "ID_Hecho", "ID_Caso", "OT-TE", "Tipo de Hecho",
     "Fecha del Hecho", "Departamento", "Municipio",
     "Tipo Actor Generador", "Actor Generador",
+    "Medio Hecho", "Victima Situacion", "Tipo Amenaza",
     "Lugar", "Autor", "Descripcion",
     "Analista", "Usuario Analista"
 ]
