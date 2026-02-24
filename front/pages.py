@@ -24,6 +24,8 @@ from data.diccionarios import (
     _DESP_TIPOS_VIA, _DESP_DEPARTAMENTOS,
     # Verificaciones
     _FUENTES_VERIFICACION, _VER_OPCIONES,
+    # Impacto Consecuencial
+    _IMPACTO_SI_NR,
 )
 
 from configuration.settings import TAB_NOMBRES
@@ -2085,6 +2087,50 @@ def formulario_casos(tipo="individual"):
             })
             st.success("✅ Verificación agregada"); st.rerun()
 
+    # ── Impacto Consecuencial ─────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("📊 Impacto Consecuencial")
+
+    st.markdown("**IMPACTO EN LA ESFERA ECONÓMICA**")
+    imp_eco_col1, imp_eco_col2 = st.columns(2)
+    with imp_eco_col1:
+        imp_eco_dependencia = st.selectbox(
+            "DEPENDENCIA EN PROGRAMAS DE SUBSIDIO DEL ESTADO",
+            _IMPACTO_SI_NR,
+            key=f"imp_eco_dependencia_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_dependencia_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_eco_dependencia_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_eco_empleos = st.selectbox(
+            "ACCESO RESTRINGIDO A EMPLEOS FORMALES",
+            _IMPACTO_SI_NR,
+            key=f"imp_eco_empleos_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_eco_bienes = st.selectbox(
+            "ACCESO A SERVICIOS Y BIENES O ENSERES DE PRIMERA NECESIDAD",
+            _IMPACTO_SI_NR,
+            key=f"imp_eco_bienes_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_bienes_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_eco_bienes_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+    with imp_eco_col2:
+        imp_eco_iniciativas = st.selectbox(
+            "PÉRDIDA DE INICIATIVAS PRODUCTIVAS",
+            _IMPACTO_SI_NR,
+            key=f"imp_eco_iniciativas_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_iniciativas_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_eco_iniciativas_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+        imp_eco_ilicita = st.selectbox(
+            "INSERCIÓN EN PROCESOS DE ECONOMÍAS ILÍCITAS O EMPLEOS INFORMALES PRECARIZADOS",
+            _IMPACTO_SI_NR,
+            key=f"imp_eco_ilicita_{tipo}",
+            index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione..."))
+                if st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
+        )
+
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
     with col_borrador:
@@ -2135,6 +2181,11 @@ def formulario_casos(tipo="individual"):
                 "perfiles_actuales": st.session_state.get("perfiles_actuales", []),
                 "desplazamientos":   st.session_state.get("desplazamientos", []),
                 "verificaciones":    st.session_state.get("verificaciones", []),
+                f"imp_eco_dependencia_{tipo}": st.session_state.get(f"imp_eco_dependencia_{tipo}", "Seleccione..."),
+                f"imp_eco_iniciativas_{tipo}": st.session_state.get(f"imp_eco_iniciativas_{tipo}", "Seleccione..."),
+                f"imp_eco_empleos_{tipo}":     st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione..."),
+                f"imp_eco_ilicita_{tipo}":     st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione..."),
+                f"imp_eco_bienes_{tipo}":      st.session_state.get(f"imp_eco_bienes_{tipo}", "Seleccione..."),
             }
             if guardar_borrador(st.session_state.username, tipo, datos_borrador):
                 st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
@@ -2217,6 +2268,11 @@ def formulario_casos(tipo="individual"):
                         factor_cuidador if factor_cuidador and factor_cuidador != "Seleccione..." else "",
                         " | ".join(victima_conflicto),
                         " | ".join(lider_social),
+                        imp_eco_dependencia if imp_eco_dependencia != "Seleccione..." else "",
+                        imp_eco_iniciativas if imp_eco_iniciativas != "Seleccione..." else "",
+                        imp_eco_empleos if imp_eco_empleos != "Seleccione..." else "",
+                        imp_eco_ilicita if imp_eco_ilicita != "Seleccione..." else "",
+                        imp_eco_bienes if imp_eco_bienes != "Seleccione..." else "",
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0

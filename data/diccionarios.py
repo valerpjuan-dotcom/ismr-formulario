@@ -572,3 +572,6 @@ _VER_OPCIONES = [
     "NIEGA",
     "NO REPORTA",
 ]
+
+# ── Impacto Consecuencial ─────────────────────────────────────────────────────
+_IMPACTO_SI_NR = ["Seleccione...", "SI", "NO REPORTA"]

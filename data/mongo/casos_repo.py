@@ -17,6 +17,10 @@ _CABECERAS_CASOS = [
     "Num Hijos Menores Edad", "Num Menores Otros", "Num Adultos Mayores", "Num Discapacidad",
     "OSIEGD", "Factor Discapacidad", "Factor Etnia", "Factor Campesino",
     "Factor Cuidador", "Factor Victima Conflicto Armado", "Factor Lider Social DDHH",
+    # Impacto Consecuencial - Esfera Económica
+    "Imp Eco Dependencia Subsidio", "Imp Eco Perdida Iniciativas",
+    "Imp Eco Acceso Empleos Formales", "Imp Eco Economia Ilicita",
+    "Imp Eco Acceso Bienes",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [
