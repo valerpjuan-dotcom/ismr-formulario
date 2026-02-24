@@ -210,28 +210,28 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, mostrar_cargo_comunes):
 
         # Instancias del partido (multi) — siempre visibles
         _inst_prev = [x.strip() for x in _v("instancias_partido", "").split("|") if x.strip()] if pa else []
-        st.markdown("**Instancias del Partido en que participa**")
+        st.markdown("**¿DE CUÁL INSTANCIA DE DIRECCIÓN O VIGILANCIA DEL PARTIDO COMUNES ES INTEGRANTE?**")
         cols_inst = st.columns(2)
         for j, inst in enumerate(_PA_INSTANCIAS_PARTIDO[1:]):
             cols_inst[j % 2].checkbox(inst, value=(inst in _inst_prev), key=f"pa_inst_{j}_{sfx}")
 
         # Roles en el partido (multi) — siempre visibles
         _roles_prev = [x.strip() for x in _v("roles_partido", "").split("|") if x.strip()] if pa else []
-        st.markdown("**Rol(es) en el Partido**")
+        st.markdown("**ROL QUE EJERCE EN DICHA INSTANCIA**")
         cols_rp = st.columns(2)
         for j, rol in enumerate(_PA_ROLES_PARTIDO[1:]):
             cols_rp[j % 2].checkbox(rol, value=(rol in _roles_prev), key=f"pa_rol_{j}_{sfx}")
 
         col11, col12 = st.columns(2)
         with col11:
-            st.selectbox("¿Tiene Consejería Nacional?", _SI_NO,
+            st.selectbox("ES INTEGRANTE DE CONSEJERÍA NACIONAL", _SI_NO,
                          index=_SI_NO.index(_v("consejeria_nacional")) if _v("consejeria_nacional") in _SI_NO else 0,
                          key=f"pa_cons_nac_{sfx}")
         _tiene_consejeria = st.session_state.get(f"pa_cons_nac_{sfx}", "Seleccione...")
         if _tiene_consejeria == "SI":
             _opts_cn = _PA_CONSEJERIA_NACIONAL
             with col12:
-                st.selectbox("Tipo de Consejería", _opts_cn,
+                st.selectbox("¿CUÁL CONSEJERÍA?", _opts_cn,
                              index=_opts_cn.index(_v("tipo_consejeria")) if _v("tipo_consejeria") in _opts_cn else 0,
                              key=f"pa_tipo_cons_{sfx}")
 
