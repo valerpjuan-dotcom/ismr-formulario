@@ -167,7 +167,6 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
 
     # ── Sección de perfil (siempre visible) ──────────────────────────────────
     st.markdown("---")
-    st.markdown("**PERFIL DE REINCORPORACIÓN / PARTICIPACIÓN**")
 
     col1, col2 = st.columns(2)
     with col1:
