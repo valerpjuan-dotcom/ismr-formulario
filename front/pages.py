@@ -176,10 +176,9 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
                            if _v("nivel_educativo") in _PA_NIVEL_EDUCATIVO else 0,
                      key=f"pa_edu_{sfx}")
     with col2:
-        st.selectbox("FUENTE PRINCIPAL DE INGRESOS", _PA_FUENTE_INGRESOS,
-                     index=_PA_FUENTE_INGRESOS.index(_v("fuente_ingresos"))
-                           if _v("fuente_ingresos") in _PA_FUENTE_INGRESOS else 0,
-                     key=f"pa_ingresos_{sfx}")
+        st.text_input("FUENTE PRINCIPAL DE INGRESOS",
+                      value=_v("fuente_ingresos", ""),
+                      key=f"pa_ingresos_{sfx}")
 
     # JEP — Comparecencia
     st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_si_no_rep,
@@ -331,10 +330,9 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
                                    if _v("fr_nivel_educativo") in _PA_NIVEL_EDUCATIVO else 0,
                              key=f"fr_edu_{sfx}")
             with col_fr2:
-                st.selectbox("FUENTE PRINCIPAL DE INGRESOS", _PA_FUENTE_INGRESOS,
-                             index=_PA_FUENTE_INGRESOS.index(_v("fr_fuente_ingresos"))
-                                   if _v("fr_fuente_ingresos") in _PA_FUENTE_INGRESOS else 0,
-                             key=f"fr_ingresos_{sfx}")
+                st.text_input("FUENTE PRINCIPAL DE INGRESOS",
+                              value=_v("fr_fuente_ingresos", ""),
+                              key=f"fr_ingresos_{sfx}")
 
             col_fr3, col_fr4 = st.columns(2)
             with col_fr3:
