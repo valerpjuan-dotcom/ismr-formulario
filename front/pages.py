@@ -165,9 +165,6 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
 
     _opts_si_no_rep = ["Seleccione...", "SI", "NO REPORTA"]
 
-    # ── Sección de perfil (siempre visible) ──────────────────────────────────
-    st.markdown("---")
-
     col1, col2 = st.columns(2)
     with col1:
         st.selectbox("NIVEL DE ESCOLARIDAD", _PA_NIVEL_EDUCATIVO,
