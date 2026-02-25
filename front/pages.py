@@ -26,8 +26,6 @@ from data.diccionarios import (
     _FUENTES_VERIFICACION, _VER_OPCIONES,
     # Impacto Consecuencial
     _IMPACTO_SI_NR,
-    # 👇 AGREGAR ESTA LÍNEA
-    _TIPOS_RUTA_ANTECEDENTE,
 )
 
 from configuration.settings import TAB_NOMBRES
@@ -142,7 +140,7 @@ def pantalla_selector():
         if st.button("🚪 Cerrar sesión", use_container_width=True, type="secondary"): logout()
 
 
-def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_comunes, mostrar_cargo_comunes):
+def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, es_familiar_comunes, mostrar_cargo_comunes):
     """
     Renderiza los campos de Perfil Actual según tipo de población.
 
@@ -163,7 +161,7 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_comunes, mostra
     def _v(campo, defecto="Seleccione..."):
         return pa.get(campo, defecto) if pa else defecto
 
-    _mostrar_perfil = es_reincorporado or es_familiar_comunes
+    _mostrar_perfil = es_reincorporado or es_familiar_reincorporado or es_familiar_comunes
     _opts_si_no_rep = ["Seleccione...", "SI", "NO REPORTA"]
 
     # ── Sección de perfil (condicionada) ─────────────────────────────────────
@@ -317,6 +315,96 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_comunes, mostra
                         st.session_state[_oo_show_key] = False
                         st.rerun()
 
+    # ── Subformulario: Perfil del Reincorporado/a (FAMILIAR DE REINCORPORADO/A) ─
+    if es_familiar_reincorporado:
+        st.markdown("---")
+        with st.container(border=True):
+            st.markdown("#### 👤 PERFIL DEL REINCORPORADO/A RELACIONADO")
+            st.caption("Información sobre el perfil de reincorporación del familiar")
+
+            _opts_fr = ["Seleccione...", "SI", "NO REPORTA"]
+
+            col_fr1, col_fr2 = st.columns(2)
+            with col_fr1:
+                st.selectbox("NIVEL DE ESCOLARIDAD", _PA_NIVEL_EDUCATIVO,
+                             index=_PA_NIVEL_EDUCATIVO.index(_v("fr_nivel_educativo"))
+                                   if _v("fr_nivel_educativo") in _PA_NIVEL_EDUCATIVO else 0,
+                             key=f"fr_edu_{sfx}")
+            with col_fr2:
+                st.selectbox("FUENTE PRINCIPAL DE INGRESOS", _PA_FUENTE_INGRESOS,
+                             index=_PA_FUENTE_INGRESOS.index(_v("fr_fuente_ingresos"))
+                                   if _v("fr_fuente_ingresos") in _PA_FUENTE_INGRESOS else 0,
+                             key=f"fr_ingresos_{sfx}")
+
+            col_fr3, col_fr4 = st.columns(2)
+            with col_fr3:
+                st.selectbox("PROYECTO PRODUCTIVO REINCORPORACIÓN ARN", _PA_ESTADO_PROYECTO_ARN,
+                             index=_PA_ESTADO_PROYECTO_ARN.index(_v("fr_estado_arn"))
+                                   if _v("fr_estado_arn") in _PA_ESTADO_PROYECTO_ARN else 0,
+                             key=f"fr_arn_{sfx}")
+            with col_fr4:
+                st.selectbox("ACTIVIDAD ECONÓMICA REINCORPORACIÓN", _PA_ACTIVIDAD_ECONOMICA,
+                             index=_PA_ACTIVIDAD_ECONOMICA.index(_v("fr_actividad_economica"))
+                                   if _v("fr_actividad_economica") in _PA_ACTIVIDAD_ECONOMICA else 0,
+                             key=f"fr_act_eco_{sfx}")
+
+            st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_fr,
+                         index=_opts_fr.index(_v("fr_comparecencia_jep"))
+                               if _v("fr_comparecencia_jep") in _opts_fr else 0,
+                         key=f"fr_jep_comp_{sfx}")
+            if st.session_state.get(f"fr_jep_comp_{sfx}", "Seleccione...") == "SI":
+                _fr_mcc_prev = [m.strip() for m in _v("fr_macrocasos_jep", "").split("|") if m.strip()] if pa else []
+                st.markdown("**MACROCASO COMPARECIENTE**")
+                _cols_fr_mcc = st.columns(2)
+                for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+                    _cols_fr_mcc[_j % 2].checkbox(_mc, value=(_mc in _fr_mcc_prev), key=f"fr_mcc_{_j}_{sfx}")
+
+            st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("fr_victima_jep"))
+                               if _v("fr_victima_jep") in _SI_NO_REPORTA else 0,
+                         key=f"fr_jep_vic_{sfx}")
+            if st.session_state.get(f"fr_jep_vic_{sfx}", "Seleccione...") == "SI":
+                _fr_mcv_prev = [m.strip() for m in _v("fr_macrocaso_victima", "").split("|") if m.strip()] if pa else []
+                st.markdown("**MACROCASO VÍCTIMA**")
+                _cols_fr_mcv = st.columns(2)
+                for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+                    _cols_fr_mcv[_j % 2].checkbox(_mc, value=(_mc in _fr_mcv_prev), key=f"fr_mcv_{_j}_{sfx}")
+
+            col_fr5, col_fr6 = st.columns(2)
+            with col_fr5:
+                st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR",
+                             _SI_NO_REPORTA,
+                             index=_SI_NO_REPORTA.index(_v("fr_participacion_toar"))
+                                   if _v("fr_participacion_toar") in _SI_NO_REPORTA else 0,
+                             key=f"fr_toar_{sfx}")
+                st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
+                             index=_SI_NO_REPORTA.index(_v("fr_participacion_pnis"))
+                                   if _v("fr_participacion_pnis") in _SI_NO_REPORTA else 0,
+                             key=f"fr_pnis_{sfx}")
+            with col_fr6:
+                st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS",
+                             _SI_NO_REPORTA,
+                             index=_SI_NO_REPORTA.index(_v("fr_busqueda_desaparecidos"))
+                                   if _v("fr_busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
+                             key=f"fr_busq_{sfx}")
+                st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
+                             index=_SI_NO_REPORTA.index(_v("fr_desminado"))
+                                   if _v("fr_desminado") in _SI_NO_REPORTA else 0,
+                             key=f"fr_desminado_{sfx}")
+
+            st.selectbox(
+                "¿PARTICIPA DE ALGÚN TIPO DE ORGANIZACIÓN SOCIAL, POLÍTICA O INSTANCIA INSTITUCIONAL?",
+                _SI_NO,
+                index=_SI_NO.index(_v("fr_participa_otras_org"))
+                      if _v("fr_participa_otras_org") in _SI_NO else 0,
+                key=f"fr_otras_org_{sfx}"
+            )
+
+            st.selectbox("¿EJERCE UN CARGO DE ELECCIÓN POPULAR?", _PA_CARGO_ELECCION,
+                         index=_PA_CARGO_ELECCION.index(_v("fr_cargo_eleccion"))
+                               if _v("fr_cargo_eleccion") in _PA_CARGO_ELECCION else 0,
+                         key=f"fr_cargo_{sfx}")
+
     # ── Partido Comunes ───────────────────────────────────────────────────────
     if mostrar_cargo_comunes:
         st.markdown("---")
@@ -403,16 +491,16 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_comunes, mostra
                  key=f"pa_cargo_{sfx}")
 
 
-def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_comunes, mostrar_cargo_comunes):
+def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
+                es_familiar_comunes, mostrar_cargo_comunes):
     """
     Lee el estado de los widgets del Perfil Actual y retorna un dict,
     o None si hay errores de validación.
     """
     sfx = f"{tipo}_{idx}"
-    _mostrar_perfil = es_reincorporado or es_familiar_comunes
+    _mostrar_perfil = es_reincorporado or es_familiar_reincorporado or es_familiar_comunes
 
-    nivel_edu = ""
-    fuente_ingresos = ""
+    nivel_edu = fuente_ingresos = ""
     comparecencia_jep = macrocaso_comp = ""
     victima_jep = macrocaso_vic = ""
     participacion_toar = busqueda_desaparecidos = participacion_pnis = desminado = ""
@@ -445,6 +533,38 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_comunes, mostrar_cargo_
         if participa_otras == "SI":
             otras_orgs = list(st.session_state.get(f"otras_orgs_temp_{sfx}", []))
 
+    # Subformulario del reincorporado/a (solo FAMILIAR DE REINCORPORADO/A)
+    fr_nivel_edu = fr_fuente_ingresos = fr_estado_arn = fr_actividad_eco = ""
+    fr_comparecencia_jep = fr_macrocasos_jep = ""
+    fr_victima_jep = fr_macrocaso_victima = ""
+    fr_toar = fr_busqueda = fr_pnis = fr_desminado = ""
+    fr_participa_otras = fr_cargo_eleccion = ""
+
+    if es_familiar_reincorporado:
+        fr_nivel_edu         = st.session_state.get(f"fr_edu_{sfx}", "Seleccione...")
+        fr_fuente_ingresos   = st.session_state.get(f"fr_ingresos_{sfx}", "Seleccione...")
+        fr_estado_arn        = st.session_state.get(f"fr_arn_{sfx}", "Seleccione...")
+        fr_actividad_eco     = st.session_state.get(f"fr_act_eco_{sfx}", "Seleccione...")
+        fr_comparecencia_jep = st.session_state.get(f"fr_jep_comp_{sfx}", "Seleccione...")
+        if fr_comparecencia_jep == "SI":
+            fr_macrocasos_jep = " | ".join([
+                mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+                if st.session_state.get(f"fr_mcc_{j}_{sfx}", False)
+            ])
+        fr_victima_jep = st.session_state.get(f"fr_jep_vic_{sfx}", "Seleccione...")
+        if fr_victima_jep == "SI":
+            fr_macrocaso_victima = " | ".join([
+                mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+                if st.session_state.get(f"fr_mcv_{j}_{sfx}", False)
+            ])
+        fr_toar            = st.session_state.get(f"fr_toar_{sfx}", "Seleccione...")
+        fr_busqueda        = st.session_state.get(f"fr_busq_{sfx}", "Seleccione...")
+        fr_pnis            = st.session_state.get(f"fr_pnis_{sfx}", "Seleccione...")
+        fr_desminado       = st.session_state.get(f"fr_desminado_{sfx}", "Seleccione...")
+        fr_participa_otras = st.session_state.get(f"fr_otras_org_{sfx}", "Seleccione...")
+        fr_cargo_eleccion  = st.session_state.get(f"fr_cargo_{sfx}", "Seleccione...")
+
+    # Partido Comunes
     instancias_comunes = []
     concejo_comunes    = ""
     participa_comunes  = "SI" if mostrar_cargo_comunes else ""
@@ -458,6 +578,7 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_comunes, mostrar_cargo_
     def _c(v): return v if v and v != "Seleccione..." else ""
 
     return {
+        # Perfil base (REINCORPORADO/A y FAMILIAR DE INTEGRANTE)
         "nivel_educativo":        nivel_edu,
         "fuente_ingresos":        _c(fuente_ingresos),
         "estado_proyecto_arn":    "",
@@ -470,13 +591,6 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_comunes, mostrar_cargo_
         "busqueda_desaparecidos": _c(busqueda_desaparecidos),
         "participacion_pnis":     _c(participacion_pnis),
         "desminado":              _c(desminado),
-        "participa_comunes":      participa_comunes,
-        "concejo_comunes":        concejo_comunes,
-        "instancias_comunes":     instancias_comunes,
-        "instancias_partido":     _ic0.get("instancias_partido", ""),
-        "roles_partido":          _ic0.get("roles_partido", ""),
-        "consejeria_nacional":    _ic0.get("consejeria_nacional", ""),
-        "tipo_consejeria":        _ic0.get("tipo_consejeria", ""),
         "participa_otras_org":    _c(participa_otras),
         "otras_orgs":             otras_orgs,
         "tipo_org":               _oo0.get("tipo_org", ""),
@@ -489,8 +603,30 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_comunes, mostrar_cargo_
         "anio_inicio_org":        _oo0.get("anio_inicio_org", ""),
         "anio_fin_org":           _oo0.get("anio_fin_org", ""),
         "cargo_eleccion":         _c(st.session_state.get(f"pa_cargo_{sfx}", "Seleccione...")),
+        # Partido Comunes
+        "participa_comunes":      participa_comunes,
+        "concejo_comunes":        concejo_comunes,
+        "instancias_comunes":     instancias_comunes,
+        "instancias_partido":     _ic0.get("instancias_partido", ""),
+        "roles_partido":          _ic0.get("roles_partido", ""),
+        "consejeria_nacional":    _ic0.get("consejeria_nacional", ""),
+        "tipo_consejeria":        _ic0.get("tipo_consejeria", ""),
+        # Subformulario FAMILIAR DE REINCORPORADO/A
+        "fr_nivel_educativo":        _c(fr_nivel_edu),
+        "fr_fuente_ingresos":        _c(fr_fuente_ingresos),
+        "fr_estado_arn":             _c(fr_estado_arn),
+        "fr_actividad_economica":    _c(fr_actividad_eco),
+        "fr_comparecencia_jep":      _c(fr_comparecencia_jep),
+        "fr_macrocasos_jep":         fr_macrocasos_jep,
+        "fr_victima_jep":            _c(fr_victima_jep),
+        "fr_macrocaso_victima":      fr_macrocaso_victima,
+        "fr_participacion_toar":     _c(fr_toar),
+        "fr_busqueda_desaparecidos": _c(fr_busqueda),
+        "fr_participacion_pnis":     _c(fr_pnis),
+        "fr_desminado":              _c(fr_desminado),
+        "fr_participa_otras_org":    _c(fr_participa_otras),
+        "fr_cargo_eleccion":         _c(fr_cargo_eleccion),
     }
-
 
 
 def formulario_casos(tipo="individual"):
@@ -753,68 +889,6 @@ def formulario_casos(tipo="individual"):
             ["Seleccione...", "SI", "NO REPORTA"],
             key=f"caso_familiar_parte_comunes_{tipo}"
         )
-
-    # ── Subsección: Perfil del Reincorporado/a (solo FAMILIAR DE REINCORPORADO/A) ─
-    if tipo_poblacion == "FAMILIAR DE REINCORPORADO/A":
-        st.markdown("---")
-        st.subheader("👤 PERFIL DEL REINCORPORADO/A RELACIONADO")
-        st.caption("Campos que describen el perfil de reincorporación del familiar")
-
-        _opts_si_no_rep_fr = ["Seleccione...", "SI", "NO REPORTA"]
-
-        col_fr1, col_fr2 = st.columns(2)
-        with col_fr1:
-            st.selectbox("NIVEL DE ESCOLARIDAD", _PA_NIVEL_EDUCATIVO,
-                         index=0, key=f"fr_edu_{tipo}")
-        with col_fr2:
-            st.selectbox("FUENTE PRINCIPAL DE INGRESOS", _PA_FUENTE_INGRESOS,
-                         index=0, key=f"fr_ingresos_{tipo}")
-
-        col_fr3, col_fr4 = st.columns(2)
-        with col_fr3:
-            st.selectbox("PROYECTO PRODUCTIVO REINCORPORACIÓN ARN", _PA_ESTADO_PROYECTO_ARN,
-                         index=0, key=f"fr_arn_{tipo}")
-        with col_fr4:
-            st.selectbox("ACTIVIDAD ECONÓMICA REINCORPORACIÓN", _PA_ACTIVIDAD_ECONOMICA,
-                         index=0, key=f"fr_act_eco_{tipo}")
-
-        st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_si_no_rep_fr,
-                     index=0, key=f"fr_jep_comp_{tipo}")
-        if st.session_state.get(f"fr_jep_comp_{tipo}", "Seleccione...") == "SI":
-            st.markdown("**MACROCASO COMPARECIENTE**")
-            _cols_mcc_fr = st.columns(2)
-            for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
-                _cols_mcc_fr[_j % 2].checkbox(_mc, value=False, key=f"fr_mcc_{_j}_{tipo}")
-
-        st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
-                     index=0, key=f"fr_jep_vic_{tipo}")
-        if st.session_state.get(f"fr_jep_vic_{tipo}", "Seleccione...") == "SI":
-            st.markdown("**MACROCASO VÍCTIMA**")
-            _cols_mcv_fr = st.columns(2)
-            for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
-                _cols_mcv_fr[_j % 2].checkbox(_mc, value=False, key=f"fr_mcv_{_j}_{tipo}")
-
-        col_fr5, col_fr6 = st.columns(2)
-        with col_fr5:
-            st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR",
-                         _SI_NO_REPORTA, index=0, key=f"fr_toar_{tipo}")
-            st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS",
-                         _SI_NO_REPORTA, index=0, key=f"fr_pnis_{tipo}")
-        with col_fr6:
-            st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS",
-                         _SI_NO_REPORTA, index=0, key=f"fr_busq_{tipo}")
-            st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO",
-                         _SI_NO_REPORTA, index=0, key=f"fr_desminado_{tipo}")
-
-        st.selectbox(
-            "¿PARTICIPA DE ALGÚN TIPO DE ORGANIZACIÓN SOCIAL, POLÍTICA O INSTANCIA INSTITUCIONAL?",
-            _SI_NO, index=0, key=f"fr_otras_org_{tipo}"
-        )
-
-        st.selectbox("¿EJERCE UN CARGO DE ELECCIÓN POPULAR?", _PA_CARGO_ELECCION,
-                     index=0, key=f"fr_cargo_{tipo}")
-
-        st.markdown("---")
 
     # ── Subpoblación: checkboxes en cuadrícula de 2 columnas ─────────────────
     st.markdown("**Subpoblación \\***")
@@ -1480,12 +1554,12 @@ def formulario_casos(tipo="individual"):
             if st.session_state.get(_edit_pa_key) == i:
                 # ── Modo edición ──────────────────────────────────────────────
                 st.markdown(f"**✏️ Editando Perfil Actual #{i+1}**")
-                _render_pa_form(pa, tipo, i, _es_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+                _render_pa_form(pa, tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
                 col_sv, col_cx = st.columns(2)
                 with col_sv:
                     if st.button("💾 Guardar cambios", key=f"pa_save_{tipo}_{i}",
                                  type="primary", use_container_width=True):
-                        nuevo = _recoger_pa(tipo, i, _es_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+                        nuevo = _recoger_pa(tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
                         if nuevo is not None:
                             st.session_state.perfiles_actuales[i] = nuevo
                             st.session_state[_edit_pa_key] = None
@@ -1537,11 +1611,11 @@ def formulario_casos(tipo="individual"):
     # ── Perfil Actual — solo se permite uno ─────────────────────────────────
     if len(st.session_state.perfiles_actuales) == 0:
         with st.expander("➕ Agregar Perfil Actual", expanded=True):
-            _render_pa_form(None, tipo, "new", _es_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+            _render_pa_form(None, tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
             st.markdown("")
             if st.button("✅ Guardar Perfil Actual", use_container_width=True,
                          key=f"btn_add_pa_{tipo}", type="primary"):
-                nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+                nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
                 if nuevo is not None:
                     st.session_state.perfiles_actuales.append(nuevo)
                     # Limpiar listas temporales del formulario "new"
