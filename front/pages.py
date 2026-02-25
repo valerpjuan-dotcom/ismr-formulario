@@ -26,6 +26,8 @@ from data.diccionarios import (
     _FUENTES_VERIFICACION, _VER_OPCIONES,
     # Impacto Consecuencial
     _IMPACTO_SI_NR,
+    # 👇 AGREGAR ESTA LÍNEA
+    _TIPOS_RUTA_ANTECEDENTE,
 )
 
 from configuration.settings import TAB_NOMBRES
