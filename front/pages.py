@@ -540,6 +540,7 @@ def formulario_casos(tipo="individual"):
                         f"caso_factor_campesino_{tipo}", f"caso_factor_cuidador_{tipo}",
                         *[f"victima_{i}_{tipo}" for i in range(len(_VICTIMA_CONFLICTO_ARMADO))],
                         *[f"lider_{i}_{tipo}" for i in range(len(_LIDER_SOCIAL_DDHH))],
+                        f"imp_sal_dano_vida_{tipo}",f"imp_sal_dano_vida_{tipo}",
                     ]
                     for campo in _todos_campos:
                         if campo in borrador:
