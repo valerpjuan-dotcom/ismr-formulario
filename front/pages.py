@@ -871,8 +871,8 @@ def formulario_casos(tipo="individual"):
 
 
     # ── FAMILIAR HACE PARTE DEL PARTIDO COMUNES ──────────────────────────────
-    # Solo visible cuando tipo_poblacion == FAMILIAR DE REINCORPORADO/A
-    if tipo_poblacion == "FAMILIAR DE REINCORPORADO/A":
+    # Visible cuando tipo_poblacion es cualquiera de los dos tipos de familiar
+    if tipo_poblacion in ("FAMILIAR DE REINCORPORADO/A", "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES"):
         st.selectbox(
             "FAMILIAR HACE PARTE DEL PARTIDO COMUNES",
             ["Seleccione...", "SI", "NO REPORTA"],
@@ -1513,9 +1513,18 @@ def formulario_casos(tipo="individual"):
         "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES",
     )
     _es_familiar_comunes   = tipo_poblacion == "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES"
-    _mostrar_cargo_comunes = tipo_poblacion in (
-        "INTEGRANTE DEL PARTIDO COMUNES",
+    # Para tipos de familiar, la sección Partido Comunes solo aparece si
+    # el usuario indicó que el familiar hace parte de Comunes
+    _es_familiar = tipo_poblacion in (
+        "FAMILIAR DE REINCORPORADO/A",
         "FAMILIAR DE INTEGRANTE DEL PARTIDO COMUNES",
+    )
+    _familiar_parte_comunes_val = st.session_state.get(
+        f"caso_familiar_parte_comunes_{tipo}", "Seleccione..."
+    )
+    _mostrar_cargo_comunes = (
+        tipo_poblacion == "INTEGRANTE DEL PARTIDO COMUNES"
+        or (_es_familiar and _familiar_parte_comunes_val == "SI")
     )
 
     _edit_pa_key = f"editando_pa_{tipo}"
