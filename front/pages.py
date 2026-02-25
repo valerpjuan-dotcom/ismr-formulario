@@ -997,6 +997,28 @@ def formulario_casos(tipo="individual"):
                           if ant.get("registra_ot","") in _reg_ot_opts else 0,
                     key=f"ea_reg_ot_{tipo}_{i}"
                 )
+
+                # ── NUEVO: Campos condicionales en edición
+                if ea_reg_ot == "SI":
+                    col_ot_e, col_ruta_e = st.columns(2)
+                    with col_ot_e:
+                        ea_ot_te = st.text_input(
+                            "OT - TE ANTECEDE *",
+                            value=ant.get("ot_te_antecede", ""),
+                            key=f"ea_ot_te_{tipo}_{i}"
+                        )
+                    with col_ruta_e:
+                        ea_tipo_ruta = st.selectbox(
+                            "TIPO DE RUTA ANTECEDENTE *",
+                            _TIPOS_RUTA_ANTECEDENTE,
+                            index=_TIPOS_RUTA_ANTECEDENTE.index(ant.get("tipo_ruta_antecedente", "Seleccione..."))
+                            if ant.get("tipo_ruta_antecedente", "") in _TIPOS_RUTA_ANTECEDENTE else 0,
+                            key=f"ea_tipo_ruta_{tipo}_{i}"
+                        )
+                else:
+                    ea_ot_te = ""
+                    ea_tipo_ruta = ""
+
                 ea_reg_res = st.selectbox(
                     "¿REGISTRA RESOLUCIONES O MEDIDAS VIGENTES? *", _REGISTRA_RES,
                     index=_REGISTRA_RES.index(ant.get("registra_resoluciones","Seleccione..."))
@@ -1035,12 +1057,21 @@ def formulario_casos(tipo="individual"):
                                  type="primary", use_container_width=True):
                         err_ea = []
                         if ea_reg_ot  == "Seleccione...": err_ea.append("Debe indicar si registra OT antecedentes")
+                        # ── NUEVO: Validar campos condicionales en edición
+                        if ea_reg_ot == "SI":
+                            if not ea_ot_te.strip():
+                                err_ea.append("Debe especificar OT - TE ANTECEDE")
+                            if ea_tipo_ruta == "Seleccione...":
+                                err_ea.append("Debe seleccionar el tipo de ruta")
                         if ea_reg_res == "Seleccione...": err_ea.append("Debe indicar si registra resoluciones o medidas vigentes")
                         if err_ea:
                             for e in err_ea: st.error(f"• {e}")
                         else:
                             st.session_state.antecedentes[i] = {
                                 "registra_ot":            ea_reg_ot,
+                                # ── NUEVO: Guardar campos condicionales
+                                "ot_te_antecede": ea_ot_te if ea_reg_ot == "SI" else "",
+                                "tipo_ruta_antecedente": ea_tipo_ruta if ea_reg_ot == "SI" else "",
                                 "registra_resoluciones":  ea_reg_res,
                                 "anio_resolucion":        str(int(ea_anio)) if ea_anio is not None else "",
                                 "mes_resolucion":         str(int(ea_mes))  if ea_mes  is not None else "",
@@ -1070,6 +1101,10 @@ def formulario_casos(tipo="individual"):
                 ca1, ca2 = st.columns(2)
                 with ca1:
                     st.write(f"📋 **¿Registra OT Antecedentes?:** {ant.get('registra_ot','')}")
+                    # ── NUEVO: Mostrar campos condicionales si existen
+                    if ant.get('registra_ot') == "SI":
+                        st.write(f"🔖 **OT - TE ANTECEDE:** {ant.get('ot_te_antecede', '')}")
+                        st.write(f"🛣️ **Tipo de Ruta:** {ant.get('tipo_ruta_antecedente', '')}")
                     st.write(f"📋 **¿Registra Resoluciones?:** {ant.get('registra_resoluciones','')}")
                 with ca2:
                     _fecha_ant = " / ".join(filter(None, [
@@ -1086,6 +1121,27 @@ def formulario_casos(tipo="individual"):
             ["Seleccione...", "SI", "NO"],
             key=f"ant_reg_ot_{tipo}"
         )
+
+        # ── NUEVO: Campos condicionales que aparecen SOLO si es "SI"
+        if ant_reg_ot == "SI":
+            col_ot, col_ruta = st.columns(2)
+            with col_ot:
+                ant_ot_te_antecede = st.text_input(
+                    "OT - TE ANTECEDE *",
+                    placeholder="Ej: 2024-145",
+                    key=f"ant_ot_te_{tipo}"
+                )
+            with col_ruta:
+                ant_tipo_ruta = st.selectbox(
+                    "TIPO DE RUTA ANTECEDENTE *",
+                    _TIPOS_RUTA_ANTECEDENTE,
+                    key=f"ant_tipo_ruta_{tipo}"
+                )
+        else:
+            # Si es "NO" o "Seleccione...", estos campos no existen
+            ant_ot_te_antecede = ""
+            ant_tipo_ruta = ""
+
         ant_reg_res = st.selectbox(
             "¿REGISTRA RESOLUCIONES O MEDIDAS VIGENTES? *",
             _REGISTRA_RES,
@@ -1122,12 +1178,20 @@ def formulario_casos(tipo="individual"):
                      key=f"btn_add_ant_{tipo}", type="secondary"):
             err_ant = []
             if ant_reg_ot  == "Seleccione...": err_ant.append("Debe indicar si registra OT antecedentes")
+            # ── NUEVO: Validar campos condicionales
+            if ant_reg_ot == "SI":
+                if not ant_ot_te_antecede.strip():
+                    err_ant.append("Debe especificar OT - TE ANTECEDE")
+                if ant_tipo_ruta == "Seleccione...":
+                    err_ant.append("Debe seleccionar el tipo de ruta")
             if ant_reg_res == "Seleccione...": err_ant.append("Debe indicar si registra resoluciones o medidas vigentes")
             if err_ant:
                 for e in err_ant: st.error(f"• {e}")
             else:
                 st.session_state.antecedentes.append({
                     "registra_ot":           ant_reg_ot,
+                    "ot_te_antecede": ant_ot_te_antecede if ant_reg_ot == "SI" else "",
+                    "tipo_ruta_antecedente": ant_tipo_ruta if ant_reg_ot == "SI" else "",
                     "registra_resoluciones": ant_reg_res,
                     "anio_resolucion":       str(int(ant_anio)) if ant_anio is not None else "",
                     "mes_resolucion":        str(int(ant_mes))  if ant_mes  is not None else "",
@@ -2817,6 +2881,9 @@ def formulario_casos(tipo="individual"):
                         hoja_antecedentes.append_row([
                             id_ant, id_caso, ot_te.strip(),
                             ant.get("registra_ot", ""),
+                            # ── NUEVO: Agregar los nuevos campos
+                            ant.get("ot_te_antecede", ""),
+                            ant.get("tipo_ruta_antecedente", ""),
                             ant.get("registra_resoluciones", ""),
                             ant.get("dia_resolucion", ""),
                             ant.get("mes_resolucion", ""),
