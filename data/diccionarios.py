@@ -74,10 +74,11 @@ _ESTRUCTURAS = {
     "Charras (San José del Guaviare)"],
 }
 
-_ROLES = ["Seleccione...", "Combatiente", "Mando Medio", "Comandante",
-          "Miliciano/a", "Colaborador/a", "Finanzas", "Inteligencia",
-          "Comunicaciones", "Sanidad", "Logística", "Político",
-          "Jurídico", "Minería/Economía", "Otro"]
+_ROLES = ["Seleccione...", "Base", "Radista", "Caletero/a",
+          "Enfermero/a", "Finanzas", "Organización de masas", "Comunicación propaganda",
+          "Inteligencia", "Logística", "Instrucción/Educación", "Correo Humano",
+          "Ayudante", "Explosivista","Fuerzas especiales","Francotirador","Ametralladora",
+          "Artillería","Comandante","Reemplazante","Mecanismo monitoreo y verificación","Delegación de paz La Habana","Relaciones internacionales", "Otro"]
 
 _LUGAR_ACREDITACION = ["Seleccione...", "PONDORES, FONSECA",
             "SAN JOSÉ DE ORIENTE, LA PAZ",
