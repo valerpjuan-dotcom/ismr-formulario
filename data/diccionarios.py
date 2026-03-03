@@ -128,8 +128,8 @@ _INSTITUCIONES = ["Seleccione...",
                   "CO -COMPLEJO CARCELARÍO",
                   "PRISIÓN DOMICILIARIA"]
 
-_PARTICIPACION = ["Seleccione...", "Combatiente", "Miliciano/a", "Colaborador/a",
-             "Privado de la libertad", "Otro"]
+_PARTICIPACION = ["Seleccione...", "MILICIANO/A", "GUERRILLERO/A", "MILITANTE PCCC",
+             "MOVIMIENTO BOLIVARIANO", "COLABORADOR", "PRIVADO DE LA LIBERTAD"]
 
 
 
