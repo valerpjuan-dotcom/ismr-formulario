@@ -86,7 +86,7 @@ _ROLES = [
     "Instrucción/Educación","Inteligencia",
     "Logística","Mecanismo monitoreo y verificación",
     "Organización de masas","Radista","Reemplazante",
-    "Relaciones internacionales,"Otro",
+    "Relaciones internacionales", "Otro",
     ]
 
 _LUGAR_ACREDITACION = ["Seleccione...", "PONDORES, FONSECA",
@@ -104,7 +104,7 @@ _LUGAR_ACREDITACION = ["Seleccione...", "PONDORES, FONSECA",
                  "MIRAVALLE, SAN VICENTE DEL CAGUÁN","MONTERREDONDO, MIRANDA",
                  "PLANADAS, TOLIMA","PLAYA RICA, LA MACARENA",
                  "SAN JOSÉ DE ORIENTE, LA PAZ","SANTA LUCIA, ITUANGO",
-                 "VAGAEZ, VIGÍA DEL FUERTE,"OTRO","NO REPORTA",
+                 "VAGAEZ, VIGÍA DEL FUERTE","OTRO","NO REPORTA",
                  ]
 
 _INSTITUCIONES = [
