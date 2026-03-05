@@ -372,7 +372,7 @@ _PA_ROLES_PARTIDO = [
     "Directivo",
     "Representante Legal",
     "Revisor Fiscal",
-    "Veedor"
+    "Veedor",
     "No reporta",
 ]
 
@@ -401,7 +401,7 @@ _PA_TIPO_ORG = [
 ]
 
 _PA_AMBITO_ORG = [
-   "Ambiental",
+    "Ambiental",
     "Campesino",
     "Comunal",
     "Comunicaciones",
@@ -415,7 +415,7 @@ _PA_AMBITO_ORG = [
     "Reincorporación",
     "Sector solidario",
     "Sindical",
-    "Víctimas"
+    "Víctimas",
     "Otros",
 ]
 
@@ -471,10 +471,10 @@ _TIPOS_HECHO = [
     "PERSECUCIÓN",
     "RETEN VEHICULAR",
     "RETENCIÓN",
-    "SECUUESTRO",
+    "SECUESTRO",
     "SEGUIMIENTO",
     "VINCULACIÓN FORZADA A ACCIONES EN EL MARCO DEL CONFLICTO ARMADO",
-    "VIOLENCIAS BASADAS EN GENERO",
+    "VIOLENCIAS BASADAS EN GÉNERO",
     "NO REPORTA",
 ]
 
