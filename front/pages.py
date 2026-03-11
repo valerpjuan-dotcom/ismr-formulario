@@ -1497,7 +1497,8 @@ def formulario_casos(tipo="individual"):
         else:
             ant_anio = None
             ant_mes  = None
-            ant_dia  = None        st.markdown("")
+            ant_dia  = None
+        st.markdown("")
         if st.button("➕ Agregar este antecedente", use_container_width=True,
                      key=f"btn_add_ant_{tipo}", type="secondary"):
             err_ant = []
