@@ -1061,7 +1061,7 @@ def formulario_casos(tipo="individual"):
     # ── Fila: Entidad Solicitante | Fecha Expedición OT ──────────────────────
     col_sol, col_fecha_ot = st.columns(2)
     with col_sol:
-        solicitante = st.selectbox("Entidad Solicitante *", ["Seleccione...", "ARN", "SESP", "OTRO"],
+        solicitante = st.selectbox("Entidad Solicitante *", ["Seleccione...", "TERCEROS", "A NOMBRE PROPIO", "ONG", "INSTITUCIÓN DEL ESTADO COLOMBIANO", "ORGANIZACIÓN INTERNACIONAL", "NO REPORTA"],
                                    key=f"caso_solicitante_{tipo}")
     with col_fecha_ot:
         fecha_expedicion_ot = st.date_input("Fecha de Expedición OT *", value=None,
