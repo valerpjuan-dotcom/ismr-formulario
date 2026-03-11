@@ -1059,9 +1059,13 @@ def formulario_casos(tipo="individual"):
     ot_te = f"OT-{int(ot_anio)}-{str(int(ot_numero)).zfill(3)}" if (ot_anio is not None and ot_numero is not None) else ""
 
     # ── Fila: Entidad Solicitante | Fecha Expedición OT ──────────────────────
+    _opts_solicitante = ["Seleccione...", "TERCEROS", "A NOMBRE PROPIO", "ONG",
+                         "INSTITUCIÓN DEL ESTADO COLOMBIANO", "ORGANIZACIÓN INTERNACIONAL", "NO REPORTA"]
+    if st.session_state.get(f"caso_solicitante_{tipo}") not in _opts_solicitante:
+        st.session_state[f"caso_solicitante_{tipo}"] = "Seleccione..."
     col_sol, col_fecha_ot = st.columns(2)
     with col_sol:
-        solicitante = st.selectbox("Entidad Solicitante *", ["Seleccione...", "TERCEROS", "A NOMBRE PROPIO", "ONG", "INSTITUCIÓN DEL ESTADO COLOMBIANO", "ORGANIZACIÓN INTERNACIONAL", "NO REPORTA"],
+        solicitante = st.selectbox("Entidad Solicitante *", _opts_solicitante,
                                    key=f"caso_solicitante_{tipo}")
     with col_fecha_ot:
         fecha_expedicion_ot = st.date_input("Fecha de Expedición OT *", value=None,
