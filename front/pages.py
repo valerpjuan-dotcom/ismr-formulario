@@ -1321,32 +1321,37 @@ def formulario_casos(tipo="individual"):
                     )
                 else:
                     ea_num_resolucion = ""
-                col_a1, col_a2, col_a3 = st.columns(3)
-                with col_a1:
-                    ea_anio = st.number_input(
-                        "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
-                        value=_anio_val_e, step=1, key=f"ea_anio_{tipo}_{i}"
-                    )
-                with col_a2:
-                    ea_mes = st.number_input(
-                        "MES RESOLUCIÓN MTSP", min_value=1, max_value=12,
-                        value=_mes_val_e, step=1, key=f"ea_mes_{tipo}_{i}"
-                    )
-                _e_max_dia = 31
-                _e_dia_key = f"ea_dia_{tipo}_{i}"
-                if ea_anio is not None and ea_mes is not None:
-                    try:
-                        _e_max_dia = calendar.monthrange(int(ea_anio), int(ea_mes))[1]
-                        _e_dia_cur = st.session_state.get(_e_dia_key)
-                        if _e_dia_cur is not None and _e_dia_cur > _e_max_dia:
-                            st.session_state[_e_dia_key] = _e_max_dia
-                    except Exception:
-                        _e_max_dia = 31
-                with col_a3:
-                    ea_dia = st.number_input(
-                        "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_e_max_dia,
-                        value=_dia_val_e, step=1, key=_e_dia_key
-                    )
+                if ea_reg_res == "SI":
+                    col_a1, col_a2, col_a3 = st.columns(3)
+                    with col_a1:
+                        ea_anio = st.number_input(
+                            "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
+                            value=_anio_val_e, step=1, key=f"ea_anio_{tipo}_{i}"
+                        )
+                    with col_a2:
+                        ea_mes = st.number_input(
+                            "MES RESOLUCIÓN MTSP", min_value=1, max_value=12,
+                            value=_mes_val_e, step=1, key=f"ea_mes_{tipo}_{i}"
+                        )
+                    _e_max_dia = 31
+                    _e_dia_key = f"ea_dia_{tipo}_{i}"
+                    if ea_anio is not None and ea_mes is not None:
+                        try:
+                            _e_max_dia = calendar.monthrange(int(ea_anio), int(ea_mes))[1]
+                            _e_dia_cur = st.session_state.get(_e_dia_key)
+                            if _e_dia_cur is not None and _e_dia_cur > _e_max_dia:
+                                st.session_state[_e_dia_key] = _e_max_dia
+                        except Exception:
+                            _e_max_dia = 31
+                    with col_a3:
+                        ea_dia = st.number_input(
+                            "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_e_max_dia,
+                            value=_dia_val_e, step=1, key=f"ea_dia_{tipo}_{i}"
+                        )
+                else:
+                    ea_anio = None
+                    ea_mes  = None
+                    ea_dia  = None
                 col_save_a, col_cancel_a = st.columns(2)
                 with col_save_a:
                     if st.button("💾 Guardar cambios", key=f"ea_save_{tipo}_{i}",
@@ -1462,33 +1467,37 @@ def formulario_casos(tipo="individual"):
             )
         else:
             ant_num_resolucion = ""
-        col_anio_ant, col_mes_ant, col_dia_ant = st.columns(3)
-        with col_anio_ant:
-            ant_anio = st.number_input(
-                "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
-                value=None, step=1, key=f"ant_anio_{tipo}"
-            )
-        with col_mes_ant:
-            ant_mes = st.number_input(
-                "MES RESOLUCIÓN MTSP", min_value=1, max_value=12,
-                value=None, step=1, key=f"ant_mes_{tipo}"
-            )
-        _max_dia_ant = 31
-        _dia_ant_key = f"ant_dia_{tipo}"
-        if ant_anio is not None and ant_mes is not None:
-            try:
-                _max_dia_ant = calendar.monthrange(int(ant_anio), int(ant_mes))[1]
-                _dia_cur_ant = st.session_state.get(_dia_ant_key)
-                if _dia_cur_ant is not None and _dia_cur_ant > _max_dia_ant:
-                    st.session_state[_dia_ant_key] = _max_dia_ant
-            except Exception:
-                _max_dia_ant = 31
-        with col_dia_ant:
-            ant_dia = st.number_input(
-                "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_max_dia_ant,
-                value=None, step=1, key=_dia_ant_key
-            )
-        st.markdown("")
+        if ant_reg_res == "SI":
+            col_anio_ant, col_mes_ant, col_dia_ant = st.columns(3)
+            with col_anio_ant:
+                ant_anio = st.number_input(
+                    "AÑO RESOLUCIÓN MTSP", min_value=2000, max_value=2099,
+                    value=None, step=1, key=f"ant_anio_{tipo}"
+                )
+            with col_mes_ant:
+                ant_mes = st.number_input(
+                    "MES RESOLUCIÓN MTSP", min_value=1, max_value=12,
+                    value=None, step=1, key=f"ant_mes_{tipo}"
+                )
+            _max_dia_ant = 31
+            _dia_ant_key = f"ant_dia_{tipo}"
+            if ant_anio is not None and ant_mes is not None:
+                try:
+                    _max_dia_ant = calendar.monthrange(int(ant_anio), int(ant_mes))[1]
+                    _dia_cur_ant = st.session_state.get(_dia_ant_key)
+                    if _dia_cur_ant is not None and _dia_cur_ant > _max_dia_ant:
+                        st.session_state[_dia_ant_key] = _max_dia_ant
+                except Exception:
+                    _max_dia_ant = 31
+            with col_dia_ant:
+                ant_dia = st.number_input(
+                    "DÍA RESOLUCIÓN MTSP", min_value=1, max_value=_max_dia_ant,
+                    value=None, step=1, key=f"ant_dia_{tipo}"
+                )
+        else:
+            ant_anio = None
+            ant_mes  = None
+            ant_dia  = None        st.markdown("")
         if st.button("➕ Agregar este antecedente", use_container_width=True,
                      key=f"btn_add_ant_{tipo}", type="secondary"):
             err_ant = []
