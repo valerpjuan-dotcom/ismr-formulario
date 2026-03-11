@@ -2910,7 +2910,7 @@ def formulario_casos(tipo="individual"):
     st.subheader("⚠️ Nivel de Riesgo")
     nivel_riesgo = st.selectbox(
         "Nivel de Riesgo *",
-        ["Seleccione...", "EXTRAORDINARIO", "EXTREMO", "ORDINARIO"],
+        ["Seleccione...", "ORDINARIO","EXTRAORDINARIO", "EXTRAORDINARIO DE GÉNERO", "EXTREMO"],
         key=f"caso_nivel_riesgo_{tipo}"
     )
 
