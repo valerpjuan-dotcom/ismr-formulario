@@ -1313,6 +1313,14 @@ def formulario_casos(tipo="individual"):
                           if ant.get("registra_resoluciones","") in _REGISTRA_RES else 0,
                     key=f"ea_reg_res_{tipo}_{i}"
                 )
+                if ea_reg_res == "SI":
+                    ea_num_resolucion = st.text_input(
+                        "NÚMERO DE RESOLUCIÓN MTSP",
+                        value=ant.get("numero_resolucion", ""),
+                        key=f"ea_num_resolucion_{tipo}_{i}"
+                    )
+                else:
+                    ea_num_resolucion = ""
                 col_a1, col_a2, col_a3 = st.columns(3)
                 with col_a1:
                     ea_anio = st.number_input(
@@ -1362,6 +1370,7 @@ def formulario_casos(tipo="individual"):
                                 "tipo_ruta_antecedente": ea_tipo_ruta if ea_reg_ot == "SI" else "",
                                 "nivel_riesgo_anterior": ea_nivel_riesgo_ant if ea_reg_ot == "SI" else "",
                                 "registra_resoluciones":  ea_reg_res,
+                                "numero_resolucion":       ea_num_resolucion if ea_reg_res == "SI" else "",
                                 "anio_resolucion":        str(int(ea_anio)) if ea_anio is not None else "",
                                 "mes_resolucion":         str(int(ea_mes))  if ea_mes  is not None else "",
                                 "dia_resolucion":         str(int(ea_dia))  if ea_dia  is not None else "",
@@ -1396,6 +1405,8 @@ def formulario_casos(tipo="individual"):
                         st.write(f"🛣️ **Tipo de Ruta:** {ant.get('tipo_ruta_antecedente', '')}")
                         st.write(f"⚠️ **Recomendación Nivel de Riesgo OT-TE Anterior:** {ant.get('nivel_riesgo_anterior', '')}")
                     st.write(f"📋 **¿Registra Resoluciones?:** {ant.get('registra_resoluciones','')}")
+                    if ant.get('registra_resoluciones') == "SI":
+                        st.write(f"🔢 **Número de Resolución MTSP:** {ant.get('numero_resolucion', '')}")
                 with ca2:
                     _fecha_ant = " / ".join(filter(None, [
                         ant.get("dia_resolucion",""),
@@ -1443,6 +1454,14 @@ def formulario_casos(tipo="individual"):
             _REGISTRA_RES,
             key=f"ant_reg_res_{tipo}"
         )
+        if ant_reg_res == "SI":
+            ant_num_resolucion = st.text_input(
+                "NÚMERO DE RESOLUCIÓN MTSP",
+                placeholder="Ej: 1234",
+                key=f"ant_num_resolucion_{tipo}"
+            )
+        else:
+            ant_num_resolucion = ""
         col_anio_ant, col_mes_ant, col_dia_ant = st.columns(3)
         with col_anio_ant:
             ant_anio = st.number_input(
@@ -1490,6 +1509,7 @@ def formulario_casos(tipo="individual"):
                     "tipo_ruta_antecedente": ant_tipo_ruta if ant_reg_ot == "SI" else "",
                     "nivel_riesgo_anterior": ant_nivel_riesgo_ant if ant_reg_ot == "SI" else "",
                     "registra_resoluciones": ant_reg_res,
+                    "numero_resolucion":      ant_num_resolucion if ant_reg_res == "SI" else "",
                     "anio_resolucion":       str(int(ant_anio)) if ant_anio is not None else "",
                     "mes_resolucion":        str(int(ant_mes))  if ant_mes  is not None else "",
                     "dia_resolucion":        str(int(ant_dia))  if ant_dia  is not None else "",
@@ -3186,6 +3206,7 @@ def formulario_casos(tipo="individual"):
                             ant.get("tipo_ruta_antecedente", ""),
                             ant.get("nivel_riesgo_anterior", ""),
                             ant.get("registra_resoluciones", ""),
+                            ant.get("numero_resolucion", ""),
                             ant.get("dia_resolucion", ""),
                             ant.get("mes_resolucion", ""),
                             ant.get("anio_resolucion", ""),
