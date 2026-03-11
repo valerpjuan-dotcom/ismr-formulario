@@ -8,7 +8,7 @@ from data.mongo.usuarios_repo import _get_client
 _CABECERAS_CASOS = [
     "ID_Caso", "Timestamp",
     "Tipo de Estudio", "OT-TE", "Fecha Expedicion OT",
-    "Tipo de Poblacion", "Subpoblacion",
+    "Tipo de Evaluacion", "Tipo de Poblacion", "Subpoblacion",
     "Fecha de Nacimiento", "Sexo", "Género", "Orientación Sexual", "Jefatura del Hogar",
     "Zona Rural", "Zona de Reserva Campesina",
     "Departamento", "Municipio", "Solicitante",

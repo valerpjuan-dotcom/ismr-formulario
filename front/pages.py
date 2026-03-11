@@ -1067,6 +1067,14 @@ def formulario_casos(tipo="individual"):
         fecha_expedicion_ot = st.date_input("Fecha de Expedición OT *", value=None,
                                             key=f"caso_fecha_expedicion_{tipo}")
 
+    # ── Tipo de Evaluación (fila propia) ─────────────────────────────────────
+    tipo_evaluacion = st.selectbox(
+        "Tipo de Evaluación *",
+        ["Seleccione...", "EVALUACIÓN POR PRIMERA VEZ",
+         "REEVALUACIÓN POR HECHOS SOBREVINIENTES", "REEVALUACIÓN POR TEMPORALIDAD"],
+        key=f"caso_tipo_evaluacion_{tipo}"
+    )
+
     # ── Tipo de Población (fila propia) ──────────────────────────────────────
     tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
                                   key=f"caso_tipo_poblacion_{tipo}")
@@ -2869,6 +2877,7 @@ def formulario_casos(tipo="individual"):
                 f"caso_ot_numero_{tipo}":        st.session_state.get(f"caso_ot_numero_{tipo}", None),
                 f"caso_solicitante_{tipo}":      st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
                 f"caso_fecha_expedicion_{tipo}": st.session_state.get(f"caso_fecha_expedicion_{tipo}", None),
+                f"caso_tipo_evaluacion_{tipo}": st.session_state.get(f"caso_tipo_evaluacion_{tipo}", "Seleccione..."),
                 f"caso_tipo_poblacion_{tipo}":   st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
                 **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
                    for i in range(len(_SUBPOBLACIONES))},
@@ -2952,6 +2961,7 @@ def formulario_casos(tipo="individual"):
         if es_emergencia and ot_anio is None and ot_numero is None:
             pass  # ambos opcionales en emergencia
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
+        if tipo_evaluacion == "Seleccione...":          errores.append("Debe seleccionar el tipo de evaluación")
         if tipo_poblacion == "Seleccione...":           errores.append("Debe seleccionar el tipo de población")
         if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
         if es_individual and fecha_nacimiento is None:       errores.append("La fecha de nacimiento es obligatoria")
@@ -2994,6 +3004,7 @@ def formulario_casos(tipo="individual"):
                     hoja_casos.append_row([
                         id_caso, timestamp, tipo_estudio, ot_te.strip(),
                         str(fecha_expedicion_ot) if fecha_expedicion_ot else "",
+                        tipo_evaluacion,
                         tipo_poblacion, " | ".join(subpoblacion),
                         str(fecha_nacimiento) if fecha_nacimiento else "", sexo,
                         genero if genero and genero != "Seleccione..." else "",
@@ -3216,6 +3227,7 @@ def formulario_casos(tipo="individual"):
                     - **Tipo de Estudio:** {tipo_estudio}
                     - **OT-TE:** {ot_te}
                     - **Fecha Expedición OT:** {fecha_expedicion_ot}
+                    - **Tipo de Evaluación:** {tipo_evaluacion}
                     - **Tipo de Población:** {tipo_poblacion}
                     - **Subpoblación:** {" | ".join(subpoblacion)}
                     - **Ubicación:** {municipio}, {departamento}
