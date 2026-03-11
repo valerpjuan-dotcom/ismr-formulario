@@ -1294,9 +1294,18 @@ def formulario_casos(tipo="individual"):
                             if ant.get("tipo_ruta_antecedente", "") in _TIPOS_RUTA_ANTECEDENTE else 0,
                             key=f"ea_tipo_ruta_{tipo}_{i}"
                         )
+                    _opts_nra = ["Seleccione...", "ORDINARIO", "EXTRAORDINARIO", "EXTRAORDINARIO DE GÉNERO", "EXTREMO", "INACTIVACIÓN"]
+                    ea_nivel_riesgo_ant = st.selectbox(
+                        "RECOMENDACIÓN NIVEL DE RIESGO OT-TE ANTERIOR *",
+                        _opts_nra,
+                        index=_opts_nra.index(ant.get("nivel_riesgo_anterior", "Seleccione..."))
+                        if ant.get("nivel_riesgo_anterior", "") in _opts_nra else 0,
+                        key=f"ea_nivel_riesgo_ant_{tipo}_{i}"
+                    )
                 else:
                     ea_ot_te = ""
                     ea_tipo_ruta = ""
+                    ea_nivel_riesgo_ant = ""
 
                 ea_reg_res = st.selectbox(
                     "¿REGISTRA RESOLUCIONES O MEDIDAS VIGENTES? *", _REGISTRA_RES,
@@ -1351,6 +1360,7 @@ def formulario_casos(tipo="individual"):
                                 # ── NUEVO: Guardar campos condicionales
                                 "ot_te_antecede": ea_ot_te if ea_reg_ot == "SI" else "",
                                 "tipo_ruta_antecedente": ea_tipo_ruta if ea_reg_ot == "SI" else "",
+                                "nivel_riesgo_anterior": ea_nivel_riesgo_ant if ea_reg_ot == "SI" else "",
                                 "registra_resoluciones":  ea_reg_res,
                                 "anio_resolucion":        str(int(ea_anio)) if ea_anio is not None else "",
                                 "mes_resolucion":         str(int(ea_mes))  if ea_mes  is not None else "",
@@ -1384,6 +1394,7 @@ def formulario_casos(tipo="individual"):
                     if ant.get('registra_ot') == "SI":
                         st.write(f"🔖 **OT - TE ANTECEDE:** {ant.get('ot_te_antecede', '')}")
                         st.write(f"🛣️ **Tipo de Ruta:** {ant.get('tipo_ruta_antecedente', '')}")
+                        st.write(f"⚠️ **Recomendación Nivel de Riesgo OT-TE Anterior:** {ant.get('nivel_riesgo_anterior', '')}")
                     st.write(f"📋 **¿Registra Resoluciones?:** {ant.get('registra_resoluciones','')}")
                 with ca2:
                     _fecha_ant = " / ".join(filter(None, [
@@ -1416,10 +1427,16 @@ def formulario_casos(tipo="individual"):
                     _TIPOS_RUTA_ANTECEDENTE,
                     key=f"ant_tipo_ruta_{tipo}"
                 )
+            ant_nivel_riesgo_ant = st.selectbox(
+                "RECOMENDACIÓN NIVEL DE RIESGO OT-TE ANTERIOR *",
+                ["Seleccione...", "ORDINARIO", "EXTRAORDINARIO", "EXTRAORDINARIO DE GÉNERO", "EXTREMO", "INACTIVACIÓN"],
+                key=f"ant_nivel_riesgo_ant_{tipo}"
+            )
         else:
             # Si es "NO" o "Seleccione...", estos campos no existen
             ant_ot_te_antecede = ""
             ant_tipo_ruta = ""
+            ant_nivel_riesgo_ant = ""
 
         ant_reg_res = st.selectbox(
             "¿REGISTRA RESOLUCIONES O MEDIDAS VIGENTES? *",
@@ -1471,6 +1488,7 @@ def formulario_casos(tipo="individual"):
                     "registra_ot":           ant_reg_ot,
                     "ot_te_antecede": ant_ot_te_antecede if ant_reg_ot == "SI" else "",
                     "tipo_ruta_antecedente": ant_tipo_ruta if ant_reg_ot == "SI" else "",
+                    "nivel_riesgo_anterior": ant_nivel_riesgo_ant if ant_reg_ot == "SI" else "",
                     "registra_resoluciones": ant_reg_res,
                     "anio_resolucion":       str(int(ant_anio)) if ant_anio is not None else "",
                     "mes_resolucion":        str(int(ant_mes))  if ant_mes  is not None else "",
@@ -3166,6 +3184,7 @@ def formulario_casos(tipo="individual"):
                             # ── NUEVO: Agregar los nuevos campos
                             ant.get("ot_te_antecede", ""),
                             ant.get("tipo_ruta_antecedente", ""),
+                            ant.get("nivel_riesgo_anterior", ""),
                             ant.get("registra_resoluciones", ""),
                             ant.get("dia_resolucion", ""),
                             ant.get("mes_resolucion", ""),

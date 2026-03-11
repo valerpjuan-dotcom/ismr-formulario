@@ -49,7 +49,7 @@ _CABECERAS_HECHOS = [
 _CABECERAS_ANTECEDENTES = [
     "ID_Antecedente", "ID_Caso", "OT-TE",
     "Registra OT Antecedentes",
-    "OT-TE Antecede", "Tipo Ruta Antecedente",
+    "OT-TE Antecede", "Tipo Ruta Antecedente", "Recomendacion Nivel Riesgo OT-TE Anterior",
     "Registra Resoluciones o Medidas Vigentes",
     "Dia Resolucion MTSP", "Mes Resolucion MTSP", "Anio Resolucion MTSP",
     "Analista", "Usuario Analista"
