@@ -11,7 +11,7 @@ from data.diccionarios import (
     _ESTRUCTURAS, _ROLES, _LUGAR_ACREDITACION, _INSTITUCIONES, _PARTICIPACION,
     _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES,
     _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA, _CUIDADOR,
-    _VICTIMA_CONFLICTO_ARMADO, _LIDER_SOCIAL_DDHH,
+    _VICTIMA_CONFLICTO_ARMADO, _LIDER_SOCIAL_DDHH, _ACTIVIDADES_ECONOMICAS_COLECTIVO,
     # Perfil Actual
     _PA_NIVEL_EDUCATIVO, _PA_FUENTE_INGRESOS, _PA_ESTADO_PROYECTO_ARN, _PA_ACTIVIDAD_ECONOMICA,
     _PA_MACROCASOS_JEP, _PA_INSTANCIAS_PARTIDO, _PA_ROLES_PARTIDO,
@@ -1296,8 +1296,11 @@ def formulario_casos(tipo="individual"):
         comp_menores             = None
         comp_adultos_mayores_col = None
         comp_discapacidad_col    = None
+        comp_num_integrantes     = None
         tipo_division            = ""
         comp_otro_cual           = ""
+        comp_proyecto_productivo = ""
+        comp_actividad_economica = []
     else:
         num_personas = None
         companero = ""
@@ -1349,6 +1352,7 @@ def formulario_casos(tipo="individual"):
                 min_value=0, step=1, value=None,
                 key=f"caso_comp_discapacidad_col_{tipo}"
             )
+            comp_num_integrantes = None
             tipo_division  = ""
             comp_otro_cual = ""
         else:
@@ -1369,6 +1373,24 @@ def formulario_casos(tipo="individual"):
                 )
             else:
                 comp_otro_cual = ""
+            comp_num_integrantes = st.number_input(
+                "Número de integrantes",
+                min_value=0, step=1, value=None,
+                key=f"caso_comp_num_integrantes_{tipo}"
+            )
+
+        # ── Campos comunes: proyecto productivo y actividad económica ──────────
+        comp_proyecto_productivo = st.selectbox(
+            "Tiene a cargo proyecto o iniciativa productiva",
+            ["Seleccione...", "Sí", "No"],
+            key=f"caso_comp_proyecto_productivo_{tipo}"
+        )
+        st.markdown("**Actividad económica de proyecto productivo**")
+        _cols_ae = st.columns(2)
+        comp_actividad_economica = [
+            act for i, act in enumerate(_ACTIVIDADES_ECONOMICAS_COLECTIVO)
+            if _cols_ae[i % 2].checkbox(act, key=f"caso_comp_act_eco_{i}_{tipo}")
+        ]
 
     # ── Factores Diferenciales (solo individual) ───────────────────────────────
     if es_individual:
@@ -3122,8 +3144,12 @@ def formulario_casos(tipo="individual"):
                 f"caso_comp_menores_{tipo}":              st.session_state.get(f"caso_comp_menores_{tipo}", None),
                 f"caso_comp_adultos_mayores_col_{tipo}":  st.session_state.get(f"caso_comp_adultos_mayores_col_{tipo}", None),
                 f"caso_comp_discapacidad_col_{tipo}":     st.session_state.get(f"caso_comp_discapacidad_col_{tipo}", None),
+                f"caso_comp_num_integrantes_{tipo}":      st.session_state.get(f"caso_comp_num_integrantes_{tipo}", None),
                 f"caso_tipo_division_{tipo}":             st.session_state.get(f"caso_tipo_division_{tipo}", "Seleccione..."),
                 f"caso_tipo_division_otro_{tipo}":        st.session_state.get(f"caso_tipo_division_otro_{tipo}", ""),
+                f"caso_comp_proyecto_productivo_{tipo}":  st.session_state.get(f"caso_comp_proyecto_productivo_{tipo}", "Seleccione..."),
+                **{f"caso_comp_act_eco_{i}_{tipo}": st.session_state.get(f"caso_comp_act_eco_{i}_{tipo}", False)
+                   for i in range(len(_ACTIVIDADES_ECONOMICAS_COLECTIVO))},
                 # FACTORES DIFERENCIALES
                 f"caso_osiegd_{tipo}":              st.session_state.get(f"caso_osiegd_{tipo}", ""),
                 f"caso_factor_discapacidad_{tipo}": st.session_state.get(f"caso_factor_discapacidad_{tipo}", "Seleccione..."),
@@ -3251,7 +3277,10 @@ def formulario_casos(tipo="individual"):
                         comp_menores if comp_menores is not None else "",
                         comp_adultos_mayores_col if comp_adultos_mayores_col is not None else "",
                         comp_discapacidad_col if comp_discapacidad_col is not None else "",
+                        comp_num_integrantes if comp_num_integrantes is not None else "",
                         f"{tipo_division}{': ' + comp_otro_cual if tipo_division == 'Otro/¿Cuál?' and comp_otro_cual else tipo_division}",
+                        comp_proyecto_productivo if comp_proyecto_productivo != "Seleccione..." else "",
+                        " | ".join(comp_actividad_economica),
                         osiegd.strip() if osiegd else "",
                         factor_discapacidad if factor_discapacidad and factor_discapacidad != "Seleccione..." else "",
                         factor_etnia if factor_etnia and factor_etnia != "Seleccione..." else "",

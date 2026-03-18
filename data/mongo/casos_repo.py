@@ -16,7 +16,8 @@ _CABECERAS_CASOS = [
     "Num Personas Nucleo Familiar", "Companero Permanente",
     "Num Hijos Menores Edad", "Num Menores Otros", "Num Adultos Mayores", "Num Discapacidad",
     "Comp Nucleos Familiares", "Comp Num Personas", "Comp Menores Edad",
-    "Comp Adultos Mayores", "Comp Discapacidad", "Tipo Division",
+    "Comp Adultos Mayores", "Comp Discapacidad", "Comp Num Integrantes",
+    "Tipo Division", "Comp Proyecto Productivo", "Comp Actividad Economica",
     "OSIEGD", "Factor Discapacidad", "Factor Etnia", "Factor Campesino",
     "Factor Cuidador", "Factor Victima Conflicto Armado", "Factor Lider Social DDHH",
     # Impacto Consecuencial - Esfera Económica

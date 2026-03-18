@@ -261,6 +261,17 @@ _VICTIMA_CONFLICTO_ARMADO = [
     "VÍCTIMA TORTURA",  "NO REPORTA",
 ]
 
+_ACTIVIDADES_ECONOMICAS_COLECTIVO = [
+    "Agropecuaria",
+    "Industrial",
+    "Turística",
+    "Comercial - servicios",
+    "Construcción",
+    "Transporte",
+    "Minería",
+    "Otro",
+]
+
 _LIDER_SOCIAL_DDHH = [
     "ACTIVISTA POLÍTICO",
     "LÍDER AFRODESCENDIENTE",
