@@ -1137,9 +1137,52 @@ def formulario_casos(tipo="individual"):
                                              key=f"caso_fecha_nacimiento_{tipo}")
         else:
             fecha_nacimiento = None
-        sexo = ""
-        genero = None
-        orientacion_sexual = None
+        # ── Cantidad por Sexo ─────────────────────────────────────────────────
+        st.markdown("**Cantidad por Sexo**")
+        col_sx1, col_sx2, col_sx3 = st.columns(3)
+        with col_sx1:
+            _cant_hombres     = st.number_input("Cantidad de Hombres", min_value=0, step=1, value=0,
+                                                key=f"caso_cant_hombres_{tipo}")
+        with col_sx2:
+            _cant_mujeres     = st.number_input("Cantidad de Mujeres", min_value=0, step=1, value=0,
+                                                key=f"caso_cant_mujeres_{tipo}")
+        with col_sx3:
+            _cant_intersexual = st.number_input("Cantidad de Intersexual", min_value=0, step=1, value=0,
+                                                key=f"caso_cant_intersexual_{tipo}")
+        sexo = f"Hombres:{_cant_hombres} | Mujeres:{_cant_mujeres} | Intersexual:{_cant_intersexual}"
+
+        # ── Cantidad por Género ────────────────────────────────────────────────
+        st.markdown("**Cantidad por Género**")
+        col_gn1, col_gn2 = st.columns(2)
+        with col_gn1:
+            _cant_femenino    = st.number_input("Cantidad de Femenino", min_value=0, step=1, value=0,
+                                                key=f"caso_cant_femenino_{tipo}")
+            _cant_masculino   = st.number_input("Cantidad de Masculino", min_value=0, step=1, value=0,
+                                                key=f"caso_cant_masculino_{tipo}")
+        with col_gn2:
+            _cant_transgenero = st.number_input("Cantidad de Transgénero", min_value=0, step=1, value=0,
+                                                key=f"caso_cant_transgenero_{tipo}")
+            _cant_genero_nr   = st.number_input("Cantidad de No Reporta", min_value=0, step=1, value=0,
+                                                key=f"caso_cant_genero_nr_{tipo}")
+        genero = (f"Femenino:{_cant_femenino} | Masculino:{_cant_masculino} | "
+                  f"Transgénero:{_cant_transgenero} | No Reporta:{_cant_genero_nr}")
+
+        # ── Cantidad por Orientación Sexual ────────────────────────────────────
+        st.markdown("**Cantidad por Orientación Sexual**")
+        col_or1, col_or2 = st.columns(2)
+        with col_or1:
+            _cant_heterosexual = st.number_input("Cantidad de Heterosexual", min_value=0, step=1, value=0,
+                                                 key=f"caso_cant_heterosexual_{tipo}")
+            _cant_homosexual   = st.number_input("Cantidad de Homosexual", min_value=0, step=1, value=0,
+                                                 key=f"caso_cant_homosexual_{tipo}")
+        with col_or2:
+            _cant_bisexual     = st.number_input("Cantidad de Bisexual", min_value=0, step=1, value=0,
+                                                 key=f"caso_cant_bisexual_{tipo}")
+            _cant_orient_nr    = st.number_input("Cantidad de No Reporta", min_value=0, step=1, value=0,
+                                                 key=f"caso_cant_orient_nr_{tipo}")
+        orientacion_sexual = (f"Heterosexual:{_cant_heterosexual} | Homosexual:{_cant_homosexual} | "
+                              f"Bisexual:{_cant_bisexual} | No Reporta:{_cant_orient_nr}")
+
         jefatura_hogar = None
 
     # ── Fila: Género | Orientación Sexual | Jefatura del Hogar (solo individual)
@@ -1175,8 +1218,21 @@ def formulario_casos(tipo="individual"):
             zona_reserva = st.selectbox("¿Vive en zona de reserva campesina? *", _SI_NO_REPORTA,
                                         key=f"caso_zona_reserva_{tipo}")
     else:
-        zona_rural = ""
-        zona_reserva = ""
+        # ── Cantidad por Zona de Residencia ───────────────────────────────────
+        st.markdown("**Cantidad por Zona de Residencia**")
+        col_z1, col_z2, col_z3 = st.columns(3)
+        with col_z1:
+            _cant_zona_rural    = st.number_input("Cantidad en zona rural", min_value=0, step=1, value=0,
+                                                  key=f"caso_cant_zona_rural_{tipo}")
+        with col_z2:
+            _cant_zona_urbana   = st.number_input("Cantidad en zona urbana", min_value=0, step=1, value=0,
+                                                  key=f"caso_cant_zona_urbana_{tipo}")
+        with col_z3:
+            _cant_zona_reserva  = st.number_input("Cantidad en zona de reserva campesina",
+                                                  min_value=0, step=1, value=0,
+                                                  key=f"caso_cant_zona_reserva_{tipo}")
+        zona_rural   = f"Rural:{_cant_zona_rural} | Urbana:{_cant_zona_urbana}"
+        zona_reserva = f"Reserva Campesina:{_cant_zona_reserva}"
 
     # ── Composición Núcleo Familiar (solo individual) ─────────────────────────
     if es_individual:
