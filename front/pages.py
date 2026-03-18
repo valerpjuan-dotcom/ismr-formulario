@@ -1385,12 +1385,15 @@ def formulario_casos(tipo="individual"):
             ["Seleccione...", "Sí", "No"],
             key=f"caso_comp_proyecto_productivo_{tipo}"
         )
-        st.markdown("**Actividad económica de proyecto productivo**")
-        _cols_ae = st.columns(2)
-        comp_actividad_economica = [
-            act for i, act in enumerate(_ACTIVIDADES_ECONOMICAS_COLECTIVO)
-            if _cols_ae[i % 2].checkbox(act, key=f"caso_comp_act_eco_{i}_{tipo}")
-        ]
+        if comp_proyecto_productivo == "Sí":
+            st.markdown("**Actividad económica de proyecto productivo**")
+            _cols_ae = st.columns(2)
+            comp_actividad_economica = [
+                act for i, act in enumerate(_ACTIVIDADES_ECONOMICAS_COLECTIVO)
+                if _cols_ae[i % 2].checkbox(act, key=f"caso_comp_act_eco_{i}_{tipo}")
+            ]
+        else:
+            comp_actividad_economica = []
 
     # ── Factores Diferenciales (solo individual) ───────────────────────────────
     if es_individual:
