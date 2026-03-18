@@ -1041,7 +1041,7 @@ def formulario_casos(tipo="individual"):
     # ── Tipo de estudio (ancho completo) ─────────────────────────────────────
     tipo_estudio = st.selectbox(
         "Tipo de Estudio *",
-        ["Seleccione...", "Tipo de Orden de Trabajo", "Trámite de Emergencia"],
+        ["Seleccione...", "Orden de Trabajo", "Trámite de Emergencia"],
         key=f"caso_tipo_estudio_{tipo}"
     )
 
