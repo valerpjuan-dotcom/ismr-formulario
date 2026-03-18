@@ -38,7 +38,6 @@ _CABECERAS_CASOS = [
     "Imp Sal Desescolarizacion", "Imp Sal Abandono Menores",
     "Imp Sal Afectacion Psicosocial", "Imp Sal Discapacidad",
     "Imp Sal Dano Vida Integridad",
-    "Criterios Verificacion",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [
@@ -81,6 +80,7 @@ _CABECERAS_VERIFICACIONES = [
     "V Hechos Riesgo", "V Lugar Hechos Riesgo", "V Actor Hechos Riesgo", "V Motivacion Amenaza",
     "V Perfil Antiguo", "V Modo Participacion", "V Rol Perfil Antiguo", "V Frente Columna",
     "V Perfil Actual", "V Organizacion", "V Rol Perfil Actual",
+    "Criterios Verificacion",
     "Analista", "Usuario Analista"
 ]
 

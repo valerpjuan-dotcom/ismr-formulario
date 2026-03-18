@@ -1001,6 +1001,7 @@ def formulario_casos(tipo="individual"):
                             ver.get("v_perfil_actual", ""),
                             ver.get("v_organizacion", ""),
                             ver.get("v_rol_perfil_actual", ""),
+                            ver.get("criterios", ""),
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         ver_guardados += 1
@@ -2794,6 +2795,14 @@ def formulario_casos(tipo="individual"):
     st.caption("Opcional. Agrega una o varias verificaciones asociadas a este caso.")
 
     _edit_ver_key = f"editando_verificacion_{tipo}"
+    _CRITERIOS_VER = [
+        ("Pertinencia", "Relación directa con el riesgo identificado."),
+        ("Fiabilidad",  "Credibilidad de la fuente de la información."),
+        ("Suficiencia", "Cantidad y calidad adecuadas para justificar el nivel de riesgo sugerido."),
+        ("Veracidad",   "Verificación de la autenticidad de los datos presentados."),
+        ("Necesidad",   "Implica que esta sea indispensable para esclarecer un hecho controvertido "
+                        "o esencial para la toma de decisiones."),
+    ]
 
     for i, ver in enumerate(st.session_state.verificaciones):
         with st.container(border=True):
@@ -2926,6 +2935,16 @@ def formulario_casos(tipo="individual"):
                 else:
                     ev_v_organizacion = ""
                     ev_v_rol_perfil_actual = ""
+                # Criterios de verificación (edición)
+                st.markdown("**¿Esta verificación cumplió con alguno de los siguientes criterios?**")
+                _crit_actual = [c.strip() for c in ver.get("criterios", "").split("|") if c.strip()]
+                _cols_ev_crit = st.columns(len(_CRITERIOS_VER))
+                ev_criterios = [
+                    nombre
+                    for (nombre, definicion), col in zip(_CRITERIOS_VER, _cols_ev_crit)
+                    if col.checkbox(nombre, value=(nombre in _crit_actual),
+                                    help=definicion, key=f"ev_crit_{nombre.lower()}_{tipo}_{i}")
+                ]
                 col_sv, col_cv = st.columns(2)
                 with col_sv:
                     if st.button("💾 Guardar cambios", key=f"ev_save_{tipo}_{i}", type="primary", use_container_width=True):
@@ -2943,6 +2962,7 @@ def formulario_casos(tipo="individual"):
                             "v_perfil_actual": ev_v_perfil_actual if ev_v_perfil_actual != "Seleccione..." else "",
                             "v_organizacion": ev_v_organizacion if ev_v_organizacion != "Seleccione..." else "",
                             "v_rol_perfil_actual": ev_v_rol_perfil_actual if ev_v_rol_perfil_actual != "Seleccione..." else "",
+                            "criterios": " | ".join(ev_criterios),
                         }
                         st.session_state[_edit_ver_key] = None
                         st.rerun()
@@ -2982,6 +3002,8 @@ def formulario_casos(tipo="individual"):
                     if ver.get("v_perfil_actual") == "SI":
                         st.write(f"🏢 **V. Organización:** {ver.get('v_organizacion', '')}")
                         st.write(f"🏷️ **V. Rol:** {ver.get('v_rol_perfil_actual', '')}")
+                if ver.get("criterios"):
+                    st.write(f"✅ **Criterios:** {ver.get('criterios', '')}")
 
     with st.expander("➕ Agregar verificación", expanded=len(st.session_state.verificaciones) == 0):
         # Fila 1
@@ -3084,6 +3106,14 @@ def formulario_casos(tipo="individual"):
         else:
             nv_v_organizacion = ""
             nv_v_rol_perfil_actual = ""
+        # Criterios de verificación (nuevo registro)
+        st.markdown("**¿Esta verificación cumplió con alguno de los siguientes criterios?**")
+        _cols_nv_crit = st.columns(len(_CRITERIOS_VER))
+        nv_criterios = [
+            nombre
+            for (nombre, definicion), col in zip(_CRITERIOS_VER, _cols_nv_crit)
+            if col.checkbox(nombre, help=definicion, key=f"nv_crit_{nombre.lower()}_{tipo}")
+        ]
         st.markdown("")
         if st.button("➕ Agregar esta verificación", use_container_width=True, key=f"btn_add_ver_{tipo}", type="secondary"):
             st.session_state.verificaciones.append({
@@ -3100,25 +3130,9 @@ def formulario_casos(tipo="individual"):
                 "v_perfil_actual": nv_v_perfil_actual if nv_v_perfil_actual != "Seleccione..." else "",
                 "v_organizacion": nv_v_organizacion if nv_v_organizacion != "Seleccione..." else "",
                 "v_rol_perfil_actual": nv_v_rol_perfil_actual if nv_v_rol_perfil_actual != "Seleccione..." else "",
+                "criterios": " | ".join(nv_criterios),
             })
             st.success("✅ Verificación agregada"); st.rerun()
-
-    # ── Criterios de Verificación ─────────────────────────────────────────────
-    _CRITERIOS_VER = [
-        ("Pertinencia",  "Relación directa con el riesgo identificado."),
-        ("Fiabilidad",   "Credibilidad de la fuente de la información."),
-        ("Suficiencia",  "Cantidad y calidad adecuadas para justificar el nivel de riesgo sugerido."),
-        ("Veracidad",    "Verificación de la autenticidad de los datos presentados."),
-        ("Necesidad",    "Implica que esta sea indispensable para esclarecer un hecho controvertido "
-                         "o esencial para la toma de decisiones."),
-    ]
-    st.markdown("**¿La verificación cumplió con alguno de los siguientes criterios? Selecciónelos:**")
-    _cols_crit = st.columns(len(_CRITERIOS_VER))
-    criterios_verificacion = [
-        nombre
-        for (nombre, definicion), col in zip(_CRITERIOS_VER, _cols_crit)
-        if col.checkbox(nombre, help=definicion, key=f"ver_crit_{nombre.lower()}_{tipo}")
-    ]
 
     # ── Impacto Consecuencial ─────────────────────────────────────────────────
     st.markdown("---")
@@ -3399,8 +3413,6 @@ def formulario_casos(tipo="individual"):
                 **{f"lider_{i}_{tipo}": st.session_state.get(f"lider_{i}_{tipo}", False)
                    for i in range(len(_LIDER_SOCIAL_DDHH))},
                 # Hechos, perfiles y antecedentes
-                **{f"ver_crit_{nombre.lower()}_{tipo}": st.session_state.get(f"ver_crit_{nombre.lower()}_{tipo}", False)
-                   for nombre, _ in [("Pertinencia",""),("Fiabilidad",""),("Suficiencia",""),("Veracidad",""),("Necesidad","")]},
                 "hechos":           st.session_state.get("hechos", []),
                 "perfiles":         st.session_state.get("perfiles", []),
                 "perfiles_col":     st.session_state.get("perfiles_col", []),
@@ -3555,7 +3567,6 @@ def formulario_casos(tipo="individual"):
                         imp_sal_psicosocial if imp_sal_psicosocial != "Seleccione..." else "",
                         imp_sal_discapacidad if imp_sal_discapacidad != "Seleccione..." else "",
                         imp_sal_dano_vida if imp_sal_dano_vida != "Seleccione..." else "",
-                        " | ".join(criterios_verificacion),
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0
@@ -3710,6 +3721,7 @@ def formulario_casos(tipo="individual"):
                             ver.get("v_perfil_actual", ""),
                             ver.get("v_organizacion", ""),
                             ver.get("v_rol_perfil_actual", ""),
+                            ver.get("criterios", ""),
                             st.session_state.nombre_completo, st.session_state.username
                         ])
                         ver_guardados += 1
