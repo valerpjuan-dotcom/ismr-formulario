@@ -856,6 +856,7 @@ def formulario_casos(tipo="individual"):
                         f"caso_solicitante_{tipo}", f"caso_fecha_expedicion_{tipo}",
                         f"caso_tipo_poblacion_{tipo}",
                         *[f"subpob_{i}_{tipo}" for i in range(len(_SUBPOBLACIONES))],
+                        *[f"subpob_cnt_{i}_{tipo}" for i in range(len(_SUBPOBLACIONES))],
                         f"caso_fecha_nacimiento_{tipo}", f"caso_sexo_{tipo}",
                         f"caso_genero_{tipo}", f"caso_orientacion_{tipo}", f"caso_jefatura_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
@@ -922,6 +923,7 @@ def formulario_casos(tipo="individual"):
                         f"caso_solicitante_{tipo}", f"caso_fecha_expedicion_{tipo}",
                         f"caso_tipo_poblacion_{tipo}",
                         *[f"subpob_{i}_{tipo}" for i in range(len(_SUBPOBLACIONES))],
+                        *[f"subpob_cnt_{i}_{tipo}" for i in range(len(_SUBPOBLACIONES))],
                         f"caso_fecha_nacimiento_{tipo}", f"caso_sexo_{tipo}",
                         f"caso_genero_{tipo}", f"caso_orientacion_{tipo}", f"caso_jefatura_{tipo}",
                         f"p_departamento_{tipo}", f"p_municipio_{tipo}",
@@ -1089,9 +1091,12 @@ def formulario_casos(tipo="individual"):
     else:
         tipo_colectivo = ""
 
-    # ── Tipo de Población (fila propia) ──────────────────────────────────────
-    tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
-                                  key=f"caso_tipo_poblacion_{tipo}")
+    # ── Tipo de Población (solo individual) ──────────────────────────────────
+    if es_individual:
+        tipo_poblacion = st.selectbox("Tipo de Población *", _TIPOS_POBLACION,
+                                      key=f"caso_tipo_poblacion_{tipo}")
+    else:
+        tipo_poblacion = ""
 
 
     # ── FAMILIAR HACE PARTE DEL PARTIDO COMUNES ──────────────────────────────
@@ -1103,13 +1108,21 @@ def formulario_casos(tipo="individual"):
             key=f"caso_familiar_parte_comunes_{tipo}"
         )
 
-    # ── Subpoblación: checkboxes en cuadrícula de 2 columnas ─────────────────
-    st.markdown("**Subpoblación \\***")
-    cols_chk = st.columns(2)
-    subpoblacion = [
-        opcion for i, opcion in enumerate(_SUBPOBLACIONES)
-        if cols_chk[i % 2].checkbox(opcion, key=f"subpob_{i}_{tipo}")
-    ]
+    # ── Subpoblación ──────────────────────────────────────────────────────────
+    if es_individual:
+        st.markdown("**Subpoblación \\***")
+        cols_chk = st.columns(2)
+        subpoblacion = [
+            opcion for i, opcion in enumerate(_SUBPOBLACIONES)
+            if cols_chk[i % 2].checkbox(opcion, key=f"subpob_{i}_{tipo}")
+        ]
+    else:
+        st.markdown("**Cantidad por Subpoblación**")
+        _cols_sp = st.columns(2)
+        subpoblacion = [
+            f"{opcion}:{_cols_sp[i % 2].number_input(f'Cantidad de {opcion}', min_value=0, step=1, value=0, key=f'subpob_cnt_{i}_{tipo}')}"
+            for i, opcion in enumerate(_SUBPOBLACIONES)
+        ]
 
     # Controla si se muestra la sección Perfil Antiguo
     _mostrar_perfil_antiguo = tipo_poblacion in ("REINCORPORADO/A", "FAMILIAR DE REINCORPORADO/A")
@@ -3004,6 +3017,8 @@ def formulario_casos(tipo="individual"):
                 f"caso_tipo_poblacion_{tipo}":   st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
                 **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
                    for i in range(len(_SUBPOBLACIONES))},
+                **{f"subpob_cnt_{i}_{tipo}": st.session_state.get(f"subpob_cnt_{i}_{tipo}", 0)
+                   for i in range(len(_SUBPOBLACIONES))},
                 # CARACTERÍSTICAS DEMOGRÁFICAS
                 f"caso_fecha_nacimiento_{tipo}": st.session_state.get(f"caso_fecha_nacimiento_{tipo}", None),
                 f"caso_sexo_{tipo}":             st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
@@ -3086,8 +3101,8 @@ def formulario_casos(tipo="individual"):
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
         if tipo_evaluacion == "Seleccione...":          errores.append("Debe seleccionar el tipo de evaluación")
         if not es_individual and tipo_colectivo == "Seleccione...": errores.append("Debe seleccionar el tipo de colectivo")
-        if tipo_poblacion == "Seleccione...":           errores.append("Debe seleccionar el tipo de población")
-        if len(subpoblacion) == 0:                       errores.append("Debe seleccionar al menos una subpoblación")
+        if es_individual and tipo_poblacion == "Seleccione...":  errores.append("Debe seleccionar el tipo de población")
+        if es_individual and len(subpoblacion) == 0:              errores.append("Debe seleccionar al menos una subpoblación")
         if es_individual and fecha_nacimiento is None:       errores.append("La fecha de nacimiento es obligatoria")
         if es_individual and fecha_nacimiento is not None:
             if fecha_nacimiento.year < 1900:                errores.append("La fecha de nacimiento no puede ser anterior a 1900")
