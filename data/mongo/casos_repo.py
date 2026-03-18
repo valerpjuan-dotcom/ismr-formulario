@@ -38,6 +38,7 @@ _CABECERAS_CASOS = [
     "Imp Sal Desescolarizacion", "Imp Sal Abandono Menores",
     "Imp Sal Afectacion Psicosocial", "Imp Sal Discapacidad",
     "Imp Sal Dano Vida Integridad",
+    "Criterios Verificacion",
     "Analista", "Usuario Analista"
 ]
 _CABECERAS_HECHOS = [
