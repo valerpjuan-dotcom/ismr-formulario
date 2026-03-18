@@ -1150,6 +1150,18 @@ def formulario_casos(tipo="individual"):
                                              key=f"caso_fecha_nacimiento_{tipo}")
         else:
             fecha_nacimiento = None
+
+        # ── Departamento | Municipio (colectivo) ──────────────────────────────
+        _col_dep, _col_mun = st.columns(2)
+        with _col_dep:
+            departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
+                                        ["Seleccione..."] + list(_MUNICIPIOS.keys()),
+                                        key=f"p_departamento_{tipo}")
+        with _col_mun:
+            municipio = st.selectbox("SELECCIONE EL MUNICIPIO *",
+                                     _MUNICIPIOS.get(departamento, ["Seleccione..."]),
+                                     key=f"p_municipio_{tipo}")
+
         # ── Cantidad por Sexo ─────────────────────────────────────────────────
         st.markdown("**Cantidad por Sexo**")
         col_sx1, col_sx2, col_sx3 = st.columns(3)
@@ -1207,16 +1219,17 @@ def formulario_casos(tipo="individual"):
             jefatura_hogar = st.selectbox("Jefatura del Hogar *", _JEFATURA_HOGAR,
                                           key=f"caso_jefatura_{tipo}")
 
-    # ── Fila: Departamento | Municipio ────────────────────────────────────────
-    col_dep, col_mun = st.columns(2)
-    with col_dep:
-        departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
-                                    ["Seleccione..."] + list(_MUNICIPIOS.keys()),
-                                    key=f"p_departamento_{tipo}")
-    with col_mun:
-        municipio = st.selectbox("SELECCIONE EL MUNICIPIO *",
-                                 _MUNICIPIOS.get(departamento, ["Seleccione..."]),
-                                 key=f"p_municipio_{tipo}")
+    # ── Fila: Departamento | Municipio (solo individual; colectivo ya lo renderiza arriba) ──
+    if es_individual:
+        col_dep, col_mun = st.columns(2)
+        with col_dep:
+            departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
+                                        ["Seleccione..."] + list(_MUNICIPIOS.keys()),
+                                        key=f"p_departamento_{tipo}")
+        with col_mun:
+            municipio = st.selectbox("SELECCIONE EL MUNICIPIO *",
+                                     _MUNICIPIOS.get(departamento, ["Seleccione..."]),
+                                     key=f"p_municipio_{tipo}")
 
     # ── Fila: Zona Rural | Zona de Reserva Campesina (solo individual) ─────────
     if es_individual:
