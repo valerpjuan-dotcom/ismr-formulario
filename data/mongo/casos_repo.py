@@ -15,6 +15,8 @@ _CABECERAS_CASOS = [
     "Nivel de Riesgo", "Observaciones",
     "Num Personas Nucleo Familiar", "Companero Permanente",
     "Num Hijos Menores Edad", "Num Menores Otros", "Num Adultos Mayores", "Num Discapacidad",
+    "Comp Nucleos Familiares", "Comp Num Personas", "Comp Menores Edad",
+    "Comp Adultos Mayores", "Comp Discapacidad", "Tipo Division",
     "OSIEGD", "Factor Discapacidad", "Factor Etnia", "Factor Campesino",
     "Factor Cuidador", "Factor Victima Conflicto Armado", "Factor Lider Social DDHH",
     # Impacto Consecuencial - Esfera Económica

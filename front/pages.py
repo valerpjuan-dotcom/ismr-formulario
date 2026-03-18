@@ -1290,6 +1290,14 @@ def formulario_casos(tipo="individual"):
             num_discapacidad = st.number_input("Número de personas en situación de discapacidad *",
                                                min_value=0, step=1, value=None,
                                                key=f"caso_discapacidad_{tipo}")
+        # Variables exclusivas de colectivo — no aplican para individual
+        comp_nucleos_familiares  = None
+        comp_num_personas        = None
+        comp_menores             = None
+        comp_adultos_mayores_col = None
+        comp_discapacidad_col    = None
+        tipo_division            = ""
+        comp_otro_cual           = ""
     else:
         num_personas = None
         companero = ""
@@ -1304,6 +1312,63 @@ def formulario_casos(tipo="individual"):
         factor_cuidador = ""
         victima_conflicto = []
         lider_social = []
+
+        # ── Composición del Colectivo ─────────────────────────────────────────
+        st.markdown("---")
+        st.subheader("👥 COMPOSICIÓN DEL COLECTIVO")
+
+        if tipo_colectivo == "Familiar":
+            col_nf, col_np_col = st.columns(2)
+            with col_nf:
+                comp_nucleos_familiares = st.number_input(
+                    "Número de núcleos familiares",
+                    min_value=0, step=1, value=None,
+                    key=f"caso_comp_nucleos_fam_{tipo}"
+                )
+            with col_np_col:
+                comp_num_personas = st.number_input(
+                    "Número de personas en el colectivo",
+                    min_value=0, step=1, value=None,
+                    key=f"caso_comp_num_personas_{tipo}"
+                )
+            col_me_col, col_am_col = st.columns(2)
+            with col_me_col:
+                comp_menores = st.number_input(
+                    "Número de menores de edad",
+                    min_value=0, step=1, value=None,
+                    key=f"caso_comp_menores_{tipo}"
+                )
+            with col_am_col:
+                comp_adultos_mayores_col = st.number_input(
+                    "Número de adultos mayores (60 años en adelante)",
+                    min_value=0, step=1, value=None,
+                    key=f"caso_comp_adultos_mayores_col_{tipo}"
+                )
+            comp_discapacidad_col = st.number_input(
+                "Número de personas en situación de discapacidad",
+                min_value=0, step=1, value=None,
+                key=f"caso_comp_discapacidad_col_{tipo}"
+            )
+            tipo_division  = ""
+            comp_otro_cual = ""
+        else:
+            comp_nucleos_familiares  = None
+            comp_num_personas        = None
+            comp_menores             = None
+            comp_adultos_mayores_col = None
+            comp_discapacidad_col    = None
+            tipo_division = st.selectbox(
+                "Tipo de División",
+                ["Seleccione...", "Comité", "Mesa", "Delegación", "Otro/¿Cuál?"],
+                key=f"caso_tipo_division_{tipo}"
+            )
+            if tipo_division == "Otro/¿Cuál?":
+                comp_otro_cual = st.text_input(
+                    "¿Cuál?",
+                    key=f"caso_tipo_division_otro_{tipo}"
+                )
+            else:
+                comp_otro_cual = ""
 
     # ── Factores Diferenciales (solo individual) ───────────────────────────────
     if es_individual:
@@ -3051,6 +3116,14 @@ def formulario_casos(tipo="individual"):
                 f"caso_menores_otros_{tipo}":    st.session_state.get(f"caso_menores_otros_{tipo}", None),
                 f"caso_adultos_mayores_{tipo}":  st.session_state.get(f"caso_adultos_mayores_{tipo}", None),
                 f"caso_discapacidad_{tipo}":     st.session_state.get(f"caso_discapacidad_{tipo}", None),
+                # COMPOSICIÓN DEL COLECTIVO
+                f"caso_comp_nucleos_fam_{tipo}":          st.session_state.get(f"caso_comp_nucleos_fam_{tipo}", None),
+                f"caso_comp_num_personas_{tipo}":         st.session_state.get(f"caso_comp_num_personas_{tipo}", None),
+                f"caso_comp_menores_{tipo}":              st.session_state.get(f"caso_comp_menores_{tipo}", None),
+                f"caso_comp_adultos_mayores_col_{tipo}":  st.session_state.get(f"caso_comp_adultos_mayores_col_{tipo}", None),
+                f"caso_comp_discapacidad_col_{tipo}":     st.session_state.get(f"caso_comp_discapacidad_col_{tipo}", None),
+                f"caso_tipo_division_{tipo}":             st.session_state.get(f"caso_tipo_division_{tipo}", "Seleccione..."),
+                f"caso_tipo_division_otro_{tipo}":        st.session_state.get(f"caso_tipo_division_otro_{tipo}", ""),
                 # FACTORES DIFERENCIALES
                 f"caso_osiegd_{tipo}":              st.session_state.get(f"caso_osiegd_{tipo}", ""),
                 f"caso_factor_discapacidad_{tipo}": st.session_state.get(f"caso_factor_discapacidad_{tipo}", "Seleccione..."),
@@ -3173,6 +3246,12 @@ def formulario_casos(tipo="individual"):
                         num_menores_otros if num_menores_otros is not None else "",
                         num_adultos_mayores if num_adultos_mayores is not None else "",
                         num_discapacidad if num_discapacidad is not None else "",
+                        comp_nucleos_familiares if comp_nucleos_familiares is not None else "",
+                        comp_num_personas if comp_num_personas is not None else "",
+                        comp_menores if comp_menores is not None else "",
+                        comp_adultos_mayores_col if comp_adultos_mayores_col is not None else "",
+                        comp_discapacidad_col if comp_discapacidad_col is not None else "",
+                        f"{tipo_division}{': ' + comp_otro_cual if tipo_division == 'Otro/¿Cuál?' and comp_otro_cual else tipo_division}",
                         osiegd.strip() if osiegd else "",
                         factor_discapacidad if factor_discapacidad and factor_discapacidad != "Seleccione..." else "",
                         factor_etnia if factor_etnia and factor_etnia != "Seleccione..." else "",
