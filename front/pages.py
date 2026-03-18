@@ -130,6 +130,7 @@ def pantalla_selector():
             st.session_state.vista = "colectivo"
             st.session_state.hechos = []
             st.session_state.perfiles = []
+            st.session_state.perfiles_col = []
             st.session_state.antecedentes = []
             st.session_state["borrador_cargado_colectivo"] = False
             st.rerun()
@@ -908,6 +909,7 @@ def formulario_casos(tipo="individual"):
                             st.session_state[campo] = valor
                     st.session_state.hechos        = borrador.get("hechos", [])
                     st.session_state.perfiles      = borrador.get("perfiles", [])
+                    st.session_state.perfiles_col  = borrador.get("perfiles_col", [])
                     st.session_state.antecedentes  = borrador.get("antecedentes", [])
                     st.session_state.perfiles_actuales = borrador.get("perfiles_actuales", [])
                     st.session_state.desplazamientos   = borrador.get("desplazamientos", [])
@@ -1018,6 +1020,7 @@ def formulario_casos(tipo="individual"):
             st.session_state.vista = None
             st.session_state.hechos = []
             st.session_state.perfiles = []
+            st.session_state.perfiles_col = []
             st.session_state.antecedentes = []
             st.session_state[f"borrador_cargado_{tipo}"] = False
             st.rerun()
@@ -1942,6 +1945,221 @@ def formulario_casos(tipo="individual"):
                         "pabellon_alta_seguridad": p_pabellon if p_pabellon != "Seleccione..." else "",
                     })
                     st.success("✅ Perfil Antiguo agregado"); st.rerun()
+
+    # ── Perfil Antiguo Colectivo (solo colectivo) ─────────────────────────────
+    if not es_individual:
+        st.markdown("---")
+        _es_familiar_col = tipo_colectivo == "Familiar"
+        _label_registro  = "Representante" if _es_familiar_col else "Directivo"
+        _titulo_seccion  = "PERFIL ANTIGUO DEL REPRESENTANTE" if _es_familiar_col else "PERFIL ANTIGUO DE DIRECTIVOS"
+        st.subheader(_titulo_seccion)
+        if _es_familiar_col:
+            st.caption("Agrega el perfil FARC-EP del representante del colectivo familiar (máximo 1 registro).")
+        else:
+            st.caption("Agrega uno o varios perfiles FARC-EP de los directivos del colectivo.")
+
+        if "perfiles_col" not in st.session_state:
+            st.session_state.perfiles_col = []
+
+        _edit_pcol_key = f"editando_perfil_col_{tipo}"
+        _MODOS_PART_COL = ["Seleccione...", "Combatiente", "Miliciano/a", "Colaborador/a",
+                           "Privado de la libertad", "Otro"]
+
+        for i, perfil in enumerate(st.session_state.perfiles_col):
+            with st.container(border=True):
+                if st.session_state.get(_edit_pcol_key) == i:
+                    st.markdown(f"**✏️ Editando {_label_registro} #{i+1}**")
+                    pc1, pc2 = st.columns(2)
+                    with pc1:
+                        epc_modo = st.selectbox("MODO DE PARTICIPACIÓN EN LAS FARC-EP *", _MODOS_PART_COL,
+                            index=_MODOS_PART_COL.index(perfil.get("modo_participacion", "Seleccione..."))
+                                  if perfil.get("modo_participacion", "") in _MODOS_PART_COL else 0,
+                            key=f"epc_modo_{tipo}_{i}")
+                        epc_anio = st.number_input("AÑO DE INGRESO, TRASLADO O CAPTURA *",
+                            min_value=1950, max_value=2026, step=1,
+                            value=int(perfil["anio_ingreso"]) if str(perfil.get("anio_ingreso", "")).isdigit() else 2000,
+                            key=f"epc_anio_{tipo}_{i}")
+                        _bloques_col = ["Seleccione..."] + list(_ESTRUCTURAS.keys())
+                        epc_bloque = st.selectbox("SELECCIONE EL BLOQUE DE OPERACIÓN *", _bloques_col,
+                            index=_bloques_col.index(perfil.get("bloque", "Seleccione..."))
+                                  if perfil.get("bloque", "") in _bloques_col else 0,
+                            key=f"epc_bloque_{tipo}_{i}")
+                    with pc2:
+                        epc_estructura = "Seleccione..."
+                        if epc_bloque != "Seleccione...":
+                            _ops_est_col = _ESTRUCTURAS[epc_bloque]
+                            epc_estructura = st.selectbox("ESTRUCTURA *", _ops_est_col,
+                                index=_ops_est_col.index(perfil.get("estructura", ""))
+                                      if perfil.get("estructura", "") in _ops_est_col else 0,
+                                key=f"epc_estructura_{tipo}_{i}")
+                        epc_lugar = st.selectbox("LUGAR DE ACREDITACIÓN *", _LUGAR_ACREDITACION,
+                            index=_LUGAR_ACREDITACION.index(perfil.get("lugar_acreditacion", "Seleccione..."))
+                                  if perfil.get("lugar_acreditacion", "") in _LUGAR_ACREDITACION else 0,
+                            key=f"epc_lugar_{tipo}_{i}")
+
+                    st.markdown("**ROL/ACTIVIDADES P_ANTIGUO \\***")
+                    _rol_actual_col = [r.strip() for r in perfil.get("rol", "").split("|") if r.strip() in _ROLES[1:]]
+                    cols_rol_epc = st.columns(2)
+                    epc_rol = [
+                        opcion for j, opcion in enumerate(_ROLES[1:])
+                        if cols_rol_epc[j % 2].checkbox(opcion, value=(opcion in _rol_actual_col),
+                                                         key=f"epc_rol_{j}_{tipo}_{i}")
+                    ]
+                    epc_otro_rol = ""
+                    if "Otro" in epc_rol:
+                        epc_otro_rol = st.text_input("¿QUÉ OTRO ROL?",
+                            value=perfil.get("otro_rol", ""), key=f"epc_otro_rol_{tipo}_{i}")
+
+                    epc_mostrar_libertad = (epc_modo == "Privado de la libertad")
+                    epc_meses = ""
+                    epc_inst  = "Seleccione..."
+                    if epc_mostrar_libertad:
+                        epc_meses = st.number_input("NO. MESES PRIVADO DE LA LIBERTAD",
+                            min_value=0, max_value=600, step=1,
+                            value=int(perfil["meses_privado"]) if str(perfil.get("meses_privado", "")).isdigit() else 0,
+                            key=f"epc_meses_{tipo}_{i}")
+                        epc_inst = st.selectbox("TIPO DE INSTITUCIÓN PENITENCIARIA", _INSTITUCIONES,
+                            index=_INSTITUCIONES.index(perfil.get("tipo_institucion", "Seleccione..."))
+                                  if perfil.get("tipo_institucion", "") in _INSTITUCIONES else 0,
+                            key=f"epc_inst_{tipo}_{i}")
+
+                    epc_pabellon = ""
+                    if epc_mostrar_libertad and epc_inst == "CO -COMPLEJO CARCELARÍO":
+                        _pab_col = ["Seleccione...", "Sí", "No"]
+                        epc_pabellon = st.selectbox("PABELLÓN DE ALTA SEGURIDAD", _pab_col,
+                            index=_pab_col.index(perfil.get("pabellon_alta_seguridad", "Seleccione..."))
+                                  if perfil.get("pabellon_alta_seguridad", "") in _pab_col else 0,
+                            key=f"epc_pabellon_{tipo}_{i}")
+
+                    col_save_col, col_cancel_col = st.columns(2)
+                    with col_save_col:
+                        if st.button("💾 Guardar cambios", key=f"epc_save_{tipo}_{i}",
+                                     type="primary", use_container_width=True):
+                            err_epc = []
+                            if epc_modo      == "Seleccione...": err_epc.append("El modo de participación es obligatorio")
+                            if epc_bloque    == "Seleccione...": err_epc.append("El bloque es obligatorio")
+                            if epc_estructura== "Seleccione...": err_epc.append("La estructura es obligatoria")
+                            if epc_lugar     == "Seleccione...": err_epc.append("El lugar de acreditación es obligatorio")
+                            if len(epc_rol)  == 0:               err_epc.append("El rol es obligatorio")
+                            if "Otro" in epc_rol and not epc_otro_rol.strip(): err_epc.append("Especifica el otro rol")
+                            if err_epc:
+                                for e in err_epc: st.error(f"• {e}")
+                            else:
+                                st.session_state.perfiles_col[i] = {
+                                    "modo_participacion": epc_modo,
+                                    "anio_ingreso":       epc_anio,
+                                    "bloque":             epc_bloque,
+                                    "estructura":         epc_estructura,
+                                    "lugar_acreditacion": epc_lugar,
+                                    "rol":                " | ".join(epc_rol),
+                                    "otro_rol":           epc_otro_rol.strip(),
+                                    "meses_privado":      str(epc_meses) if epc_mostrar_libertad else "",
+                                    "tipo_institucion":   epc_inst if epc_inst != "Seleccione..." else "",
+                                    "pabellon_alta_seguridad": epc_pabellon if epc_pabellon != "Seleccione..." else "",
+                                }
+                                st.session_state[_edit_pcol_key] = None
+                                st.rerun()
+                    with col_cancel_col:
+                        if st.button("✖ Cancelar", key=f"epc_cancel_{tipo}_{i}",
+                                     type="secondary", use_container_width=True):
+                            st.session_state[_edit_pcol_key] = None
+                            st.rerun()
+                else:
+                    col_tit_col, col_edit_col, col_del_col = st.columns([4, 1, 1])
+                    with col_tit_col:
+                        st.markdown(f"**{_label_registro} #{i+1} — {perfil.get('modo_participacion', '')}**")
+                    with col_edit_col:
+                        if st.button("✏️", key=f"edit_pcol_{tipo}_{i}", help="Editar"):
+                            st.session_state[_edit_pcol_key] = i
+                            st.rerun()
+                    with col_del_col:
+                        if st.button("🗑️", key=f"del_pcol_{tipo}_{i}", help="Eliminar"):
+                            st.session_state.perfiles_col.pop(i)
+                            st.session_state[_edit_pcol_key] = None
+                            st.rerun()
+                    c1_col, c2_col = st.columns(2)
+                    with c1_col:
+                        st.write(f"📋 **Modo de Participación:** {perfil.get('modo_participacion', '')}")
+                        st.write(f"📅 **Año Ingreso/Traslado/Captura:** {perfil.get('anio_ingreso', '')}")
+                        st.write(f"🗺️ **Bloque:** {perfil.get('bloque', '')}")
+                        st.write(f"🏗️ **Estructura:** {perfil.get('estructura', '')}")
+                        st.write(f"📍 **Lugar de Acreditación:** {perfil.get('lugar_acreditacion', '')}")
+                    with c2_col:
+                        st.write(f"🎭 **Rol/Actividades:** {perfil.get('rol', '')}")
+                        if perfil.get('otro_rol'): st.write(f"❓ **Otro Rol:** {perfil.get('otro_rol', '')}")
+                        if perfil.get('meses_privado'): st.write(f"⛓️ **Meses Privado de Libertad:** {perfil.get('meses_privado', '')}")
+                        if perfil.get('tipo_institucion'): st.write(f"🏛️ **Tipo Institución:** {perfil.get('tipo_institucion', '')}")
+                        if perfil.get('pabellon_alta_seguridad'): st.write(f"🔒 **Pabellón Alta Seguridad:** {perfil.get('pabellon_alta_seguridad', '')}")
+
+        # Para familiar: solo mostrar el formulario si aún no hay ningún registro
+        _puede_agregar = (not _es_familiar_col) or (len(st.session_state.perfiles_col) == 0)
+        if _puede_agregar:
+            _label_exp = f"➕ Agregar Perfil del {_label_registro}" if _es_familiar_col else f"➕ Agregar {_label_registro}"
+            with st.expander(_label_exp, expanded=len(st.session_state.perfiles_col) == 0):
+                pc_modo = st.selectbox("MODO DE PARTICIPACIÓN EN LAS FARC-EP *",
+                    _MODOS_PART_COL, key=f"pc_modo_{tipo}")
+                pc_anio = st.number_input("AÑO DE INGRESO, TRASLADO O CAPTURA *",
+                    min_value=1950, max_value=2026, step=1, key=f"pc_anio_{tipo}")
+                pc_bloque = st.selectbox("SELECCIONE EL BLOQUE DE OPERACIÓN *",
+                    ["Seleccione..."] + list(_ESTRUCTURAS.keys()), key=f"pc_bloque_{tipo}")
+                pc_estructura = "Seleccione..."
+                if pc_bloque != "Seleccione...":
+                    _ops_pc = _ESTRUCTURAS[pc_bloque]
+                    pc_estructura = st.selectbox("ESTRUCTURA *", _ops_pc, key=f"pc_estructura_{tipo}")
+                pc_lugar = st.selectbox("LUGAR DE ACREDITACIÓN *", _LUGAR_ACREDITACION,
+                    key=f"pc_lugar_{tipo}")
+
+                st.markdown("**ROL/ACTIVIDADES P_ANTIGUO \\***")
+                cols_rol_pc = st.columns(2)
+                pc_rol = [
+                    opcion for j, opcion in enumerate(_ROLES[1:])
+                    if cols_rol_pc[j % 2].checkbox(opcion, key=f"pc_rol_{j}_{tipo}")
+                ]
+                pc_otro_rol = ""
+                if "Otro" in pc_rol:
+                    pc_otro_rol = st.text_input("¿QUÉ OTRO ROL?", key=f"pc_otro_rol_{tipo}")
+
+                pc_mostrar_libertad = (pc_modo == "Privado de la libertad")
+                pc_meses     = ""
+                pc_inst      = "Seleccione..."
+                pc_pabellon  = ""
+                if pc_mostrar_libertad:
+                    pc_meses = st.number_input("NO. MESES PRIVADO DE LA LIBERTAD",
+                        min_value=0, max_value=600, step=1, key=f"pc_meses_{tipo}")
+                    pc_inst = st.selectbox("TIPO DE INSTITUCIÓN PENITENCIARIA",
+                        _INSTITUCIONES, key=f"pc_inst_{tipo}")
+                    if pc_inst == "CO -COMPLEJO CARCELARÍO":
+                        pc_pabellon = st.selectbox("PABELLÓN DE ALTA SEGURIDAD",
+                            ["Seleccione...", "Sí", "No"], key=f"pc_pabellon_{tipo}")
+
+                st.markdown("")
+                if st.button(f"➕ Agregar {_label_registro}", use_container_width=True,
+                             key=f"btn_add_pcol_{tipo}", type="secondary"):
+                    err_pc = []
+                    if pc_modo      == "Seleccione...": err_pc.append("El modo de participación es obligatorio")
+                    if pc_bloque    == "Seleccione...": err_pc.append("El bloque de operación es obligatorio")
+                    if pc_estructura== "Seleccione...": err_pc.append("La estructura es obligatoria")
+                    if pc_lugar     == "Seleccione...": err_pc.append("El lugar de acreditación es obligatorio")
+                    if len(pc_rol)  == 0:               err_pc.append("El rol es obligatorio")
+                    if "Otro" in pc_rol and not pc_otro_rol.strip(): err_pc.append("Especifica el otro rol")
+                    if err_pc:
+                        for e in err_pc: st.error(f"• {e}")
+                    else:
+                        st.session_state.perfiles_col.append({
+                            "modo_participacion":  pc_modo,
+                            "anio_ingreso":        pc_anio,
+                            "bloque":              pc_bloque,
+                            "estructura":          pc_estructura,
+                            "lugar_acreditacion":  pc_lugar,
+                            "rol":                 " | ".join(pc_rol),
+                            "otro_rol":            pc_otro_rol.strip() if pc_otro_rol else "",
+                            "meses_privado":       str(pc_meses) if pc_mostrar_libertad else "",
+                            "tipo_institucion":    pc_inst if pc_inst != "Seleccione..." else "",
+                            "pabellon_alta_seguridad": pc_pabellon if pc_pabellon != "Seleccione..." else "",
+                        })
+                        st.success(f"✅ {_label_registro} agregado"); st.rerun()
+        elif _es_familiar_col:
+            st.info("ℹ️ Ya se registró el perfil del representante. Elimínalo para reemplazarlo.")
 
     # ══════════════════════════════════════════════════════════════════════════
     # 7. PERFIL ACTUAL
@@ -3166,6 +3384,7 @@ def formulario_casos(tipo="individual"):
                 # Hechos, perfiles y antecedentes
                 "hechos":           st.session_state.get("hechos", []),
                 "perfiles":         st.session_state.get("perfiles", []),
+                "perfiles_col":     st.session_state.get("perfiles_col", []),
                 "antecedentes":     st.session_state.get("antecedentes", []),
                 "perfiles_actuales": st.session_state.get("perfiles_actuales", []),
                 "desplazamientos":   st.session_state.get("desplazamientos", []),
@@ -3334,7 +3553,9 @@ def formulario_casos(tipo="individual"):
                         ])
                         hechos_guardados += 1
                     perfiles_guardados = 0
-                    for perfil in st.session_state.perfiles:
+                    # Perfiles individuales (perfil antiguo individual)
+                    _fuente_perfiles = st.session_state.perfiles if es_individual else st.session_state.get("perfiles_col", [])
+                    for perfil in _fuente_perfiles:
                         id_perfil = obtener_siguiente_id(hoja_perfiles)
                         hoja_perfiles.append_row([
                             id_perfil, id_caso, ot_te.strip(),
@@ -3474,6 +3695,7 @@ def formulario_casos(tipo="individual"):
                         ver_guardados += 1
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
+                    st.session_state.perfiles_col = []
                     st.session_state.antecedentes = []
                     st.session_state.perfiles_actuales = []
                     st.session_state.desplazamientos = []
