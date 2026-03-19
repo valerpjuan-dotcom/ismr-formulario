@@ -3,7 +3,7 @@ def inyectar_css_selector():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
-        .stApp { background: #0A0A0F; }
+        .stApp { background: #0F0A1F; }
         #MainMenu, footer, header { visibility: hidden; }
         ._terminalButton_rix23_138,
         button[data-testid="manage-app-button"] {
