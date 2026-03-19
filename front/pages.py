@@ -731,10 +731,23 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
     # ── Cargo de elección popular (siempre visible) ───────────────────────────
     st.markdown("---")
     st.markdown("**Cargo de Elección Popular**")
-    st.selectbox("¿Ocupa o ha ocupado cargo de elección popular?", _PA_CARGO_ELECCION,
-                 index=_PA_CARGO_ELECCION.index(_v("cargo_eleccion"))
-                       if _v("cargo_eleccion") in _PA_CARGO_ELECCION else 0,
-                 key=f"pa_cargo_{sfx}")
+    if es_colectivo:
+        _cargo_col_val = _v("col_cargo_eleccion_sino", "No")
+        if _cargo_col_val not in _SI_NO:
+            _cargo_col_val = "No"
+        st.selectbox("¿MIEMBROS EJERCEN CARGOS DE ELECCIÓN POPULAR?", _SI_NO,
+                     index=_SI_NO.index(_cargo_col_val),
+                     key=f"pa_col_cargo_sino_{sfx}")
+        if st.session_state.get(f"pa_col_cargo_sino_{sfx}", "No") == "Sí":
+            st.number_input("¿CUÁNTOS MIEMBROS EJERCEN CARGOS DE ELECCIÓN POPULAR?",
+                            min_value=0, step=1,
+                            value=int(_v("col_cargo_eleccion_cnt", 0) or 0),
+                            key=f"pa_col_cargo_cnt_{sfx}")
+    else:
+        st.selectbox("¿Ocupa o ha ocupado cargo de elección popular?", _PA_CARGO_ELECCION,
+                     index=_PA_CARGO_ELECCION.index(_v("cargo_eleccion"))
+                           if _v("cargo_eleccion") in _PA_CARGO_ELECCION else 0,
+                     key=f"pa_cargo_{sfx}")
 
 
 def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
@@ -902,7 +915,16 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
         "rol_org":                _oo0.get("rol_org", ""),
         "anio_inicio_org":        _oo0.get("anio_inicio_org", ""),
         "anio_fin_org":           _oo0.get("anio_fin_org", ""),
-        "cargo_eleccion":         _c(st.session_state.get(f"pa_cargo_{sfx}", "Seleccione...")),
+        "cargo_eleccion":         (
+            _c(st.session_state.get(f"pa_col_cargo_sino_{sfx}", "No"))
+            if es_colectivo
+            else _c(st.session_state.get(f"pa_cargo_{sfx}", "Seleccione..."))
+        ),
+        "col_cargo_eleccion_cnt": (
+            int(st.session_state.get(f"pa_col_cargo_cnt_{sfx}") or 0)
+            if es_colectivo and st.session_state.get(f"pa_col_cargo_sino_{sfx}") == "Sí"
+            else 0
+        ),
         # Partido Comunes
         "participa_comunes":      participa_comunes,
         "concejo_comunes":        concejo_comunes,
