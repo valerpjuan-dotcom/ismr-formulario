@@ -2760,6 +2760,23 @@ def formulario_casos(tipo="individual"):
                         key=f"eh_victima_{tipo}_{i}"
                     )
                 with ec_amenaza:
+                    pass
+                if not es_individual:
+                    _eh_am_dir_opts = ["Seleccione...", "Sí", "No"]
+                    _eh_am_dir_val  = hecho.get("amenaza_directa_colectivo", "Seleccione...")
+                    _eh_am_dir_idx  = _eh_am_dir_opts.index(_eh_am_dir_val) if _eh_am_dir_val in _eh_am_dir_opts else 0
+                    col_am_dir, _ = st.columns([1, 2])
+                    with col_am_dir:
+                        eh_amenaza_directa_col = st.selectbox(
+                            "AMENAZA DIRECTA EN CONTRA DEL COLECTIVO",
+                            _eh_am_dir_opts,
+                            index=_eh_am_dir_idx,
+                            key=f"eh_amenaza_directa_col_{tipo}_{i}"
+                        )
+                else:
+                    eh_amenaza_directa_col = ""
+                _ec_amenaza_cols = st.columns(3)
+                with _ec_amenaza_cols[0]:
                     _eh_amenaza_val = hecho.get("tipo_amenaza", "Seleccione...")
                     eh_tipo_amenaza = st.selectbox(
                         "TIPO DE AMENAZA",
@@ -2813,6 +2830,7 @@ def formulario_casos(tipo="individual"):
                                 "tipo_actor": eh_tipo_actor if eh_tipo_actor != "Seleccione..." else "",
                                 "actor_generador": eh_actor_generador.strip(),
                                 "medio": eh_medio if eh_medio != "Seleccione..." else "",
+                                "amenaza_directa_colectivo": eh_amenaza_directa_col if eh_amenaza_directa_col != "Seleccione..." else "",
                                 "victima_situacion": eh_victima_situacion if eh_victima_situacion != "Seleccione..." else "",
                                 "tipo_amenaza": eh_tipo_amenaza if eh_tipo_amenaza != "Seleccione..." else "",
                                 "motivacion_amenaza": eh_motivacion.strip(),
@@ -2921,6 +2939,20 @@ def formulario_casos(tipo="individual"):
                 key=f"hf_victima_{tipo}"
             )
         with col_hf_amenaza:
+            pass
+        if not es_individual:
+            _hf_am_dir_opts = ["Seleccione...", "Sí", "No"]
+            col_hf_am_dir, _ = st.columns([1, 2])
+            with col_hf_am_dir:
+                hecho_amenaza_directa_col = st.selectbox(
+                    "AMENAZA DIRECTA EN CONTRA DEL COLECTIVO",
+                    _hf_am_dir_opts,
+                    key=f"hf_amenaza_directa_col_{tipo}"
+                )
+        else:
+            hecho_amenaza_directa_col = ""
+        _hf_amenaza_cols = st.columns(3)
+        with _hf_amenaza_cols[0]:
             hecho_tipo_amenaza = st.selectbox(
                 "TIPO DE AMENAZA",
                 _TIPOS_AMENAZA,
@@ -2967,6 +2999,7 @@ def formulario_casos(tipo="individual"):
                     "tipo_actor": hecho_tipo_actor if hecho_tipo_actor != "Seleccione..." else "",
                     "actor_generador": hecho_actor_generador.strip(),
                     "medio": hecho_medio if hecho_medio != "Seleccione..." else "",
+                    "amenaza_directa_colectivo": hecho_amenaza_directa_col if hecho_amenaza_directa_col != "Seleccione..." else "",
                     "victima_situacion": hecho_victima_situacion if hecho_victima_situacion != "Seleccione..." else "",
                     "tipo_amenaza": hecho_tipo_amenaza if hecho_tipo_amenaza != "Seleccione..." else "",
                     "motivacion_amenaza": motivacion_hecho.strip(),
