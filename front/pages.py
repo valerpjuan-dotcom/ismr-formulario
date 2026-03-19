@@ -821,6 +821,109 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
     }
 
 
+def _construir_datos_borrador(tipo):
+    """Construye el dict de borrador leyendo el estado actual de todos los widgets."""
+    return {
+        f"caso_tipo_estudio_{tipo}":     st.session_state.get(f"caso_tipo_estudio_{tipo}", "Seleccione..."),
+        f"caso_ot_anio_{tipo}":          st.session_state.get(f"caso_ot_anio_{tipo}", None),
+        f"caso_ot_numero_{tipo}":        st.session_state.get(f"caso_ot_numero_{tipo}", None),
+        f"caso_solicitante_{tipo}":      st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
+        f"caso_fecha_expedicion_{tipo}": st.session_state.get(f"caso_fecha_expedicion_{tipo}", None),
+        f"caso_tipo_evaluacion_{tipo}":  st.session_state.get(f"caso_tipo_evaluacion_{tipo}", "Seleccione..."),
+        f"caso_tipo_colectivo_{tipo}":   st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
+        f"caso_tipo_poblacion_{tipo}":   st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
+        **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
+           for i in range(len(_SUBPOBLACIONES))},
+        **{f"subpob_cnt_{i}_{tipo}": st.session_state.get(f"subpob_cnt_{i}_{tipo}", 0)
+           for i in range(len(_SUBPOBLACIONES))},
+        f"caso_fecha_nacimiento_{tipo}": st.session_state.get(f"caso_fecha_nacimiento_{tipo}", None),
+        f"caso_sexo_{tipo}":             st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
+        f"caso_genero_{tipo}":           st.session_state.get(f"caso_genero_{tipo}", "Seleccione..."),
+        f"caso_orientacion_{tipo}":      st.session_state.get(f"caso_orientacion_{tipo}", "Seleccione..."),
+        f"caso_jefatura_{tipo}":         st.session_state.get(f"caso_jefatura_{tipo}", "Seleccione..."),
+        f"p_departamento_{tipo}":        st.session_state.get(f"p_departamento_{tipo}", "Seleccione..."),
+        f"p_municipio_{tipo}":           st.session_state.get(f"p_municipio_{tipo}", "Seleccione..."),
+        f"caso_zona_rural_{tipo}":       st.session_state.get(f"caso_zona_rural_{tipo}", "Seleccione..."),
+        f"caso_zona_reserva_{tipo}":     st.session_state.get(f"caso_zona_reserva_{tipo}", "Seleccione..."),
+        f"caso_nivel_riesgo_{tipo}":     st.session_state.get(f"caso_nivel_riesgo_{tipo}", "Seleccione..."),
+        f"caso_observaciones_{tipo}":    st.session_state.get(f"caso_observaciones_{tipo}", ""),
+        f"caso_num_personas_{tipo}":     st.session_state.get(f"caso_num_personas_{tipo}", None),
+        f"caso_companero_{tipo}":        st.session_state.get(f"caso_companero_{tipo}", "Seleccione..."),
+        f"caso_hijos_menores_{tipo}":    st.session_state.get(f"caso_hijos_menores_{tipo}", None),
+        f"caso_menores_otros_{tipo}":    st.session_state.get(f"caso_menores_otros_{tipo}", None),
+        f"caso_adultos_mayores_{tipo}":  st.session_state.get(f"caso_adultos_mayores_{tipo}", None),
+        f"caso_discapacidad_{tipo}":     st.session_state.get(f"caso_discapacidad_{tipo}", None),
+        f"caso_comp_nucleos_fam_{tipo}":         st.session_state.get(f"caso_comp_nucleos_fam_{tipo}", None),
+        f"caso_comp_num_personas_{tipo}":        st.session_state.get(f"caso_comp_num_personas_{tipo}", None),
+        f"caso_comp_menores_{tipo}":             st.session_state.get(f"caso_comp_menores_{tipo}", None),
+        f"caso_comp_adultos_mayores_col_{tipo}": st.session_state.get(f"caso_comp_adultos_mayores_col_{tipo}", None),
+        f"caso_comp_discapacidad_col_{tipo}":    st.session_state.get(f"caso_comp_discapacidad_col_{tipo}", None),
+        f"caso_comp_num_integrantes_{tipo}":     st.session_state.get(f"caso_comp_num_integrantes_{tipo}", None),
+        f"caso_tipo_division_{tipo}":            st.session_state.get(f"caso_tipo_division_{tipo}", "Seleccione..."),
+        f"caso_tipo_division_otro_{tipo}":       st.session_state.get(f"caso_tipo_division_otro_{tipo}", ""),
+        f"caso_comp_proyecto_productivo_{tipo}": st.session_state.get(f"caso_comp_proyecto_productivo_{tipo}", "Seleccione..."),
+        **{f"caso_comp_act_eco_{i}_{tipo}": st.session_state.get(f"caso_comp_act_eco_{i}_{tipo}", False)
+           for i in range(len(_ACTIVIDADES_ECONOMICAS_COLECTIVO))},
+        f"caso_osiegd_{tipo}":              st.session_state.get(f"caso_osiegd_{tipo}", ""),
+        f"caso_factor_discapacidad_{tipo}": st.session_state.get(f"caso_factor_discapacidad_{tipo}", "Seleccione..."),
+        f"caso_factor_etnia_{tipo}":        st.session_state.get(f"caso_factor_etnia_{tipo}", "Seleccione..."),
+        f"caso_factor_campesino_{tipo}":    st.session_state.get(f"caso_factor_campesino_{tipo}", "Seleccione..."),
+        f"caso_factor_cuidador_{tipo}":     st.session_state.get(f"caso_factor_cuidador_{tipo}", "Seleccione..."),
+        **{f"victima_{i}_{tipo}": st.session_state.get(f"victima_{i}_{tipo}", False)
+           for i in range(len(_VICTIMA_CONFLICTO_ARMADO))},
+        **{f"lider_{i}_{tipo}": st.session_state.get(f"lider_{i}_{tipo}", False)
+           for i in range(len(_LIDER_SOCIAL_DDHH))},
+        "hechos":            st.session_state.get("hechos", []),
+        "perfiles":          st.session_state.get("perfiles", []),
+        "perfiles_col":      st.session_state.get("perfiles_col", []),
+        "antecedentes":      st.session_state.get("antecedentes", []),
+        "perfiles_actuales": st.session_state.get("perfiles_actuales", []),
+        "desplazamientos":   st.session_state.get("desplazamientos", []),
+        "verificaciones":    st.session_state.get("verificaciones", []),
+        f"imp_eco_dependencia_{tipo}":    st.session_state.get(f"imp_eco_dependencia_{tipo}", "Seleccione..."),
+        f"imp_eco_iniciativas_{tipo}":    st.session_state.get(f"imp_eco_iniciativas_{tipo}", "Seleccione..."),
+        f"imp_eco_empleos_{tipo}":        st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione..."),
+        f"imp_eco_ilicita_{tipo}":        st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione..."),
+        f"imp_eco_bienes_{tipo}":         st.session_state.get(f"imp_eco_bienes_{tipo}", "Seleccione..."),
+        f"imp_soc_tejido_{tipo}":         st.session_state.get(f"imp_soc_tejido_{tipo}", "Seleccione..."),
+        f"imp_soc_redes_{tipo}":          st.session_state.get(f"imp_soc_redes_{tipo}", "Seleccione..."),
+        f"imp_soc_traslado_{tipo}":       st.session_state.get(f"imp_soc_traslado_{tipo}", "Seleccione..."),
+        f"imp_soc_confinamiento_{tipo}":  st.session_state.get(f"imp_soc_confinamiento_{tipo}", "Seleccione..."),
+        f"imp_soc_movilidad_{tipo}":      st.session_state.get(f"imp_soc_movilidad_{tipo}", "Seleccione..."),
+        f"imp_soc_desarraigo_{tipo}":     st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione..."),
+        f"imp_soc_normalizacion_{tipo}":  st.session_state.get(f"imp_soc_normalizacion_{tipo}", "Seleccione..."),
+        f"imp_soc_libertad_{tipo}":       st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione..."),
+        f"imp_pol_participacion_{tipo}":  st.session_state.get(f"imp_pol_participacion_{tipo}", "Seleccione..."),
+        f"imp_pol_liderazgos_{tipo}":     st.session_state.get(f"imp_pol_liderazgos_{tipo}", "Seleccione..."),
+        f"imp_pol_oferta_{tipo}":         st.session_state.get(f"imp_pol_oferta_{tipo}", "Seleccione..."),
+        f"imp_pol_derechos_{tipo}":       st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione..."),
+        f"imp_pol_estigmatizacion_{tipo}": st.session_state.get(f"imp_pol_estigmatizacion_{tipo}", "Seleccione..."),
+        f"imp_pol_confianza_{tipo}":      st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione..."),
+        f"imp_sal_proyeccion_{tipo}":        st.session_state.get(f"imp_sal_proyeccion_{tipo}", "Seleccione..."),
+        f"imp_sal_cuidados_{tipo}":          st.session_state.get(f"imp_sal_cuidados_{tipo}", "Seleccione..."),
+        f"imp_sal_desescolarizacion_{tipo}": st.session_state.get(f"imp_sal_desescolarizacion_{tipo}", "Seleccione..."),
+        f"imp_sal_abandono_{tipo}":          st.session_state.get(f"imp_sal_abandono_{tipo}", "Seleccione..."),
+        f"imp_sal_psicosocial_{tipo}":       st.session_state.get(f"imp_sal_psicosocial_{tipo}", "Seleccione..."),
+        f"imp_sal_discapacidad_{tipo}":      st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione..."),
+        f"imp_sal_dano_vida_{tipo}":         st.session_state.get(f"imp_sal_dano_vida_{tipo}", "Seleccione..."),
+    }
+
+
+def _btn_borrador(tipo, sufijo):
+    """Botón compacto 💾 Guardar borrador alineado a la derecha, reutilizable en cualquier sección."""
+    _, _col = st.columns([4, 1])
+    with _col:
+        if st.button("💾 Guardar borrador", key=f"borrador_{tipo}_{sufijo}",
+                     use_container_width=True, type="secondary"):
+            datos = _construir_datos_borrador(tipo)
+            _bkey = f"borrador_cargado_{tipo}"
+            if guardar_borrador(st.session_state.username, tipo, datos):
+                st.session_state[_bkey] = True
+                st.toast("✅ Borrador guardado", icon="💾")
+            else:
+                st.toast("❌ No se pudo guardar el borrador", icon="⚠️")
+
+
 def formulario_casos(tipo="individual"):
     es_individual     = tipo == "individual"
     color             = "#4F8BFF" if es_individual else "#4ADE80"
@@ -1127,6 +1230,8 @@ def formulario_casos(tipo="individual"):
             f"{opcion}:{_cols_sp[i % 2].number_input(f'Cantidad de {opcion}', min_value=0, step=1, value=0, key=f'subpob_cnt_{i}_{tipo}')}"
             for i, opcion in enumerate(_SUBPOBLACIONES)
         ]
+
+    _btn_borrador(tipo, "tras_datos_ot")
 
     # Controla si se muestra la sección Perfil Antiguo
     _mostrar_perfil_antiguo = tipo_poblacion in ("REINCORPORADO/A", "FAMILIAR DE REINCORPORADO/A")
@@ -1438,6 +1543,8 @@ def formulario_casos(tipo="individual"):
             opcion for i, opcion in enumerate(_LIDER_SOCIAL_DDHH)
             if cols_lid[i % 2].checkbox(opcion, key=f"lider_{i}_{tipo}")
         ]
+
+    _btn_borrador(tipo, "tras_composicion")
 
     # ── Antecedentes ──────────────────────────────────────────────────────────
     st.markdown("---")
@@ -2162,6 +2269,8 @@ def formulario_casos(tipo="individual"):
         elif _es_familiar_col:
             st.info("ℹ️ Ya se registró el perfil del representante. Elimínalo para reemplazarlo.")
 
+    _btn_borrador(tipo, "tras_perfil_antiguo")
+
     # ══════════════════════════════════════════════════════════════════════════
     # 7. PERFIL ACTUAL
     # ══════════════════════════════════════════════════════════════════════════
@@ -2472,6 +2581,8 @@ def formulario_casos(tipo="individual"):
                 st.session_state.desplazamientos.append(nuevo)
                 st.success("✅ Desplazamiento agregado")
                 st.rerun()
+
+    _btn_borrador(tipo, "tras_perfil_actual")
 
     # ── Hechos de Riesgo ──────────────────────────────────────────────────────
     st.markdown("---")
@@ -2788,6 +2899,8 @@ def formulario_casos(tipo="individual"):
                     "descripcion": descripcion_hecho.strip()
                 })
                 st.success("✅ Hecho agregado"); st.rerun()
+
+    _btn_borrador(tipo, "tras_hechos")
 
     # ── Verificaciones ────────────────────────────────────────────────────────
     st.markdown("---")
@@ -3134,6 +3247,8 @@ def formulario_casos(tipo="individual"):
             })
             st.success("✅ Verificación agregada"); st.rerun()
 
+    _btn_borrador(tipo, "tras_verificaciones")
+
     # ── Impacto Consecuencial ─────────────────────────────────────────────────
     st.markdown("---")
     st.subheader("📊 Impacto Consecuencial")
@@ -3357,98 +3472,8 @@ def formulario_casos(tipo="individual"):
     col_borrador, col_registrar = st.columns([1, 2])
     with col_borrador:
         if st.button("💾 Guardar borrador", use_container_width=True, type="secondary", key=f"btn_guardar_borrador_{tipo}"):
-            datos_borrador = {
-                # DATOS DE OT/TE
-                f"caso_tipo_estudio_{tipo}":     st.session_state.get(f"caso_tipo_estudio_{tipo}", "Seleccione..."),
-                f"caso_ot_anio_{tipo}":          st.session_state.get(f"caso_ot_anio_{tipo}", None),
-                f"caso_ot_numero_{tipo}":        st.session_state.get(f"caso_ot_numero_{tipo}", None),
-                f"caso_solicitante_{tipo}":      st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
-                f"caso_fecha_expedicion_{tipo}": st.session_state.get(f"caso_fecha_expedicion_{tipo}", None),
-                f"caso_tipo_evaluacion_{tipo}": st.session_state.get(f"caso_tipo_evaluacion_{tipo}", "Seleccione..."),
-                f"caso_tipo_colectivo_{tipo}": st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
-                f"caso_tipo_poblacion_{tipo}":   st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
-                **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
-                   for i in range(len(_SUBPOBLACIONES))},
-                **{f"subpob_cnt_{i}_{tipo}": st.session_state.get(f"subpob_cnt_{i}_{tipo}", 0)
-                   for i in range(len(_SUBPOBLACIONES))},
-                # CARACTERÍSTICAS DEMOGRÁFICAS
-                f"caso_fecha_nacimiento_{tipo}": st.session_state.get(f"caso_fecha_nacimiento_{tipo}", None),
-                f"caso_sexo_{tipo}":             st.session_state.get(f"caso_sexo_{tipo}", "Seleccione..."),
-                f"caso_genero_{tipo}":           st.session_state.get(f"caso_genero_{tipo}", "Seleccione..."),
-                f"caso_orientacion_{tipo}":      st.session_state.get(f"caso_orientacion_{tipo}", "Seleccione..."),
-                f"caso_jefatura_{tipo}":         st.session_state.get(f"caso_jefatura_{tipo}", "Seleccione..."),
-                f"p_departamento_{tipo}":        st.session_state.get(f"p_departamento_{tipo}", "Seleccione..."),
-                f"p_municipio_{tipo}":           st.session_state.get(f"p_municipio_{tipo}", "Seleccione..."),
-                f"caso_zona_rural_{tipo}":       st.session_state.get(f"caso_zona_rural_{tipo}", "Seleccione..."),
-                f"caso_zona_reserva_{tipo}":     st.session_state.get(f"caso_zona_reserva_{tipo}", "Seleccione..."),
-                f"caso_nivel_riesgo_{tipo}":     st.session_state.get(f"caso_nivel_riesgo_{tipo}", "Seleccione..."),
-                f"caso_observaciones_{tipo}":    st.session_state.get(f"caso_observaciones_{tipo}", ""),
-                # COMPOSICIÓN NÚCLEO FAMILIAR
-                f"caso_num_personas_{tipo}":     st.session_state.get(f"caso_num_personas_{tipo}", None),
-                f"caso_companero_{tipo}":        st.session_state.get(f"caso_companero_{tipo}", "Seleccione..."),
-                f"caso_hijos_menores_{tipo}":    st.session_state.get(f"caso_hijos_menores_{tipo}", None),
-                f"caso_menores_otros_{tipo}":    st.session_state.get(f"caso_menores_otros_{tipo}", None),
-                f"caso_adultos_mayores_{tipo}":  st.session_state.get(f"caso_adultos_mayores_{tipo}", None),
-                f"caso_discapacidad_{tipo}":     st.session_state.get(f"caso_discapacidad_{tipo}", None),
-                # COMPOSICIÓN DEL COLECTIVO
-                f"caso_comp_nucleos_fam_{tipo}":          st.session_state.get(f"caso_comp_nucleos_fam_{tipo}", None),
-                f"caso_comp_num_personas_{tipo}":         st.session_state.get(f"caso_comp_num_personas_{tipo}", None),
-                f"caso_comp_menores_{tipo}":              st.session_state.get(f"caso_comp_menores_{tipo}", None),
-                f"caso_comp_adultos_mayores_col_{tipo}":  st.session_state.get(f"caso_comp_adultos_mayores_col_{tipo}", None),
-                f"caso_comp_discapacidad_col_{tipo}":     st.session_state.get(f"caso_comp_discapacidad_col_{tipo}", None),
-                f"caso_comp_num_integrantes_{tipo}":      st.session_state.get(f"caso_comp_num_integrantes_{tipo}", None),
-                f"caso_tipo_division_{tipo}":             st.session_state.get(f"caso_tipo_division_{tipo}", "Seleccione..."),
-                f"caso_tipo_division_otro_{tipo}":        st.session_state.get(f"caso_tipo_division_otro_{tipo}", ""),
-                f"caso_comp_proyecto_productivo_{tipo}":  st.session_state.get(f"caso_comp_proyecto_productivo_{tipo}", "Seleccione..."),
-                **{f"caso_comp_act_eco_{i}_{tipo}": st.session_state.get(f"caso_comp_act_eco_{i}_{tipo}", False)
-                   for i in range(len(_ACTIVIDADES_ECONOMICAS_COLECTIVO))},
-                # FACTORES DIFERENCIALES
-                f"caso_osiegd_{tipo}":              st.session_state.get(f"caso_osiegd_{tipo}", ""),
-                f"caso_factor_discapacidad_{tipo}": st.session_state.get(f"caso_factor_discapacidad_{tipo}", "Seleccione..."),
-                f"caso_factor_etnia_{tipo}":        st.session_state.get(f"caso_factor_etnia_{tipo}", "Seleccione..."),
-                f"caso_factor_campesino_{tipo}":    st.session_state.get(f"caso_factor_campesino_{tipo}", "Seleccione..."),
-                f"caso_factor_cuidador_{tipo}":     st.session_state.get(f"caso_factor_cuidador_{tipo}", "Seleccione..."),
-                **{f"victima_{i}_{tipo}": st.session_state.get(f"victima_{i}_{tipo}", False)
-                   for i in range(len(_VICTIMA_CONFLICTO_ARMADO))},
-                **{f"lider_{i}_{tipo}": st.session_state.get(f"lider_{i}_{tipo}", False)
-                   for i in range(len(_LIDER_SOCIAL_DDHH))},
-                # Hechos, perfiles y antecedentes
-                "hechos":           st.session_state.get("hechos", []),
-                "perfiles":         st.session_state.get("perfiles", []),
-                "perfiles_col":     st.session_state.get("perfiles_col", []),
-                "antecedentes":     st.session_state.get("antecedentes", []),
-                "perfiles_actuales": st.session_state.get("perfiles_actuales", []),
-                "desplazamientos":   st.session_state.get("desplazamientos", []),
-                "verificaciones":    st.session_state.get("verificaciones", []),
-                f"imp_eco_dependencia_{tipo}": st.session_state.get(f"imp_eco_dependencia_{tipo}", "Seleccione..."),
-                f"imp_eco_iniciativas_{tipo}": st.session_state.get(f"imp_eco_iniciativas_{tipo}", "Seleccione..."),
-                f"imp_eco_empleos_{tipo}":     st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione..."),
-                f"imp_eco_ilicita_{tipo}":     st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione..."),
-                f"imp_eco_bienes_{tipo}":      st.session_state.get(f"imp_eco_bienes_{tipo}", "Seleccione..."),
-                f"imp_soc_tejido_{tipo}":       st.session_state.get(f"imp_soc_tejido_{tipo}", "Seleccione..."),
-                f"imp_soc_redes_{tipo}":        st.session_state.get(f"imp_soc_redes_{tipo}", "Seleccione..."),
-                f"imp_soc_traslado_{tipo}":     st.session_state.get(f"imp_soc_traslado_{tipo}", "Seleccione..."),
-                f"imp_soc_confinamiento_{tipo}": st.session_state.get(f"imp_soc_confinamiento_{tipo}", "Seleccione..."),
-                f"imp_soc_movilidad_{tipo}":    st.session_state.get(f"imp_soc_movilidad_{tipo}", "Seleccione..."),
-                f"imp_soc_desarraigo_{tipo}":   st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione..."),
-                f"imp_soc_normalizacion_{tipo}": st.session_state.get(f"imp_soc_normalizacion_{tipo}", "Seleccione..."),
-                f"imp_soc_libertad_{tipo}":     st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione..."),
-                f"imp_pol_participacion_{tipo}": st.session_state.get(f"imp_pol_participacion_{tipo}", "Seleccione..."),
-                f"imp_pol_liderazgos_{tipo}":    st.session_state.get(f"imp_pol_liderazgos_{tipo}", "Seleccione..."),
-                f"imp_pol_oferta_{tipo}":        st.session_state.get(f"imp_pol_oferta_{tipo}", "Seleccione..."),
-                f"imp_pol_derechos_{tipo}":      st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione..."),
-                f"imp_pol_estigmatizacion_{tipo}": st.session_state.get(f"imp_pol_estigmatizacion_{tipo}", "Seleccione..."),
-                f"imp_pol_confianza_{tipo}":     st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione..."),
-                f"imp_sal_proyeccion_{tipo}":       st.session_state.get(f"imp_sal_proyeccion_{tipo}", "Seleccione..."),
-                f"imp_sal_cuidados_{tipo}":         st.session_state.get(f"imp_sal_cuidados_{tipo}", "Seleccione..."),
-                f"imp_sal_desescolarizacion_{tipo}": st.session_state.get(f"imp_sal_desescolarizacion_{tipo}", "Seleccione..."),
-                f"imp_sal_abandono_{tipo}":         st.session_state.get(f"imp_sal_abandono_{tipo}", "Seleccione..."),
-                f"imp_sal_psicosocial_{tipo}":      st.session_state.get(f"imp_sal_psicosocial_{tipo}", "Seleccione..."),
-                f"imp_sal_discapacidad_{tipo}":     st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione..."),
-                f"imp_sal_dano_vida_{tipo}":        st.session_state.get(f"imp_sal_dano_vida_{tipo}", "Seleccione..."),
-            }
-            if guardar_borrador(st.session_state.username, tipo, datos_borrador):
-                st.session_state[_borrador_key] = True  # evitar que el prompt borre perfiles recién agregados
+            if guardar_borrador(st.session_state.username, tipo, _construir_datos_borrador(tipo)):
+                st.session_state[_borrador_key] = True
                 st.success("✅ Borrador guardado. Puedes retomarlo más tarde.")
             else:
                 st.error("❌ No se pudo guardar el borrador.")
