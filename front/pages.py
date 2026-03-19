@@ -1244,7 +1244,7 @@ def formulario_casos(tipo="individual"):
 
     # ── Fila: Entidad Solicitante | Fecha Expedición OT ──────────────────────
     _opts_solicitante = ["Seleccione...", "TERCEROS", "A NOMBRE PROPIO", "ONG",
-                         "INSTITUCIÓN DEL ESTADO COLOMBIANO", "ORGANIZACIÓN INTERNACIONAL", "NO REPORTA"]
+                         "INSTITUCIÓN DEL ESTADO COLOMBIANO", "ORGANIZACIÓN INTERNACIONAL"]
     if st.session_state.get(f"caso_solicitante_{tipo}") not in _opts_solicitante:
         st.session_state[f"caso_solicitante_{tipo}"] = "Seleccione..."
     col_sol, col_fecha_ot = st.columns(2)
