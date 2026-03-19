@@ -2931,7 +2931,7 @@ def formulario_casos(tipo="individual"):
                     col_am_dir, _ = st.columns([1, 2])
                     with col_am_dir:
                         eh_amenaza_directa_col = st.selectbox(
-                            "AMENAZA DIRECTA EN CONTRA DEL COLECTIVO",
+                            "AMENAZA DIRECTA EN CONTRA DEL COLECTIVO/ GRUPO FAMILIAR",
                             _eh_am_dir_opts,
                             index=_eh_am_dir_idx,
                             key=f"eh_amenaza_directa_col_{tipo}_{i}"
@@ -3108,7 +3108,7 @@ def formulario_casos(tipo="individual"):
             col_hf_am_dir, _ = st.columns([1, 2])
             with col_hf_am_dir:
                 hecho_amenaza_directa_col = st.selectbox(
-                    "AMENAZA DIRECTA EN CONTRA DEL COLECTIVO",
+                    "AMENAZA DIRECTA EN CONTRA DEL COLECTIVO/ GRUPO FAMILIAR",
                     _hf_am_dir_opts,
                     key=f"hf_amenaza_directa_col_{tipo}"
                 )
