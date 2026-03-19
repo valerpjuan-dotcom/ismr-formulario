@@ -248,21 +248,20 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
 
         col_jp1, col_jp2, col_jp3 = st.columns(3)
         with col_jp1:
-            st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS",
-                         _SI_NO_REPORTA,
-                         index=_SI_NO_REPORTA.index(_v("busqueda_desaparecidos"))
-                               if _v("busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
-                         key=f"pa_busq_{sfx}")
+            st.number_input("CANTIDAD DE PERSONAS EN ACTIVIDADES DE BÚSQUEDA DE DESAPARECIDOS",
+                            min_value=0, step=1,
+                            value=int(_v("col_busq_cnt", 0) or 0),
+                            key=f"pa_col_busq_cnt_{sfx}")
         with col_jp2:
-            st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
-                         index=_SI_NO_REPORTA.index(_v("participacion_pnis"))
-                               if _v("participacion_pnis") in _SI_NO_REPORTA else 0,
-                         key=f"pa_pnis_{sfx}")
+            st.number_input("CANTIDAD DE PERSONAS EN ACTIVIDADES DEL PROGRAMA PNIS",
+                            min_value=0, step=1,
+                            value=int(_v("col_pnis_cnt", 0) or 0),
+                            key=f"pa_col_pnis_cnt_{sfx}")
         with col_jp3:
-            st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
-                         index=_SI_NO_REPORTA.index(_v("desminado"))
-                               if _v("desminado") in _SI_NO_REPORTA else 0,
-                         key=f"pa_desminado_{sfx}")
+            st.number_input("CANTIDAD DE PERSONAS EN ACTIVIDADES DE DESMINADO HUMANITARIO",
+                            min_value=0, step=1,
+                            value=int(_v("col_desminado_cnt", 0) or 0),
+                            key=f"pa_col_desminado_cnt_{sfx}")
 
     # Otras organizaciones (multiregistro)
     st.selectbox(
@@ -702,9 +701,12 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
         col_jep_comp_cnt      = int(st.session_state.get(f"pa_col_jep_comp_cnt_{sfx}") or 0)
         col_jep_vic_cnt       = int(st.session_state.get(f"pa_col_jep_vic_cnt_{sfx}") or 0)
         col_toar_cnt          = int(st.session_state.get(f"pa_col_toar_cnt_{sfx}") or 0)
-        busqueda_desaparecidos = st.session_state.get(f"pa_busq_{sfx}", "Seleccione...")
-        participacion_pnis     = st.session_state.get(f"pa_pnis_{sfx}", "Seleccione...")
-        desminado              = st.session_state.get(f"pa_desminado_{sfx}", "Seleccione...")
+        col_busq_cnt          = int(st.session_state.get(f"pa_col_busq_cnt_{sfx}") or 0)
+        col_pnis_cnt          = int(st.session_state.get(f"pa_col_pnis_cnt_{sfx}") or 0)
+        col_desminado_cnt     = int(st.session_state.get(f"pa_col_desminado_cnt_{sfx}") or 0)
+        busqueda_desaparecidos = ""
+        participacion_pnis     = ""
+        desminado              = ""
     else:
         # Campos del perfil — siempre se leen
         nivel_edu         = st.session_state.get(f"pa_edu_{sfx}", "Seleccione...")
@@ -728,6 +730,7 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
         participacion_pnis     = st.session_state.get(f"pa_pnis_{sfx}", "Seleccione...")
         desminado              = st.session_state.get(f"pa_desminado_{sfx}", "Seleccione...")
         col_jep_comp_cnt = col_jep_vic_cnt = col_toar_cnt = 0
+        col_busq_cnt = col_pnis_cnt = col_desminado_cnt = 0
     participa_otras        = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
     otras_orgs = []
     if participa_otras == "SI":
@@ -825,10 +828,13 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
         "busqueda_desaparecidos": _c(busqueda_desaparecidos),
         "participacion_pnis":     _c(participacion_pnis),
         "desminado":              _c(desminado),
-        # Colectivo — conteos JEP / TOAR
+        # Colectivo — conteos JEP / TOAR / búsqueda / PNIS / desminado
         "col_jep_comp_cnt":       col_jep_comp_cnt,
         "col_jep_vic_cnt":        col_jep_vic_cnt,
         "col_toar_cnt":           col_toar_cnt,
+        "col_busq_cnt":           col_busq_cnt,
+        "col_pnis_cnt":           col_pnis_cnt,
+        "col_desminado_cnt":      col_desminado_cnt,
         "participa_otras_org":    _c(participa_otras),
         "otras_orgs":             otras_orgs,
         "tipo_org":               _oo0.get("tipo_org", ""),
