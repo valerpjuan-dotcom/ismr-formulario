@@ -444,7 +444,7 @@ _PA_ESCALA_ORG = [
 
 _PA_CARGO_ELECCION = [
     "Seleccione...",
-    "Alcade/sa",
+    "Alcalde/sa",
     "Consejal",
     "Consejero/a de juventud",
     "Diputado/a",
