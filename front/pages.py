@@ -2519,26 +2519,24 @@ def formulario_casos(tipo="individual"):
                                 f"Rol: {_oo_item.get('rol_org','—')}"
                             )
 
-    # ── Perfil Actual — solo se permite uno ─────────────────────────────────
-    if len(st.session_state.perfiles_actuales) == 0:
-        with st.expander("➕ Agregar Perfil Actual", expanded=True):
-            _render_pa_form(None, tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
-            st.markdown("")
-            if st.button("✅ Guardar Perfil Actual", use_container_width=True,
-                         key=f"btn_add_pa_{tipo}", type="primary"):
-                nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
-                if nuevo is not None:
-                    st.session_state.perfiles_actuales.append(nuevo)
-                    # Limpiar listas temporales del formulario "new"
-                    _sfx_new = f"{tipo}_new"
-                    st.session_state.pop(f"instancias_comunes_temp_{_sfx_new}", None)
-                    st.session_state.pop(f"otras_orgs_temp_{_sfx_new}", None)
-                    st.session_state.pop(f"show_ic_form_{_sfx_new}", None)
-                    st.session_state.pop(f"show_oo_form_{_sfx_new}", None)
-                    st.success("✅ Perfil Actual guardado")
-                    st.rerun()
-    else:
-        st.info("ℹ️ Ya existe un Perfil Actual registrado. Edítalo o elimínalo con los botones de arriba.")
+    # ── Perfil Actual — multiregistro ────────────────────────────────────────
+    _expanded_pa = len(st.session_state.perfiles_actuales) == 0
+    with st.expander("➕ Agregar Perfil Actual", expanded=_expanded_pa):
+        _render_pa_form(None, tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
+        st.markdown("")
+        if st.button("✅ Guardar Perfil Actual", use_container_width=True,
+                     key=f"btn_add_pa_{tipo}", type="primary"):
+            nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
+            if nuevo is not None:
+                st.session_state.perfiles_actuales.append(nuevo)
+                # Limpiar listas temporales del formulario "new"
+                _sfx_new = f"{tipo}_new"
+                st.session_state.pop(f"instancias_comunes_temp_{_sfx_new}", None)
+                st.session_state.pop(f"otras_orgs_temp_{_sfx_new}", None)
+                st.session_state.pop(f"show_ic_form_{_sfx_new}", None)
+                st.session_state.pop(f"show_oo_form_{_sfx_new}", None)
+                st.success("✅ Perfil Actual guardado")
+                st.rerun()
 
 
     # 8. DESPLAZAMIENTOS
