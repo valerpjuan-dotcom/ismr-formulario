@@ -120,6 +120,7 @@ def pantalla_selector():
             st.session_state.perfiles_col = []
             st.session_state.perfiles_actuales = []
             st.session_state.desplazamientos = []
+            st.session_state.composiciones_col = []
             st.session_state.antecedentes = []
             st.session_state["borrador_cargado_individual"] = False
             st.rerun()
@@ -136,6 +137,7 @@ def pantalla_selector():
             st.session_state.perfiles_col = []
             st.session_state.perfiles_actuales = []
             st.session_state.desplazamientos = []
+            st.session_state.composiciones_col = []
             st.session_state.antecedentes = []
             st.session_state["borrador_cargado_colectivo"] = False
             st.rerun()
@@ -965,6 +967,112 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
     }
 
 
+_DIV_OPCIONES = ["Seleccione...", "Comité", "Mesa", "Delegación", "Otro/¿Cuál?"]
+_PROY_OPCIONES = ["Seleccione...", "Sí", "No"]
+
+
+def _render_comp_col_form(comp, tipo_colectivo, tipo, idx):
+    """Renderiza el formulario de una composición del colectivo."""
+    sfx = f"{tipo}_{idx}"
+    _v = lambda k, d="": (comp.get(k, d) if comp is not None else d)
+
+    if tipo_colectivo == "Familiar":
+        col_nf, col_np = st.columns(2)
+        with col_nf:
+            st.number_input("Número de núcleos familiares",
+                            min_value=0, step=1,
+                            value=int(_v("comp_nucleos_familiares", 0) or 0),
+                            key=f"comp_col_nucleos_{sfx}")
+        with col_np:
+            st.number_input("Número de personas en el colectivo",
+                            min_value=0, step=1,
+                            value=int(_v("comp_num_personas", 0) or 0),
+                            key=f"comp_col_num_personas_{sfx}")
+        col_me, col_am = st.columns(2)
+        with col_me:
+            st.number_input("Número de menores de edad",
+                            min_value=0, step=1,
+                            value=int(_v("comp_menores", 0) or 0),
+                            key=f"comp_col_menores_{sfx}")
+        with col_am:
+            st.number_input("Número de adultos mayores (60 años en adelante)",
+                            min_value=0, step=1,
+                            value=int(_v("comp_adultos_mayores", 0) or 0),
+                            key=f"comp_col_adultos_mayores_{sfx}")
+        st.number_input("Número de personas en situación de discapacidad",
+                        min_value=0, step=1,
+                        value=int(_v("comp_discapacidad", 0) or 0),
+                        key=f"comp_col_discapacidad_{sfx}")
+    else:
+        _div_val = _v("tipo_division", "Seleccione...")
+        st.selectbox("Tipo de División", _DIV_OPCIONES,
+                     index=_DIV_OPCIONES.index(_div_val) if _div_val in _DIV_OPCIONES else 0,
+                     key=f"comp_col_div_{sfx}")
+        if st.session_state.get(f"comp_col_div_{sfx}") == "Otro/¿Cuál?":
+            st.text_input("¿Cuál?", value=_v("comp_otro_cual", ""),
+                          key=f"comp_col_div_otro_{sfx}")
+        st.number_input("Número de integrantes",
+                        min_value=0, step=1,
+                        value=int(_v("comp_num_integrantes", 0) or 0),
+                        key=f"comp_col_num_integrantes_{sfx}")
+
+    # Campos comunes
+    _proy_val = _v("comp_proyecto_productivo", "Seleccione...")
+    st.selectbox("Tiene a cargo proyecto o iniciativa productiva", _PROY_OPCIONES,
+                 index=_PROY_OPCIONES.index(_proy_val) if _proy_val in _PROY_OPCIONES else 0,
+                 key=f"comp_col_proy_{sfx}")
+    if st.session_state.get(f"comp_col_proy_{sfx}") == "Sí":
+        st.markdown("**Actividad económica de proyecto productivo**")
+        _prev_act = _v("comp_actividad_economica", [])
+        _cols_ae = st.columns(2)
+        for i_ae, act in enumerate(_ACTIVIDADES_ECONOMICAS_COLECTIVO):
+            _cols_ae[i_ae % 2].checkbox(act, value=(act in _prev_act),
+                                        key=f"comp_col_act_eco_{i_ae}_{sfx}")
+
+
+def _recoger_comp_col(tipo_colectivo, tipo, idx):
+    """Lee los widgets de composición del colectivo y retorna un dict."""
+    sfx = f"{tipo}_{idx}"
+    _c = lambda v: v if v and v != "Seleccione..." else ""
+
+    _proy = st.session_state.get(f"comp_col_proy_{sfx}", "Seleccione...")
+    _actividades = (
+        [act for i_ae, act in enumerate(_ACTIVIDADES_ECONOMICAS_COLECTIVO)
+         if st.session_state.get(f"comp_col_act_eco_{i_ae}_{sfx}", False)]
+        if _proy == "Sí" else []
+    )
+
+    if tipo_colectivo == "Familiar":
+        return {
+            "comp_nucleos_familiares": int(st.session_state.get(f"comp_col_nucleos_{sfx}") or 0),
+            "comp_num_personas":       int(st.session_state.get(f"comp_col_num_personas_{sfx}") or 0),
+            "comp_menores":            int(st.session_state.get(f"comp_col_menores_{sfx}") or 0),
+            "comp_adultos_mayores":    int(st.session_state.get(f"comp_col_adultos_mayores_{sfx}") or 0),
+            "comp_discapacidad":       int(st.session_state.get(f"comp_col_discapacidad_{sfx}") or 0),
+            "tipo_division":           "",
+            "comp_otro_cual":          "",
+            "comp_num_integrantes":    0,
+            "comp_proyecto_productivo": _c(_proy),
+            "comp_actividad_economica": _actividades,
+        }
+    else:
+        _div = st.session_state.get(f"comp_col_div_{sfx}", "Seleccione...")
+        _otro = (st.session_state.get(f"comp_col_div_otro_{sfx}", "")
+                 if _div == "Otro/¿Cuál?" else "")
+        return {
+            "comp_nucleos_familiares": 0,
+            "comp_num_personas":       0,
+            "comp_menores":            0,
+            "comp_adultos_mayores":    0,
+            "comp_discapacidad":       0,
+            "tipo_division":           _c(_div),
+            "comp_otro_cual":          _otro,
+            "comp_num_integrantes":    int(st.session_state.get(f"comp_col_num_integrantes_{sfx}") or 0),
+            "comp_proyecto_productivo": _c(_proy),
+            "comp_actividad_economica": _actividades,
+        }
+
+
 def _construir_datos_borrador(tipo):
     """Construye el dict de borrador leyendo el estado actual de todos los widgets."""
     return {
@@ -997,17 +1105,7 @@ def _construir_datos_borrador(tipo):
         f"caso_menores_otros_{tipo}":    st.session_state.get(f"caso_menores_otros_{tipo}", None),
         f"caso_adultos_mayores_{tipo}":  st.session_state.get(f"caso_adultos_mayores_{tipo}", None),
         f"caso_discapacidad_{tipo}":     st.session_state.get(f"caso_discapacidad_{tipo}", None),
-        f"caso_comp_nucleos_fam_{tipo}":         st.session_state.get(f"caso_comp_nucleos_fam_{tipo}", None),
-        f"caso_comp_num_personas_{tipo}":        st.session_state.get(f"caso_comp_num_personas_{tipo}", None),
-        f"caso_comp_menores_{tipo}":             st.session_state.get(f"caso_comp_menores_{tipo}", None),
-        f"caso_comp_adultos_mayores_col_{tipo}": st.session_state.get(f"caso_comp_adultos_mayores_col_{tipo}", None),
-        f"caso_comp_discapacidad_col_{tipo}":    st.session_state.get(f"caso_comp_discapacidad_col_{tipo}", None),
-        f"caso_comp_num_integrantes_{tipo}":     st.session_state.get(f"caso_comp_num_integrantes_{tipo}", None),
-        f"caso_tipo_division_{tipo}":            st.session_state.get(f"caso_tipo_division_{tipo}", "Seleccione..."),
-        f"caso_tipo_division_otro_{tipo}":       st.session_state.get(f"caso_tipo_division_otro_{tipo}", ""),
-        f"caso_comp_proyecto_productivo_{tipo}": st.session_state.get(f"caso_comp_proyecto_productivo_{tipo}", "Seleccione..."),
-        **{f"caso_comp_act_eco_{i}_{tipo}": st.session_state.get(f"caso_comp_act_eco_{i}_{tipo}", False)
-           for i in range(len(_ACTIVIDADES_ECONOMICAS_COLECTIVO))},
+        "composiciones_col": st.session_state.get("composiciones_col", []),
         f"caso_osiegd_{tipo}":              st.session_state.get(f"caso_osiegd_{tipo}", ""),
         f"caso_factor_discapacidad_{tipo}": st.session_state.get(f"caso_factor_discapacidad_{tipo}", "Seleccione..."),
         f"caso_factor_etnia_{tipo}":        st.session_state.get(f"caso_factor_etnia_{tipo}", "Seleccione..."),
@@ -1154,13 +1252,14 @@ def formulario_casos(tipo="individual"):
                                 except ValueError:
                                     valor = None
                             st.session_state[campo] = valor
-                    st.session_state.hechos        = borrador.get("hechos", [])
-                    st.session_state.perfiles      = borrador.get("perfiles", [])
-                    st.session_state.perfiles_col  = borrador.get("perfiles_col", [])
-                    st.session_state.antecedentes  = borrador.get("antecedentes", [])
+                    st.session_state.hechos           = borrador.get("hechos", [])
+                    st.session_state.perfiles         = borrador.get("perfiles", [])
+                    st.session_state.perfiles_col     = borrador.get("perfiles_col", [])
+                    st.session_state.antecedentes     = borrador.get("antecedentes", [])
                     st.session_state.perfiles_actuales = borrador.get("perfiles_actuales", [])
                     st.session_state.desplazamientos   = borrador.get("desplazamientos", [])
                     st.session_state.verificaciones    = borrador.get("verificaciones", [])
+                    st.session_state.composiciones_col = borrador.get("composiciones_col", [])
                     st.session_state[_borrador_key] = True
                     st.rerun()
             with col_des:
@@ -1271,6 +1370,7 @@ def formulario_casos(tipo="individual"):
             st.session_state.perfiles_col = []
             st.session_state.perfiles_actuales = []
             st.session_state.desplazamientos = []
+            st.session_state.composiciones_col = []
             st.session_state.antecedentes = []
             st.session_state[f"borrador_cargado_{tipo}"] = False
             st.rerun()
@@ -1571,84 +1671,78 @@ def formulario_casos(tipo="individual"):
         victima_conflicto = []
         lider_social = []
 
-        # ── Composición del Colectivo ─────────────────────────────────────────
+        # ── Composición del Colectivo (multiregistro) ────────────────────────
         st.markdown("---")
         st.subheader("👥 COMPOSICIÓN DEL COLECTIVO")
 
-        if tipo_colectivo == "Familiar":
-            col_nf, col_np_col = st.columns(2)
-            with col_nf:
-                comp_nucleos_familiares = st.number_input(
-                    "Número de núcleos familiares",
-                    min_value=0, step=1, value=None,
-                    key=f"caso_comp_nucleos_fam_{tipo}"
-                )
-            with col_np_col:
-                comp_num_personas = st.number_input(
-                    "Número de personas en el colectivo",
-                    min_value=0, step=1, value=None,
-                    key=f"caso_comp_num_personas_{tipo}"
-                )
-            col_me_col, col_am_col = st.columns(2)
-            with col_me_col:
-                comp_menores = st.number_input(
-                    "Número de menores de edad",
-                    min_value=0, step=1, value=None,
-                    key=f"caso_comp_menores_{tipo}"
-                )
-            with col_am_col:
-                comp_adultos_mayores_col = st.number_input(
-                    "Número de adultos mayores (60 años en adelante)",
-                    min_value=0, step=1, value=None,
-                    key=f"caso_comp_adultos_mayores_col_{tipo}"
-                )
-            comp_discapacidad_col = st.number_input(
-                "Número de personas en situación de discapacidad",
-                min_value=0, step=1, value=None,
-                key=f"caso_comp_discapacidad_col_{tipo}"
-            )
-            comp_num_integrantes = None
-            tipo_division  = ""
-            comp_otro_cual = ""
-        else:
-            comp_nucleos_familiares  = None
-            comp_num_personas        = None
-            comp_menores             = None
-            comp_adultos_mayores_col = None
-            comp_discapacidad_col    = None
-            tipo_division = st.selectbox(
-                "Tipo de División",
-                ["Seleccione...", "Comité", "Mesa", "Delegación", "Otro/¿Cuál?"],
-                key=f"caso_tipo_division_{tipo}"
-            )
-            if tipo_division == "Otro/¿Cuál?":
-                comp_otro_cual = st.text_input(
-                    "¿Cuál?",
-                    key=f"caso_tipo_division_otro_{tipo}"
-                )
-            else:
-                comp_otro_cual = ""
-            comp_num_integrantes = st.number_input(
-                "Número de integrantes",
-                min_value=0, step=1, value=None,
-                key=f"caso_comp_num_integrantes_{tipo}"
-            )
+        if "composiciones_col" not in st.session_state:
+            st.session_state.composiciones_col = []
 
-        # ── Campos comunes: proyecto productivo y actividad económica ──────────
-        comp_proyecto_productivo = st.selectbox(
-            "Tiene a cargo proyecto o iniciativa productiva",
-            ["Seleccione...", "Sí", "No"],
-            key=f"caso_comp_proyecto_productivo_{tipo}"
-        )
-        if comp_proyecto_productivo == "Sí":
-            st.markdown("**Actividad económica de proyecto productivo**")
-            _cols_ae = st.columns(2)
-            comp_actividad_economica = [
-                act for i, act in enumerate(_ACTIVIDADES_ECONOMICAS_COLECTIVO)
-                if _cols_ae[i % 2].checkbox(act, key=f"caso_comp_act_eco_{i}_{tipo}")
-            ]
-        else:
-            comp_actividad_economica = []
+        _edit_comp_key = f"editando_comp_{tipo}"
+
+        for _ci, _comp in enumerate(st.session_state.composiciones_col):
+            with st.container(border=True):
+                _cc1, _cc2, _cc3 = st.columns([4, 1, 1])
+                with _cc1:
+                    if tipo_colectivo == "Familiar":
+                        _res = f"Composición #{_ci+1} — {_comp.get('comp_num_personas', 0)} personas"
+                    else:
+                        _div_r = _comp.get('tipo_division', '')
+                        if _div_r == 'Otro/¿Cuál?' and _comp.get('comp_otro_cual'):
+                            _div_r = _comp.get('comp_otro_cual')
+                        _res = f"Composición #{_ci+1} — {_div_r} ({_comp.get('comp_num_integrantes', 0)} integrantes)"
+                    st.markdown(f"**{_res}**")
+                with _cc2:
+                    if st.button("✏️", key=f"edit_comp_{tipo}_{_ci}", help="Editar"):
+                        st.session_state[_edit_comp_key] = _ci
+                        st.rerun()
+                with _cc3:
+                    if st.button("🗑️", key=f"del_comp_{tipo}_{_ci}", help="Eliminar"):
+                        st.session_state.composiciones_col.pop(_ci)
+                        if st.session_state.get(_edit_comp_key) == _ci:
+                            st.session_state[_edit_comp_key] = None
+                        st.rerun()
+
+                if st.session_state.get(_edit_comp_key) == _ci:
+                    st.markdown(f"**✏️ Editando Composición #{_ci+1}**")
+                    _render_comp_col_form(_comp, tipo_colectivo, tipo, _ci)
+                    _cs1, _cs2 = st.columns(2)
+                    with _cs1:
+                        if st.button("💾 Guardar cambios", key=f"save_comp_{tipo}_{_ci}",
+                                     use_container_width=True, type="primary"):
+                            _nuevo_comp = _recoger_comp_col(tipo_colectivo, tipo, _ci)
+                            if _nuevo_comp is not None:
+                                st.session_state.composiciones_col[_ci] = _nuevo_comp
+                                st.session_state[_edit_comp_key] = None
+                                st.rerun()
+                    with _cs2:
+                        if st.button("✖️ Cancelar", key=f"cancel_comp_{tipo}_{_ci}",
+                                     use_container_width=True):
+                            st.session_state[_edit_comp_key] = None
+                            st.rerun()
+
+        _exp_comp = len(st.session_state.composiciones_col) == 0
+        with st.expander("➕ Agregar Composición", expanded=_exp_comp):
+            _render_comp_col_form(None, tipo_colectivo, tipo, "new")
+            if st.button("✅ Guardar Composición", key=f"btn_add_comp_{tipo}",
+                         use_container_width=True, type="primary"):
+                _nuevo_comp = _recoger_comp_col(tipo_colectivo, tipo, "new")
+                if _nuevo_comp is not None:
+                    st.session_state.composiciones_col.append(_nuevo_comp)
+                    st.rerun()
+
+        # Variables de resumen para el submit (primer registro o vacíos)
+        _comp0 = st.session_state.composiciones_col[0] if st.session_state.composiciones_col else {}
+        comp_nucleos_familiares  = _comp0.get("comp_nucleos_familiares", None)
+        comp_num_personas        = _comp0.get("comp_num_personas", None)
+        comp_menores             = _comp0.get("comp_menores", None)
+        comp_adultos_mayores_col = _comp0.get("comp_adultos_mayores", None)
+        comp_discapacidad_col    = _comp0.get("comp_discapacidad", None)
+        comp_num_integrantes     = _comp0.get("comp_num_integrantes", None)
+        tipo_division            = _comp0.get("tipo_division", "")
+        comp_otro_cual           = _comp0.get("comp_otro_cual", "")
+        comp_proyecto_productivo = _comp0.get("comp_proyecto_productivo", "")
+        comp_actividad_economica = _comp0.get("comp_actividad_economica", [])
 
     # ── Factores Diferenciales (solo individual) ───────────────────────────────
     if es_individual:
