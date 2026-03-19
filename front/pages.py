@@ -286,12 +286,23 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
             with st.container(border=True):
                 _oo_col_t, _oo_col_d = st.columns([5, 1])
                 with _oo_col_t:
-                    st.markdown(
-                        f"**Org #{_oo_i+1}:** {_oo_reg.get('nombre_org','—')}  |  "
-                        f"**Tipo:** {_oo_reg.get('tipo_org','—')}  |  "
-                        f"**Rol:** {_oo_reg.get('rol_org','—')}  |  "
-                        f"**Ámbito:** {_oo_reg.get('ambito_org','—')}"
-                    )
+                    if es_colectivo:
+                        st.markdown(
+                            f"**Org #{_oo_i+1}:** {_oo_reg.get('tipo_org','—')}  |  "
+                            f"**Personas:** {_oo_reg.get('num_personas_org', 0)}"
+                        )
+                        _amb_cnt_disp = ", ".join(
+                            f"{k}: {v}" for k, v in _oo_reg.get("ambito_counts", {}).items() if v
+                        )
+                        if _amb_cnt_disp:
+                            st.caption(f"Ámbitos: {_amb_cnt_disp}")
+                    else:
+                        st.markdown(
+                            f"**Org #{_oo_i+1}:** {_oo_reg.get('nombre_org','—')}  |  "
+                            f"**Tipo:** {_oo_reg.get('tipo_org','—')}  |  "
+                            f"**Rol:** {_oo_reg.get('rol_org','—')}  |  "
+                            f"**Ámbito:** {_oo_reg.get('ambito_org','—')}"
+                        )
                 with _oo_col_d:
                     if st.button("🗑️", key=f"del_oo_{sfx}_{_oo_i}", help="Eliminar esta organización"):
                         st.session_state[_oo_key].pop(_oo_i)
@@ -307,53 +318,93 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
 
         if st.session_state[_oo_show_key]:
             with st.container(border=True):
-                col_ot1_n, col_ot2_n = st.columns(2)
-                with col_ot1_n:
-                    st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG, index=0, key=f"pa_tipo_org_{sfx}_new")
-                    st.text_input("NOMBRE ORGANIZACIÓN", value="", key=f"pa_nombre_org_{sfx}_new")
-                with col_ot2_n:
-                    st.selectbox("ESCALA", _PA_ESCALA_ORG, index=0, key=f"pa_escala_org_{sfx}_new")
-                    st.text_input("¿QUÉ ROL EJERCE EN DICHA INSTANCIA?", value="", key=f"pa_rol_org_{sfx}_new")
-                col_dep_on, col_mun_on = st.columns(2)
-                _dep_org_opts_n = ["Seleccione..."] + list(_MUNICIPIOS.keys())
-                with col_dep_on:
-                    st.selectbox("DEPARTAMENTO", _dep_org_opts_n, index=0, key=f"pa_dep_org_{sfx}_new")
-                with col_mun_on:
-                    _dep_sel_n  = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
-                    _mun_opts_n = _MUNICIPIOS.get(_dep_sel_n, ["Seleccione..."])
-                    st.selectbox("MUNICIPIO", _mun_opts_n, index=0, key=f"pa_mun_org_{sfx}_new")
-                col_ai_n, col_af_n = st.columns(2)
-                with col_ai_n:
-                    st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
-                                    value=None, step=1, key=f"pa_anio_ini_org_{sfx}_new")
-                with col_af_n:
-                    st.text_input("AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
-                                  value="", key=f"pa_anio_fin_org_{sfx}_new")
-                _opts_amb_n = ["Seleccione..."] + _PA_AMBITO_ORG
-                st.selectbox("**ÁMBITO DE LA ORGANIZACIÓN**", _opts_amb_n, index=0, key=f"pa_amb_{sfx}_new")
-                if st.button("✅ Guardar organización", key=f"add_oo_{sfx}", use_container_width=True, type="primary"):
-                    _oo_tipo   = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
-                    _oo_nombre = st.session_state.get(f"pa_nombre_org_{sfx}_new", "")
-                    _oo_escala = st.session_state.get(f"pa_escala_org_{sfx}_new", "Seleccione...")
-                    _oo_rol    = st.session_state.get(f"pa_rol_org_{sfx}_new", "")
-                    _oo_dep    = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
-                    _oo_mun    = st.session_state.get(f"pa_mun_org_{sfx}_new", "Seleccione...")
-                    _oo_ai     = st.session_state.get(f"pa_anio_ini_org_{sfx}_new")
-                    _oo_af     = st.session_state.get(f"pa_anio_fin_org_{sfx}_new", "")
-                    _oo_amb    = st.session_state.get(f"pa_amb_{sfx}_new", "Seleccione...")
-                    st.session_state[_oo_key].append({
-                        "tipo_org":         _oo_tipo   if _oo_tipo   != "Seleccione..." else "",
-                        "nombre_org":       _oo_nombre,
-                        "escala_org":       _oo_escala if _oo_escala != "Seleccione..." else "",
-                        "rol_org":          _oo_rol,
-                        "departamento_org": _oo_dep    if _oo_dep    != "Seleccione..." else "",
-                        "municipio_org":    _oo_mun    if _oo_mun    != "Seleccione..." else "",
-                        "anio_inicio_org":  str(int(_oo_ai)) if _oo_ai is not None else "",
-                        "anio_fin_org":     str(_oo_af),
-                        "ambito_org":       _oo_amb    if _oo_amb    != "Seleccione..." else "",
-                    })
-                    st.session_state[_oo_show_key] = False
-                    st.rerun()
+                if es_colectivo:
+                    # ── Formulario colectivo: tipo + num_personas + conteos por ámbito ─
+                    st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG, index=0,
+                                 key=f"pa_tipo_org_{sfx}_new")
+                    _oo_tipo_sel = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
+                    if _oo_tipo_sel != "Seleccione...":
+                        st.number_input(
+                            "NÚMERO DE PERSONAS EN ESTE TIPO DE ORGANIZACIÓN",
+                            min_value=0, step=1, value=0,
+                            key=f"pa_num_pers_org_{sfx}_new"
+                        )
+                        st.markdown("**NÚMERO DE PERSONAS POR ÁMBITO**")
+                        _amb_cols_new = st.columns(4)
+                        for _ai_n, _amb_n in enumerate(_PA_AMBITO_ORG):
+                            with _amb_cols_new[_ai_n % 4]:
+                                st.number_input(
+                                    _amb_n, min_value=0, step=1, value=0,
+                                    key=f"pa_amb_cnt_{_amb_n}_{sfx}_new"
+                                )
+                        if st.button("✅ Guardar organización", key=f"add_oo_{sfx}",
+                                     use_container_width=True, type="primary"):
+                            _oo_num = int(st.session_state.get(f"pa_num_pers_org_{sfx}_new") or 0)
+                            _oo_amb_counts = {
+                                _amb_n: int(st.session_state.get(f"pa_amb_cnt_{_amb_n}_{sfx}_new") or 0)
+                                for _amb_n in _PA_AMBITO_ORG
+                            }
+                            st.session_state[_oo_key].append({
+                                "tipo_org":         _oo_tipo_sel,
+                                "num_personas_org": _oo_num,
+                                "ambito_counts":    _oo_amb_counts,
+                            })
+                            st.session_state[_oo_show_key] = False
+                            st.rerun()
+                else:
+                    # ── Formulario individual (original) ──────────────────────────────
+                    col_ot1_n, col_ot2_n = st.columns(2)
+                    with col_ot1_n:
+                        st.selectbox("TIPO DE ORGANIZACIÓN", _PA_TIPO_ORG, index=0,
+                                     key=f"pa_tipo_org_{sfx}_new")
+                        st.text_input("NOMBRE ORGANIZACIÓN", value="", key=f"pa_nombre_org_{sfx}_new")
+                    with col_ot2_n:
+                        st.selectbox("ESCALA", _PA_ESCALA_ORG, index=0, key=f"pa_escala_org_{sfx}_new")
+                        st.text_input("¿QUÉ ROL EJERCE EN DICHA INSTANCIA?", value="",
+                                      key=f"pa_rol_org_{sfx}_new")
+                    col_dep_on, col_mun_on = st.columns(2)
+                    _dep_org_opts_n = ["Seleccione..."] + list(_MUNICIPIOS.keys())
+                    with col_dep_on:
+                        st.selectbox("DEPARTAMENTO", _dep_org_opts_n, index=0, key=f"pa_dep_org_{sfx}_new")
+                    with col_mun_on:
+                        _dep_sel_n  = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                        _mun_opts_n = _MUNICIPIOS.get(_dep_sel_n, ["Seleccione..."])
+                        st.selectbox("MUNICIPIO", _mun_opts_n, index=0, key=f"pa_mun_org_{sfx}_new")
+                    col_ai_n, col_af_n = st.columns(2)
+                    with col_ai_n:
+                        st.number_input("AÑO INICIO ACTIVIDAD", min_value=1990, max_value=2099,
+                                        value=None, step=1, key=f"pa_anio_ini_org_{sfx}_new")
+                    with col_af_n:
+                        st.text_input(
+                            "AÑO FINALIZACIÓN DE LA ACTIVIDAD (año finalizado, presente o no reporta)",
+                            value="", key=f"pa_anio_fin_org_{sfx}_new")
+                    _opts_amb_n = ["Seleccione..."] + _PA_AMBITO_ORG
+                    st.selectbox("**ÁMBITO DE LA ORGANIZACIÓN**", _opts_amb_n, index=0,
+                                 key=f"pa_amb_{sfx}_new")
+                    if st.button("✅ Guardar organización", key=f"add_oo_{sfx}",
+                                 use_container_width=True, type="primary"):
+                        _oo_tipo   = st.session_state.get(f"pa_tipo_org_{sfx}_new", "Seleccione...")
+                        _oo_nombre = st.session_state.get(f"pa_nombre_org_{sfx}_new", "")
+                        _oo_escala = st.session_state.get(f"pa_escala_org_{sfx}_new", "Seleccione...")
+                        _oo_rol    = st.session_state.get(f"pa_rol_org_{sfx}_new", "")
+                        _oo_dep    = st.session_state.get(f"pa_dep_org_{sfx}_new", "Seleccione...")
+                        _oo_mun    = st.session_state.get(f"pa_mun_org_{sfx}_new", "Seleccione...")
+                        _oo_ai     = st.session_state.get(f"pa_anio_ini_org_{sfx}_new")
+                        _oo_af     = st.session_state.get(f"pa_anio_fin_org_{sfx}_new", "")
+                        _oo_amb    = st.session_state.get(f"pa_amb_{sfx}_new", "Seleccione...")
+                        st.session_state[_oo_key].append({
+                            "tipo_org":         _oo_tipo   if _oo_tipo   != "Seleccione..." else "",
+                            "nombre_org":       _oo_nombre,
+                            "escala_org":       _oo_escala if _oo_escala != "Seleccione..." else "",
+                            "rol_org":          _oo_rol,
+                            "departamento_org": _oo_dep    if _oo_dep    != "Seleccione..." else "",
+                            "municipio_org":    _oo_mun    if _oo_mun    != "Seleccione..." else "",
+                            "anio_inicio_org":  str(int(_oo_ai)) if _oo_ai is not None else "",
+                            "anio_fin_org":     str(_oo_af),
+                            "ambito_org":       _oo_amb    if _oo_amb    != "Seleccione..." else "",
+                        })
+                        st.session_state[_oo_show_key] = False
+                        st.rerun()
 
     # ── Subformulario: Perfil del Reincorporado/a (FAMILIAR DE REINCORPORADO/A) ─
     if es_familiar_reincorporado:
