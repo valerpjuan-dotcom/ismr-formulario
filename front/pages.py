@@ -143,7 +143,7 @@ def pantalla_selector():
         if st.button("🚪 Cerrar sesión", use_container_width=True, type="secondary"): logout()
 
 
-def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, es_familiar_comunes, mostrar_cargo_comunes):
+def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, es_familiar_comunes, mostrar_cargo_comunes, es_colectivo=False):
     """
     Renderiza los campos de Perfil Actual según tipo de población.
 
@@ -155,6 +155,9 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
     - INTEGRANTE DEL PARTIDO       → mostrar_cargo_comunes=True
     - FAMILIAR DE INTEGRANTE       → es_familiar_comunes=True, mostrar_cargo_comunes=True
                                      → muestra sección perfil (sin ARN ni Act.Eco.)
+    - COLECTIVO                    → es_colectivo=True
+                                     → sin nivel educativo ni fuente ingresos
+                                     → JEP y TOAR como conteos numéricos
 
     ARN y Actividad Económica se muestran en la subsección del formulario principal,
     solo cuando tipo_poblacion == FAMILIAR DE REINCORPORADO/A.
@@ -166,63 +169,100 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
 
     _opts_si_no_rep = ["Seleccione...", "SI", "NO REPORTA"]
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.selectbox("NIVEL DE ESCOLARIDAD", _PA_NIVEL_EDUCATIVO,
-                     index=_PA_NIVEL_EDUCATIVO.index(_v("nivel_educativo"))
-                           if _v("nivel_educativo") in _PA_NIVEL_EDUCATIVO else 0,
-                     key=f"pa_edu_{sfx}")
-    with col2:
-        st.text_input("FUENTE PRINCIPAL DE INGRESOS",
-                      value=_v("fuente_ingresos", ""),
-                      key=f"pa_ingresos_{sfx}")
+    if not es_colectivo:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.selectbox("NIVEL DE ESCOLARIDAD", _PA_NIVEL_EDUCATIVO,
+                         index=_PA_NIVEL_EDUCATIVO.index(_v("nivel_educativo"))
+                               if _v("nivel_educativo") in _PA_NIVEL_EDUCATIVO else 0,
+                         key=f"pa_edu_{sfx}")
+        with col2:
+            st.text_input("FUENTE PRINCIPAL DE INGRESOS",
+                          value=_v("fuente_ingresos", ""),
+                          key=f"pa_ingresos_{sfx}")
 
-    # JEP — Comparecencia
-    st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_si_no_rep,
-                 index=_opts_si_no_rep.index(_v("comparecencia_jep"))
-                       if _v("comparecencia_jep") in _opts_si_no_rep else 0,
-                 key=f"pa_jep_comp_{sfx}")
-    if st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...") == "SI":
-        _mcc_prev = [m.strip() for m in _v("macrocasos_jep", "").split("|") if m.strip()] if pa else []
-        st.markdown("**MACROCASO COMPARECIENTE**")
-        _cols_mcc = st.columns(2)
-        for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
-            _cols_mcc[_j % 2].checkbox(_mc, value=(_mc in _mcc_prev), key=f"pa_mcc_{_j}_{sfx}")
+        # JEP — Comparecencia
+        st.selectbox("COMPARECENCIA ANTE LA JEP", _opts_si_no_rep,
+                     index=_opts_si_no_rep.index(_v("comparecencia_jep"))
+                           if _v("comparecencia_jep") in _opts_si_no_rep else 0,
+                     key=f"pa_jep_comp_{sfx}")
+        if st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...") == "SI":
+            _mcc_prev = [m.strip() for m in _v("macrocasos_jep", "").split("|") if m.strip()] if pa else []
+            st.markdown("**MACROCASO COMPARECIENTE**")
+            _cols_mcc = st.columns(2)
+            for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+                _cols_mcc[_j % 2].checkbox(_mc, value=(_mc in _mcc_prev), key=f"pa_mcc_{_j}_{sfx}")
 
-    # JEP — Víctima
-    st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
-                 index=_SI_NO_REPORTA.index(_v("victima_jep"))
-                       if _v("victima_jep") in _SI_NO_REPORTA else 0,
-                 key=f"pa_jep_vic_{sfx}")
-    if st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI":
-        _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
-        st.markdown("**MACROCASO VÍCTIMA**")
-        _cols_mcv = st.columns(2)
-        for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
-            _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
+        # JEP — Víctima
+        st.selectbox("ES VÍCTIMA ANTE LA JEP", _SI_NO_REPORTA,
+                     index=_SI_NO_REPORTA.index(_v("victima_jep"))
+                           if _v("victima_jep") in _SI_NO_REPORTA else 0,
+                     key=f"pa_jep_vic_{sfx}")
+        if st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...") == "SI":
+            _mcv_prev = [m.strip() for m in _v("macrocaso_victima", "").split("|") if m.strip()] if pa else []
+            st.markdown("**MACROCASO VÍCTIMA**")
+            _cols_mcv = st.columns(2)
+            for _j, _mc in enumerate(_PA_MACROCASOS_JEP):
+                _cols_mcv[_j % 2].checkbox(_mc, value=(_mc in _mcv_prev), key=f"pa_mcv_{_j}_{sfx}")
 
-    # Compromisos del proceso de paz
-    col7, col8 = st.columns(2)
-    with col7:
-        st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR",
-                     _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("participacion_toar"))
-                           if _v("participacion_toar") in _SI_NO_REPORTA else 0,
-                     key=f"pa_toar_{sfx}")
-        st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("participacion_pnis"))
-                           if _v("participacion_pnis") in _SI_NO_REPORTA else 0,
-                     key=f"pa_pnis_{sfx}")
-    with col8:
-        st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS",
-                     _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("busqueda_desaparecidos"))
-                           if _v("busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
-                     key=f"pa_busq_{sfx}")
-        st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
-                     index=_SI_NO_REPORTA.index(_v("desminado"))
-                           if _v("desminado") in _SI_NO_REPORTA else 0,
-                     key=f"pa_desminado_{sfx}")
+        # Compromisos del proceso de paz — TOAR como selectbox
+        col7, col8 = st.columns(2)
+        with col7:
+            st.selectbox("PARTICIPA EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS - TOAR",
+                         _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("participacion_toar"))
+                               if _v("participacion_toar") in _SI_NO_REPORTA else 0,
+                         key=f"pa_toar_{sfx}")
+            st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("participacion_pnis"))
+                               if _v("participacion_pnis") in _SI_NO_REPORTA else 0,
+                         key=f"pa_pnis_{sfx}")
+        with col8:
+            st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS",
+                         _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("busqueda_desaparecidos"))
+                               if _v("busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
+                         key=f"pa_busq_{sfx}")
+            st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("desminado"))
+                               if _v("desminado") in _SI_NO_REPORTA else 0,
+                         key=f"pa_desminado_{sfx}")
+    else:
+        # ── Campos JEP / TOAR para COLECTIVO (conteos numéricos + Sí/No) ──────
+        col_jc1, col_jc2, col_jc3 = st.columns(3)
+        with col_jc1:
+            st.number_input("CANTIDAD DE PERSONAS QUE COMPARECEN ANTE LA JEP",
+                            min_value=0, step=1,
+                            value=int(_v("col_jep_comp_cnt", 0) or 0),
+                            key=f"pa_col_jep_comp_cnt_{sfx}")
+        with col_jc2:
+            st.number_input("CANTIDAD DE VÍCTIMAS ANTE LA JEP",
+                            min_value=0, step=1,
+                            value=int(_v("col_jep_vic_cnt", 0) or 0),
+                            key=f"pa_col_jep_vic_cnt_{sfx}")
+        with col_jc3:
+            st.number_input("CANTIDAD DE PARTICIPANTES EN TRABAJOS, OBRAS Y ACTIVIDADES REPARADORAS (TOAR)",
+                            min_value=0, step=1,
+                            value=int(_v("col_toar_cnt", 0) or 0),
+                            key=f"pa_col_toar_cnt_{sfx}")
+
+        col_jp1, col_jp2, col_jp3 = st.columns(3)
+        with col_jp1:
+            st.selectbox("PARTICIPA EN ACTIVIDADES DE BÚSQUEDA DE PERSONAS DADAS POR DESAPARECIDAS",
+                         _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("busqueda_desaparecidos"))
+                               if _v("busqueda_desaparecidos") in _SI_NO_REPORTA else 0,
+                         key=f"pa_busq_{sfx}")
+        with col_jp2:
+            st.selectbox("PARTICIPA EN ACTIVIDADES DEL PROGRAMA PNIS", _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("participacion_pnis"))
+                               if _v("participacion_pnis") in _SI_NO_REPORTA else 0,
+                         key=f"pa_pnis_{sfx}")
+        with col_jp3:
+            st.selectbox("PARTICIPA EN ACTIVIDADES DE DESMINADO HUMANITARIO", _SI_NO_REPORTA,
+                         index=_SI_NO_REPORTA.index(_v("desminado"))
+                               if _v("desminado") in _SI_NO_REPORTA else 0,
+                         key=f"pa_desminado_{sfx}")
 
     # Otras organizaciones (multiregistro)
     st.selectbox(
@@ -643,33 +683,51 @@ def _render_pa_form(pa, tipo, idx, es_reincorporado, es_familiar_reincorporado, 
 
 
 def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
-                es_familiar_comunes, mostrar_cargo_comunes):
+                es_familiar_comunes, mostrar_cargo_comunes, es_colectivo=False):
     """
     Lee el estado de los widgets del Perfil Actual y retorna un dict,
     o None si hay errores de validación.
     """
     sfx = f"{tipo}_{idx}"
-    # Campos del perfil — siempre se leen
-    nivel_edu         = st.session_state.get(f"pa_edu_{sfx}", "Seleccione...")
-    fuente_ingresos   = st.session_state.get(f"pa_ingresos_{sfx}", "Seleccione...")
-    comparecencia_jep = st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...")
-    macrocaso_comp = ""
-    if comparecencia_jep == "SI":
-        macrocaso_comp = " | ".join([
-            mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
-            if st.session_state.get(f"pa_mcc_{j}_{sfx}", False)
-        ])
-    victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...")
-    macrocaso_vic = ""
-    if victima_jep == "SI":
-        macrocaso_vic = " | ".join([
-            mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
-            if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
-        ])
-    participacion_toar     = st.session_state.get(f"pa_toar_{sfx}", "Seleccione...")
-    busqueda_desaparecidos = st.session_state.get(f"pa_busq_{sfx}", "Seleccione...")
-    participacion_pnis     = st.session_state.get(f"pa_pnis_{sfx}", "Seleccione...")
-    desminado              = st.session_state.get(f"pa_desminado_{sfx}", "Seleccione...")
+
+    if es_colectivo:
+        # ── Colectivo: conteos JEP/TOAR + Sí/No para búsqueda, PNIS, desminado ─
+        nivel_edu             = ""
+        fuente_ingresos       = ""
+        comparecencia_jep     = ""
+        macrocaso_comp        = ""
+        victima_jep           = ""
+        macrocaso_vic         = ""
+        participacion_toar    = ""
+        col_jep_comp_cnt      = int(st.session_state.get(f"pa_col_jep_comp_cnt_{sfx}") or 0)
+        col_jep_vic_cnt       = int(st.session_state.get(f"pa_col_jep_vic_cnt_{sfx}") or 0)
+        col_toar_cnt          = int(st.session_state.get(f"pa_col_toar_cnt_{sfx}") or 0)
+        busqueda_desaparecidos = st.session_state.get(f"pa_busq_{sfx}", "Seleccione...")
+        participacion_pnis     = st.session_state.get(f"pa_pnis_{sfx}", "Seleccione...")
+        desminado              = st.session_state.get(f"pa_desminado_{sfx}", "Seleccione...")
+    else:
+        # Campos del perfil — siempre se leen
+        nivel_edu         = st.session_state.get(f"pa_edu_{sfx}", "Seleccione...")
+        fuente_ingresos   = st.session_state.get(f"pa_ingresos_{sfx}", "Seleccione...")
+        comparecencia_jep = st.session_state.get(f"pa_jep_comp_{sfx}", "Seleccione...")
+        macrocaso_comp = ""
+        if comparecencia_jep == "SI":
+            macrocaso_comp = " | ".join([
+                mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+                if st.session_state.get(f"pa_mcc_{j}_{sfx}", False)
+            ])
+        victima_jep = st.session_state.get(f"pa_jep_vic_{sfx}", "Seleccione...")
+        macrocaso_vic = ""
+        if victima_jep == "SI":
+            macrocaso_vic = " | ".join([
+                mc for j, mc in enumerate(_PA_MACROCASOS_JEP)
+                if st.session_state.get(f"pa_mcv_{j}_{sfx}", False)
+            ])
+        participacion_toar     = st.session_state.get(f"pa_toar_{sfx}", "Seleccione...")
+        busqueda_desaparecidos = st.session_state.get(f"pa_busq_{sfx}", "Seleccione...")
+        participacion_pnis     = st.session_state.get(f"pa_pnis_{sfx}", "Seleccione...")
+        desminado              = st.session_state.get(f"pa_desminado_{sfx}", "Seleccione...")
+        col_jep_comp_cnt = col_jep_vic_cnt = col_toar_cnt = 0
     participa_otras        = st.session_state.get(f"pa_otras_org_{sfx}", "Seleccione...")
     otras_orgs = []
     if participa_otras == "SI":
@@ -767,6 +825,10 @@ def _recoger_pa(tipo, idx, es_reincorporado, es_familiar_reincorporado,
         "busqueda_desaparecidos": _c(busqueda_desaparecidos),
         "participacion_pnis":     _c(participacion_pnis),
         "desminado":              _c(desminado),
+        # Colectivo — conteos JEP / TOAR
+        "col_jep_comp_cnt":       col_jep_comp_cnt,
+        "col_jep_vic_cnt":        col_jep_vic_cnt,
+        "col_toar_cnt":           col_toar_cnt,
         "participa_otras_org":    _c(participa_otras),
         "otras_orgs":             otras_orgs,
         "tipo_org":               _oo0.get("tipo_org", ""),
@@ -2319,12 +2381,12 @@ def formulario_casos(tipo="individual"):
             if st.session_state.get(_edit_pa_key) == i:
                 # ── Modo edición ──────────────────────────────────────────────
                 st.markdown(f"**✏️ Editando Perfil Actual #{i+1}**")
-                _render_pa_form(pa, tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+                _render_pa_form(pa, tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
                 col_sv, col_cx = st.columns(2)
                 with col_sv:
                     if st.button("💾 Guardar cambios", key=f"pa_save_{tipo}_{i}",
                                  type="primary", use_container_width=True):
-                        nuevo = _recoger_pa(tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+                        nuevo = _recoger_pa(tipo, i, _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
                         if nuevo is not None:
                             st.session_state.perfiles_actuales[i] = nuevo
                             st.session_state[_edit_pa_key] = None
@@ -2376,11 +2438,11 @@ def formulario_casos(tipo="individual"):
     # ── Perfil Actual — solo se permite uno ─────────────────────────────────
     if len(st.session_state.perfiles_actuales) == 0:
         with st.expander("➕ Agregar Perfil Actual", expanded=True):
-            _render_pa_form(None, tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+            _render_pa_form(None, tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
             st.markdown("")
             if st.button("✅ Guardar Perfil Actual", use_container_width=True,
                          key=f"btn_add_pa_{tipo}", type="primary"):
-                nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes)
+                nuevo = _recoger_pa(tipo, "new", _es_reincorporado, _es_familiar_reincorporado, _es_familiar_comunes, _mostrar_cargo_comunes, es_colectivo=not es_individual)
                 if nuevo is not None:
                     st.session_state.perfiles_actuales.append(nuevo)
                     # Limpiar listas temporales del formulario "new"
