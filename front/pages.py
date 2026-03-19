@@ -12,6 +12,7 @@ from data.diccionarios import (
     _MUNICIPIOS, _TIPOS_POBLACION, _SUBPOBLACIONES, _GENEROS, _ORIENTACIONES_SEXUALES,
     _JEFATURA_HOGAR, _SI_NO_REPORTA, _SI_NO, _DISCAPACIDAD, _ETNIA, _CUIDADOR,
     _VICTIMA_CONFLICTO_ARMADO, _LIDER_SOCIAL_DDHH, _ACTIVIDADES_ECONOMICAS_COLECTIVO,
+    _FACTORES_DIFER_COL,
     # Perfil Actual
     _PA_NIVEL_EDUCATIVO, _PA_FUENTE_INGRESOS, _PA_ESTADO_PROYECTO_ARN, _PA_ACTIVIDAD_ECONOMICA,
     _PA_MACROCASOS_JEP, _PA_INSTANCIAS_PARTIDO, _PA_ROLES_PARTIDO,
@@ -1115,6 +1116,11 @@ def _construir_datos_borrador(tipo):
            for i in range(len(_VICTIMA_CONFLICTO_ARMADO))},
         **{f"lider_{i}_{tipo}": st.session_state.get(f"lider_{i}_{tipo}", False)
            for i in range(len(_LIDER_SOCIAL_DDHH))},
+        # Factores diferenciales colectivo
+        **{f"fd_col_{gk}_{tipo}": st.session_state.get(f"fd_col_{gk}_{tipo}", 0)
+           for gk, _, subs in _FACTORES_DIFER_COL if not subs},
+        **{f"fd_col_{gk}_{sk}_{tipo}": st.session_state.get(f"fd_col_{gk}_{sk}_{tipo}", 0)
+           for gk, _, subs in _FACTORES_DIFER_COL for sk, _ in subs},
         "hechos":            st.session_state.get("hechos", []),
         "perfiles":          st.session_state.get("perfiles", []),
         "perfiles_col":      st.session_state.get("perfiles_col", []),
@@ -1216,6 +1222,8 @@ def formulario_casos(tipo="individual"):
                         f"caso_factor_campesino_{tipo}", f"caso_factor_cuidador_{tipo}",
                         *[f"victima_{i}_{tipo}" for i in range(len(_VICTIMA_CONFLICTO_ARMADO))],
                         *[f"lider_{i}_{tipo}" for i in range(len(_LIDER_SOCIAL_DDHH))],
+                        *[f"fd_col_{gk}_{tipo}" for gk, _, subs in _FACTORES_DIFER_COL if not subs],
+                        *[f"fd_col_{gk}_{sk}_{tipo}" for gk, _, subs in _FACTORES_DIFER_COL for sk, _ in subs],
                         f"imp_eco_dependencia_{tipo}",
                         f"imp_eco_iniciativas_{tipo}",
                         f"imp_eco_empleos_{tipo}",
@@ -1285,6 +1293,8 @@ def formulario_casos(tipo="individual"):
                         f"caso_factor_campesino_{tipo}", f"caso_factor_cuidador_{tipo}",
                         *[f"victima_{i}_{tipo}" for i in range(len(_VICTIMA_CONFLICTO_ARMADO))],
                         *[f"lider_{i}_{tipo}" for i in range(len(_LIDER_SOCIAL_DDHH))],
+                        *[f"fd_col_{gk}_{tipo}" for gk, _, subs in _FACTORES_DIFER_COL if not subs],
+                        *[f"fd_col_{gk}_{sk}_{tipo}" for gk, _, subs in _FACTORES_DIFER_COL for sk, _ in subs],
                         f"imp_eco_dependencia_{tipo}",
                         f"imp_eco_iniciativas_{tipo}",
                         f"imp_eco_empleos_{tipo}",
@@ -1663,13 +1673,9 @@ def formulario_casos(tipo="individual"):
         num_menores_otros = None
         num_adultos_mayores = None
         num_discapacidad = None
-        osiegd = ""
-        factor_discapacidad = ""
-        factor_etnia = ""
-        factor_campesino = ""
-        factor_cuidador = ""
-        victima_conflicto = []
-        lider_social = []
+        # osiegd, factor_discapacidad, factor_etnia, factor_campesino,
+        # factor_cuidador, victima_conflicto, lider_social
+        # se asignan en la sección FACTORES DIFERENCIALES (colectivo) más abajo
 
         # ── Composición del Colectivo (multiregistro) ────────────────────────
         st.markdown("---")
@@ -1744,11 +1750,11 @@ def formulario_casos(tipo="individual"):
         comp_proyecto_productivo = _comp0.get("comp_proyecto_productivo", "")
         comp_actividad_economica = _comp0.get("comp_actividad_economica", [])
 
-    # ── Factores Diferenciales (solo individual) ───────────────────────────────
-    if es_individual:
-        st.markdown("---")
-        st.subheader("🏷️ FACTORES DIFERENCIALES")
+    # ── Factores Diferenciales ─────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader("🏷️ FACTORES DIFERENCIALES")
 
+    if es_individual:
         osiegd = st.text_input(
             "F. Orientación Sexual, Identidad y Expresión de Género Diversa (OSIEGD)",
             key=f"caso_osiegd_{tipo}"
@@ -1783,6 +1789,56 @@ def formulario_casos(tipo="individual"):
             opcion for i, opcion in enumerate(_LIDER_SOCIAL_DDHH)
             if cols_lid[i % 2].checkbox(opcion, key=f"lider_{i}_{tipo}")
         ]
+
+    else:
+        # ── Colectivo: conteos numéricos por factor diferencial ────────────────
+        _fd_osiegd_cnt = _fd_campesino_cnt = 0
+        _fd_disc_parts = _fd_etnico_parts = _fd_victima_parts = []
+        _fd_cuidadora_parts = _fd_lider_parts = []
+
+        for _gk, _glabel, _subs in _FACTORES_DIFER_COL:
+            st.markdown(f"**{_glabel}**")
+            if not _subs:
+                # Campo único
+                _v_cnt = st.number_input(
+                    f"Número de {_glabel}",
+                    min_value=0, step=1, value=0,
+                    key=f"fd_col_{_gk}_{tipo}"
+                )
+                if _gk == "osiegd":
+                    _fd_osiegd_cnt = _v_cnt
+                elif _gk == "campesino":
+                    _fd_campesino_cnt = _v_cnt
+            else:
+                # Sub-campos en 2 columnas
+                _sub_cols = st.columns(2)
+                _parts = []
+                for _i_s, (_sk, _slabel) in enumerate(_subs):
+                    _v_sub = _sub_cols[_i_s % 2].number_input(
+                        f"Número de {_slabel}",
+                        min_value=0, step=1, value=0,
+                        key=f"fd_col_{_gk}_{_sk}_{tipo}"
+                    )
+                    _parts.append((_slabel, _v_sub))
+                if _gk == "discapacidad":
+                    _fd_disc_parts = _parts
+                elif _gk == "etnico":
+                    _fd_etnico_parts = _parts
+                elif _gk == "victima_ca":
+                    _fd_victima_parts = _parts
+                elif _gk == "cuidadora":
+                    _fd_cuidadora_parts = _parts
+                elif _gk == "lider_ddhh":
+                    _fd_lider_parts = _parts
+
+        # Serializar a variables del submit
+        osiegd          = str(_fd_osiegd_cnt) if _fd_osiegd_cnt else ""
+        factor_discapacidad = " | ".join(f"{l}:{v}" for l, v in _fd_disc_parts if v) or ""
+        factor_etnia        = " | ".join(f"{l}:{v}" for l, v in _fd_etnico_parts if v) or ""
+        factor_campesino    = str(_fd_campesino_cnt) if _fd_campesino_cnt else ""
+        factor_cuidador     = " | ".join(f"{l}:{v}" for l, v in _fd_cuidadora_parts if v) or ""
+        victima_conflicto   = [f"{l}:{v}" for l, v in _fd_victima_parts if v]
+        lider_social        = [f"{l}:{v}" for l, v in _fd_lider_parts if v]
 
     _btn_borrador(tipo, "tras_composicion")
 

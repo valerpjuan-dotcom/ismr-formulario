@@ -272,6 +272,62 @@ _ACTIVIDADES_ECONOMICAS_COLECTIVO = [
     "Otro",
 ]
 
+# Factores Diferenciales Colectivo
+# Cada entrada: (group_key, group_label, [(sub_key, sub_label_plural), ...])
+# sub=[] → campo único "Número de {group_label}"
+_FACTORES_DIFER_COL = [
+    ("osiegd",      "PERSONAS OSIEGD",  []),
+    ("discapacidad", "PERSONAS EN SITUACIÓN DE DISCAPACIDAD", [
+        ("visual",       "personas con discapacidad VISUAL"),
+        ("psicosocial",  "personas con discapacidad PSICOSOCIAL"),
+        ("sordoceguera", "personas con SORDOCEGUERA"),
+        ("talla_baja",   "personas con TALLA BAJA"),
+        ("intelectual",  "personas con discapacidad INTELECTUAL"),
+        ("fisica",       "personas con discapacidad FÍSICA"),
+        ("multiple",     "personas con discapacidad MÚLTIPLE"),
+    ]),
+    ("etnico", "PERSONAS FACTOR ÉTNICO", [
+        ("indigena",       "personas INDÍGENAS"),
+        ("rrom",           "personas RROM"),
+        ("gitano",         "personas GITANAS"),
+        ("afrocolombiano", "personas AFROCOLOMBIANAS"),
+        ("raizal",         "personas RAIZALES"),
+        ("palenquero",     "personas PALENQUERAS"),
+    ]),
+    ("campesino", "PERSONAS FACTOR CAMPESINO", []),
+    ("victima_ca", "PERSONAS VÍCTIMA CONFLICTO ARMADO", [
+        ("homicidio",      "VÍCTIMAS DE HOMICIDIO"),
+        ("minas",          "VÍCTIMAS DE MINAS ANTIPERSONAL, MUNICIÓN SIN EXPLOTAR O ARTEFACTO EXPLOSIVO IMPROVISADO"),
+        ("amenaza",        "VÍCTIMAS DE AMENAZA"),
+        ("secuestro",      "VÍCTIMAS DE SECUESTRO"),
+        ("despojo",        "VÍCTIMAS DE ABANDONO O DESPOJO FORZADO DE TIERRAS"),
+        ("lesiones",       "VÍCTIMAS DE LESIONES PERSONALES FÍSICAS"),
+        ("confinamiento",  "VÍCTIMAS DE CONFINAMIENTO"),
+        ("desaparicion",   "VÍCTIMAS DE DESAPARICIÓN FORZADA"),
+        ("terrorismo",     "VÍCTIMAS DE ACTO TERRORISTA - ATENTADOS, COMBATES, ENFRENTAMIENTOS Y HOSTIGAMIENTOS"),
+        ("desplazamiento", "VÍCTIMAS DE DESPLAZAMIENTO FORZADO"),
+        ("tortura",        "VÍCTIMAS DE TORTURA"),
+        ("bienes",         "VÍCTIMAS DE PÉRDIDA DE BIENES MUEBLES O INMUEBLES"),
+    ]),
+    ("cuidadora", "PERSONA CUIDADORA", [
+        ("familiar", "PERSONAS CUIDADORAS FAMILIARES"),
+        ("informal", "PERSONAS CUIDADORAS INFORMALES"),
+    ]),
+    ("lider_ddhh", "PERSONA LIDER/ESA SOCIAL Y/O DEFENSORA DDHH", [
+        ("activista_pol",  "ACTIVISTAS POLÍTICOS/AS"),
+        ("lider_afro",     "LÍDERES AFRODESCENDIENTES"),
+        ("lider_amb",      "LÍDERES AMBIENTALES"),
+        ("lider_camp",     "LÍDERES CAMPESINOS/AS"),
+        ("lider_lgbtiq",   "LÍDERES COMUNIDAD LGBTIQ+"),
+        ("lider_com",      "LÍDERES COMUNITARIOS/AS"),
+        ("lider_ddhh_sub", "LÍDERES DEFENSORES/AS DE DDHH"),
+        ("lider_ind",      "LÍDERES INDÍGENAS"),
+        ("lider_muj",      "LÍDERES DE MUJERES"),
+        ("lider_sind",     "LÍDERES SINDICALES"),
+        ("lider_vic",      "LÍDERES DE VÍCTIMAS DEL CONFLICTO ARMADO"),
+    ]),
+]
+
 _LIDER_SOCIAL_DDHH = [
     "ACTIVISTA POLÍTICO",
     "LÍDER AFRODESCENDIENTE",
