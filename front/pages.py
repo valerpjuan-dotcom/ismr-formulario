@@ -117,6 +117,9 @@ def pantalla_selector():
             st.session_state.vista = "individual"
             st.session_state.hechos = []
             st.session_state.perfiles = []
+            st.session_state.perfiles_col = []
+            st.session_state.perfiles_actuales = []
+            st.session_state.desplazamientos = []
             st.session_state.antecedentes = []
             st.session_state["borrador_cargado_individual"] = False
             st.rerun()
@@ -131,6 +134,8 @@ def pantalla_selector():
             st.session_state.hechos = []
             st.session_state.perfiles = []
             st.session_state.perfiles_col = []
+            st.session_state.perfiles_actuales = []
+            st.session_state.desplazamientos = []
             st.session_state.antecedentes = []
             st.session_state["borrador_cargado_colectivo"] = False
             st.rerun()
@@ -1193,6 +1198,8 @@ def formulario_casos(tipo="individual"):
             st.session_state.hechos = []
             st.session_state.perfiles = []
             st.session_state.perfiles_col = []
+            st.session_state.perfiles_actuales = []
+            st.session_state.desplazamientos = []
             st.session_state.antecedentes = []
             st.session_state[f"borrador_cargado_{tipo}"] = False
             st.rerun()
