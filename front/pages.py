@@ -2358,7 +2358,7 @@ def formulario_casos(tipo="individual"):
         _titulo_seccion  = "PERFIL ANTIGUO DEL REPRESENTANTE" if _es_familiar_col else "PERFIL ANTIGUO DE DIRECTIVOS"
         st.subheader(_titulo_seccion)
         if _es_familiar_col:
-            st.caption("Agrega el perfil FARC-EP del representante del colectivo familiar (máximo 1 registro).")
+            st.caption("Agrega uno o varios perfiles FARC-EP del colectivo familiar.")
         else:
             st.caption("Agrega uno o varios perfiles FARC-EP de los directivos del colectivo.")
 
@@ -2495,8 +2495,7 @@ def formulario_casos(tipo="individual"):
                         if perfil.get('tipo_institucion'): st.write(f"🏛️ **Tipo Institución:** {perfil.get('tipo_institucion', '')}")
                         if perfil.get('pabellon_alta_seguridad'): st.write(f"🔒 **Pabellón Alta Seguridad:** {perfil.get('pabellon_alta_seguridad', '')}")
 
-        # Para familiar: solo mostrar el formulario si aún no hay ningún registro
-        _puede_agregar = (not _es_familiar_col) or (len(st.session_state.perfiles_col) == 0)
+        _puede_agregar = True
         if _puede_agregar:
             _label_exp = f"➕ Agregar Perfil del {_label_registro}" if _es_familiar_col else f"➕ Agregar {_label_registro}"
             with st.expander(_label_exp, expanded=len(st.session_state.perfiles_col) == 0):
@@ -2562,8 +2561,6 @@ def formulario_casos(tipo="individual"):
                             "pabellon_alta_seguridad": pc_pabellon if pc_pabellon != "Seleccione..." else "",
                         })
                         st.success(f"✅ {_label_registro} agregado"); st.rerun()
-        elif _es_familiar_col:
-            st.info("ℹ️ Ya se registró el perfil del representante. Elimínalo para reemplazarlo.")
 
     _btn_borrador(tipo, "tras_perfil_antiguo")
 
