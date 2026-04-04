@@ -3795,6 +3795,10 @@ def formulario_casos(tipo="individual"):
     st.markdown("---")
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
+    # ── Autoguardado silencioso en cada render ────────────────────────────────
+    if st.session_state.get(_borrador_key):
+        guardar_borrador(st.session_state.username, tipo, _construir_datos_borrador(tipo))
+
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
     with col_borrador:
