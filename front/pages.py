@@ -1203,10 +1203,13 @@ def formulario_casos(tipo="individual"):
     _borrador_key = f"borrador_cargado_{tipo}"
     if not st.session_state.get(_borrador_key):
         borrador = cargar_borrador(st.session_state.username, tipo)
-        if not borrador:
-            # Sin borrador previo: marcar como revisado para evitar consultas repetidas
+        if borrador is False:
+            # Error de conexión: no se sabe si hay borrador, no activar autoguardado
+            st.warning("⚠️ No se pudo verificar si hay un borrador guardado. Recarga la página para intentar de nuevo.")
+        elif borrador is None:
+            # Confirmado: sin borrador previo
             st.session_state[_borrador_key] = True
-        if borrador:
+        if borrador and borrador is not False:
             st.warning(
                 f"📝 Tienes un borrador guardado el **{borrador.get('_guardado_en', '—')}**. "
                 "¿Deseas retomarlo?"

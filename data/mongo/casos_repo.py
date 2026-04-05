@@ -172,13 +172,16 @@ def guardar_borrador(username: str, tipo: str, datos: dict) -> bool:
         return False
 
 
-def cargar_borrador(username: str, tipo: str) -> dict | None:
+def cargar_borrador(username: str, tipo: str):
     """
-    Devuelve el borrador del usuario para el tipo dado, o None si no existe.
+    Devuelve el borrador del usuario para el tipo dado.
+    - dict  → borrador encontrado
+    - None  → no existe borrador (confirmado)
+    - False → error de conexión/consulta (no se sabe si hay borrador)
     """
     db = _conectar_db()
     if db is None:
-        return None
+        return False
     try:
         doc = db["borradores"].find_one(
             {"_username": username, "_tipo": tipo}, {"_id": 0}
@@ -186,7 +189,7 @@ def cargar_borrador(username: str, tipo: str) -> dict | None:
         return doc or None
     except Exception as e:
         st.error(f"Error al cargar borrador: {str(e)}")
-        return None
+        return False
 
 
 def eliminar_borrador(username: str, tipo: str) -> None:
