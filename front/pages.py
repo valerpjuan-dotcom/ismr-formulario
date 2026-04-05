@@ -1507,7 +1507,7 @@ def formulario_casos(tipo="individual"):
         st.markdown("**Cantidad por Subpoblación**")
         _cols_sp = st.columns(2)
         subpoblacion = [
-            f"{opcion}:{_cols_sp[i % 2].number_input(f'Cantidad de {opcion}', min_value=0, step=1, value=0, key=f'subpob_cnt_{i}_{tipo}')}"
+            f"{opcion}:{_cols_sp[i % 2].number_input(f'Cantidad de {opcion}', min_value=0, step=1, key=f'subpob_cnt_{i}_{tipo}')}"
             for i, opcion in enumerate(_SUBPOBLACIONES)
         ]
 
