@@ -1826,7 +1826,7 @@ def formulario_casos(tipo="individual"):
                 # Campo único
                 _v_cnt = st.number_input(
                     f"Número de {_glabel}",
-                    min_value=0, step=1, value=0,
+                    min_value=0, step=1,
                     key=f"fd_col_{_gk}_{tipo}"
                 )
                 if _gk == "osiegd":
@@ -1840,7 +1840,7 @@ def formulario_casos(tipo="individual"):
                 for _i_s, (_sk, _slabel) in enumerate(_subs):
                     _v_sub = _sub_cols[_i_s % 2].number_input(
                         f"Número de {_slabel}",
-                        min_value=0, step=1, value=0,
+                        min_value=0, step=1,
                         key=f"fd_col_{_gk}_{_sk}_{tipo}"
                     )
                     _parts.append((_slabel, _v_sub))
