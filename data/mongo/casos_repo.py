@@ -125,11 +125,19 @@ _CABECERAS_OTRAS_ORGS = [
 
 
 def _conectar_db():
-    """Retorna la base de datos MongoDB usando el cliente singleton."""
+    """Retorna la base de datos MongoDB usando el cliente singleton.
+    Si la conexión falla, limpia el cache para forzar un nuevo cliente en el siguiente intento.
+    """
     try:
         db_name = st.secrets["mongodb"].get("db_name", "ismr")
-        return _get_client()[db_name]
+        client = _get_client()
+        return client[db_name]
     except Exception as e:
+        # Limpiar cache para que el siguiente intento cree un cliente fresco
+        try:
+            _get_client.clear()
+        except Exception:
+            pass
         st.error(f"Error al conectar MongoDB: {str(e)}")
         return None
 
@@ -168,6 +176,11 @@ def guardar_borrador(username: str, tipo: str, datos: dict) -> bool:
         )
         return True
     except Exception as e:
+        # Si falla la operación, el cliente podría tener conexión rota — limpiar cache
+        try:
+            _get_client.clear()
+        except Exception:
+            pass
         st.error(f"Error al guardar borrador: {str(e)}")
         return False
 

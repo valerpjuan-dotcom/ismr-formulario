@@ -1082,9 +1082,10 @@ def _construir_datos_borrador(tipo):
         f"caso_ot_numero_{tipo}":        st.session_state.get(f"caso_ot_numero_{tipo}", None),
         f"caso_solicitante_{tipo}":      st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
         f"caso_fecha_expedicion_{tipo}": st.session_state.get(f"caso_fecha_expedicion_{tipo}", None),
-        f"caso_tipo_evaluacion_{tipo}":  st.session_state.get(f"caso_tipo_evaluacion_{tipo}", "Seleccione..."),
-        f"caso_tipo_colectivo_{tipo}":   st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
-        f"caso_tipo_poblacion_{tipo}":   st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
+        f"caso_tipo_evaluacion_{tipo}":       st.session_state.get(f"caso_tipo_evaluacion_{tipo}", "Seleccione..."),
+        f"caso_tipo_colectivo_{tipo}":        st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
+        f"caso_familiar_parte_comunes_{tipo}": st.session_state.get(f"caso_familiar_parte_comunes_{tipo}", "Seleccione..."),
+        f"caso_tipo_poblacion_{tipo}":        st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
         **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
            for i in range(len(_SUBPOBLACIONES))},
         **{f"subpob_cnt_{i}_{tipo}": st.session_state.get(f"subpob_cnt_{i}_{tipo}", 0)
@@ -3821,7 +3822,14 @@ def formulario_casos(tipo="individual"):
 
     # ── Autoguardado silencioso en cada render ────────────────────────────────
     if st.session_state.get(_borrador_key):
-        guardar_borrador(st.session_state.username, tipo, _construir_datos_borrador(tipo))
+        _ok = guardar_borrador(st.session_state.username, tipo, _construir_datos_borrador(tipo))
+        if _ok:
+            from datetime import datetime
+            from zoneinfo import ZoneInfo
+            st.session_state[f"_ultimo_autoguardado_{tipo}"] = datetime.now(
+                tz=ZoneInfo("America/Bogota")).strftime("%H:%M:%S")
+    if st.session_state.get(f"_ultimo_autoguardado_{tipo}"):
+        st.caption(f"💾 Autoguardado: {st.session_state[f'_ultimo_autoguardado_{tipo}']}")
 
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
