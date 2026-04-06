@@ -10,7 +10,7 @@ from configuration.settings import defaults
 
 
 def obtener_siguiente_id(hoja):
-    return max(len(hoja.get_all_values()), 1)
+    return hoja.count() + 1
 
 
 def verificar_credenciales(username, password):

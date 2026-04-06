@@ -218,6 +218,32 @@ def eliminar_borrador(username: str, tipo: str) -> None:
         st.error(f"Error al eliminar borrador: {str(e)}")
 
 
+@st.cache_resource
+def _indices_inicializados():
+    """Conjunto mutable compartido por todas las sesiones del mismo worker.
+    Registra qué tipos ya tienen sus índices creados, para no repetirlos."""
+    return set()
+
+
+def _crear_indices(tipo: str, col_casos, col_hechos, col_perfiles, col_antecedentes,
+                   col_perfiles_actuales, col_desplazamientos, col_verificaciones,
+                   col_instancias_comunes, col_otras_orgs):
+    """Crea los índices necesarios una sola vez por tipo y worker."""
+    creados = _indices_inicializados()
+    if tipo in creados:
+        return
+    col_casos.create_index([("OT-TE", ASCENDING)], unique=True, background=True)
+    col_hechos.create_index([("ID_Caso", ASCENDING)], background=True)
+    col_perfiles.create_index([("ID_Caso", ASCENDING)], background=True)
+    col_antecedentes.create_index([("ID_Caso", ASCENDING)], background=True)
+    col_perfiles_actuales.create_index([("ID_Caso", ASCENDING)], background=True)
+    col_desplazamientos.create_index([("ID_Caso", ASCENDING)], background=True)
+    col_verificaciones.create_index([("ID_Caso", ASCENDING)], background=True)
+    col_instancias_comunes.create_index([("ID_Perfil_Actual", ASCENDING)], background=True)
+    col_otras_orgs.create_index([("ID_Perfil_Actual", ASCENDING)], background=True)
+    creados.add(tipo)
+
+
 def conectar_sheet_casos(tipo="individual"):
     """
     Equivalente a conectar_sheet_casos() de Google Sheets.
@@ -226,7 +252,10 @@ def conectar_sheet_casos(tipo="individual"):
       - get_all_values() -> list[list]
       - get_all_records() -> list[dict]
       - append_row(values: list) -> None
-    Crea índices automáticamente si no existen (idempotente).
+      - append_many_rows(rows: list[list]) -> None
+      - count() -> int
+      - find_one_by(field, value) -> dict | None
+    Crea índices la primera vez por tipo (cacheado por worker).
     """
     db = _conectar_db()
     if db is None:
@@ -257,15 +286,6 @@ def conectar_sheet_casos(tipo="individual"):
         col_desplazamientos   = db[nombre_col_desplazamientos]
         col_verificaciones    = db[nombre_col_verificaciones]
 
-        # Índices — idempotentes, no fallan si ya existen
-        col_casos.create_index([("OT-TE", ASCENDING)], unique=True, background=True)
-        col_hechos.create_index([("ID_Caso", ASCENDING)], background=True)
-        col_perfiles.create_index([("ID_Caso", ASCENDING)], background=True)
-        col_antecedentes.create_index([("ID_Caso", ASCENDING)], background=True)
-        col_perfiles_actuales.create_index([("ID_Caso", ASCENDING)], background=True)
-        col_desplazamientos.create_index([("ID_Caso", ASCENDING)], background=True)
-        col_verificaciones.create_index([("ID_Caso", ASCENDING)], background=True)
-
         tab_instancias_comunes = TAB_NOMBRES[tipo].get("instancias_comunes", f"instancias_comunes_{tipo}")
         tab_otras_orgs         = TAB_NOMBRES[tipo].get("otras_orgs",         f"otras_orgs_{tipo}")
 
@@ -275,8 +295,10 @@ def conectar_sheet_casos(tipo="individual"):
         col_instancias_comunes = db[nombre_col_instancias_comunes]
         col_otras_orgs         = db[nombre_col_otras_orgs]
 
-        col_instancias_comunes.create_index([("ID_Perfil_Actual", ASCENDING)], background=True)
-        col_otras_orgs.create_index([("ID_Perfil_Actual", ASCENDING)],         background=True)
+        # Índices — solo la primera vez por tipo en este worker process
+        _crear_indices(tipo, col_casos, col_hechos, col_perfiles, col_antecedentes,
+                       col_perfiles_actuales, col_desplazamientos, col_verificaciones,
+                       col_instancias_comunes, col_otras_orgs)
 
         proxy_casos               = WorksheetProxy(col_casos,               _CABECERAS_CASOS)
         proxy_hechos              = WorksheetProxy(col_hechos,              _CABECERAS_HECHOS)
@@ -364,6 +386,42 @@ class WorksheetProxy:
             st.error(f"❌ El caso '{ot_val}' ya existe en la base de datos.")
         except Exception as e:
             st.error(f"Error al insertar registro: {str(e)}")
+
+    def append_many_rows(self, rows: list) -> None:
+        """Inserta múltiples filas en una sola operación bulk (insert_many)."""
+        if not rows:
+            return
+        from pymongo.errors import BulkWriteError
+        docs = []
+        for values in rows:
+            if len(values) != len(self._cabeceras):
+                raise ValueError(
+                    f"Se esperaban {len(self._cabeceras)} valores, "
+                    f"se recibieron {len(values)}"
+                )
+            docs.append(dict(zip(self._cabeceras, values)))
+        try:
+            self._col.insert_many(docs, ordered=True)
+        except BulkWriteError as bwe:
+            st.error(f"Error en inserción masiva: {bwe.details}")
+        except Exception as e:
+            st.error(f"Error al insertar registros: {str(e)}")
+
+    def count(self) -> int:
+        """Retorna el número de documentos en la colección (O(1), sin descargar datos)."""
+        try:
+            return self._col.estimated_document_count()
+        except Exception as e:
+            st.error(f"Error al contar registros: {str(e)}")
+            return 0
+
+    def find_one_by(self, field: str, value) -> dict | None:
+        """Busca un documento por campo/valor usando índice. Evita cargar toda la colección."""
+        try:
+            return self._col.find_one({field: value}, {"_id": 0})
+        except Exception as e:
+            st.error(f"Error al buscar registro: {str(e)}")
+            return None
 
     # ── Helper ────────────────────────────────────────────────────────────────
 

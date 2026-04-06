@@ -34,7 +34,7 @@ from data.diccionarios import (
 from configuration.settings import TAB_NOMBRES
 from data.mongo.usuarios_repo import actualizar_password, crear_usuario, listar_usuarios, usuario_existe, hashear_password
 from data.mongo.casos_repo import conectar_sheet_casos, guardar_borrador, cargar_borrador, eliminar_borrador
-from service.auth_service import verificar_credenciales, logout, obtener_siguiente_id
+from service.auth_service import verificar_credenciales, logout
 from front.styles import inyectar_css_selector
 
 
@@ -1352,43 +1352,51 @@ def formulario_casos(tipo="individual"):
                     ]:
                         st.session_state.pop(_campo, None)
                     desp_guardados = 0
-                    for desp in st.session_state.desplazamientos:
-                        id_desp = obtener_siguiente_id(hoja_desplazamientos)
-                        hoja_desplazamientos.append_row([
-                            id_desp, id_caso, ot_te.strip(),
-                            desp.get("motivo", ""),
-                            desp.get("medios_transporte", ""),
-                            desp.get("dep_origen", ""),
-                            desp.get("mun_origen", ""),
-                            desp.get("dep_destino", ""),
-                            desp.get("mun_destino", ""),
-                            desp.get("frecuencia", ""),
-                            desp.get("tipo_via", ""),
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        desp_guardados += 1
+                    if st.session_state.desplazamientos:
+                        _start_desp = hoja_desplazamientos.count() + 1
+                        _rows_desp = [
+                            [
+                                _start_desp + i, id_caso, ot_te.strip(),
+                                desp.get("motivo", ""),
+                                desp.get("medios_transporte", ""),
+                                desp.get("dep_origen", ""),
+                                desp.get("mun_origen", ""),
+                                desp.get("dep_destino", ""),
+                                desp.get("mun_destino", ""),
+                                desp.get("frecuencia", ""),
+                                desp.get("tipo_via", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ]
+                            for i, desp in enumerate(st.session_state.desplazamientos)
+                        ]
+                        hoja_desplazamientos.append_many_rows(_rows_desp)
+                        desp_guardados = len(_rows_desp)
                     ver_guardados = 0
-                    for ver in st.session_state.verificaciones:
-                        id_ver = obtener_siguiente_id(hoja_verificaciones)
-                        hoja_verificaciones.append_row([
-                            id_ver, id_caso, ot_te.strip(),
-                            ver.get("fuente", ""),
-                            ver.get("nombre_fuente", ""),
-                            ver.get("v_hechos_riesgo", ""),
-                            ver.get("v_lugar_hechos", ""),
-                            ver.get("v_actor_hechos", ""),
-                            ver.get("v_motivacion_amenaza", ""),
-                            ver.get("v_perfil_antiguo", ""),
-                            ver.get("v_modo_participacion", ""),
-                            ver.get("v_rol_perfil_antiguo", ""),
-                            ver.get("v_frente_columna", ""),
-                            ver.get("v_perfil_actual", ""),
-                            ver.get("v_organizacion", ""),
-                            ver.get("v_rol_perfil_actual", ""),
-                            ver.get("criterios", ""),
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        ver_guardados += 1
+                    if st.session_state.verificaciones:
+                        _start_ver = hoja_verificaciones.count() + 1
+                        _rows_ver = [
+                            [
+                                _start_ver + i, id_caso, ot_te.strip(),
+                                ver.get("fuente", ""),
+                                ver.get("nombre_fuente", ""),
+                                ver.get("v_hechos_riesgo", ""),
+                                ver.get("v_lugar_hechos", ""),
+                                ver.get("v_actor_hechos", ""),
+                                ver.get("v_motivacion_amenaza", ""),
+                                ver.get("v_perfil_antiguo", ""),
+                                ver.get("v_modo_participacion", ""),
+                                ver.get("v_rol_perfil_antiguo", ""),
+                                ver.get("v_frente_columna", ""),
+                                ver.get("v_perfil_actual", ""),
+                                ver.get("v_organizacion", ""),
+                                ver.get("v_rol_perfil_actual", ""),
+                                ver.get("criterios", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ]
+                            for i, ver in enumerate(st.session_state.verificaciones)
+                        ]
+                        hoja_verificaciones.append_many_rows(_rows_ver)
+                        ver_guardados = len(_rows_ver)
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
                     st.session_state.antecedentes = []
@@ -3820,18 +3828,26 @@ def formulario_casos(tipo="individual"):
     st.markdown("---")
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
-    # ── Autoguardado con debounce (máximo una vez cada 30 segundos) ──────────
+    # ── Autoguardado con debounce (30s) + change detection ───────────────────
     if st.session_state.get(_borrador_key):
         from datetime import datetime
         from zoneinfo import ZoneInfo
+        import hashlib, json
         _tz = ZoneInfo("America/Bogota")
         _ahora = datetime.now(tz=_tz)
         _ultima_ts = st.session_state.get(f"_ultimo_autoguardado_ts_{tipo}")
         if _ultima_ts is None or (_ahora - _ultima_ts).total_seconds() >= 30:
-            _ok = guardar_borrador(st.session_state.username, tipo, _construir_datos_borrador(tipo))
-            if _ok:
-                st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
-                st.session_state[f"_ultimo_autoguardado_{tipo}"] = _ahora.strftime("%H:%M:%S")
+            _datos_borrador = _construir_datos_borrador(tipo)
+            _hash_actual = hashlib.sha256(
+                json.dumps(_datos_borrador, sort_keys=True, default=str).encode()
+            ).hexdigest()
+            _hash_anterior = st.session_state.get(f"_hash_borrador_{tipo}")
+            if _hash_actual != _hash_anterior:
+                _ok = guardar_borrador(st.session_state.username, tipo, _datos_borrador)
+                if _ok:
+                    st.session_state[f"_hash_borrador_{tipo}"] = _hash_actual
+                    st.session_state[f"_ultimo_autoguardado_{tipo}"] = _ahora.strftime("%H:%M:%S")
+            st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
     if st.session_state.get(f"_ultimo_autoguardado_{tipo}"):
         st.caption(f"💾 Autoguardado: {st.session_state[f'_ultimo_autoguardado_{tipo}']}")
 
@@ -3890,13 +3906,11 @@ def formulario_casos(tipo="individual"):
             for e in errores: st.write(f"   • {e}")
         else:
             try:
-                registros_existentes = hoja_casos.get_all_records()
-                ot_existentes = [str(r.get("OT-TE", "")) for r in registros_existentes]
-                if ot_te.strip() in ot_existentes:
+                if hoja_casos.find_one_by("OT-TE", ot_te.strip()):
                     st.error(f"❌ El caso '{ot_te}' ya existe en esta hoja")
                 else:
                     timestamp = datetime.now(tz=_BOGOTA).strftime("%Y-%m-%d %H:%M:%S")
-                    id_caso   = obtener_siguiente_id(hoja_casos)
+                    id_caso   = hoja_casos.count() + 1
                     hoja_casos.append_row([
                         id_caso, timestamp, tipo_estudio, ot_te.strip(),
                         str(fecha_expedicion_ot) if fecha_expedicion_ot else "",
@@ -3962,161 +3976,189 @@ def formulario_casos(tipo="individual"):
                         st.session_state.nombre_completo, st.session_state.username
                     ])
                     hechos_guardados = 0
-                    for hecho in st.session_state.hechos:
-                        id_hecho = obtener_siguiente_id(hoja_hechos)
-                        hoja_hechos.append_row([
-                            id_hecho, id_caso, ot_te.strip(),
-                            hecho["tipo"], hecho["fecha"],
-                            hecho.get("departamento", ""), hecho.get("municipio", ""),
-                            hecho.get("tipo_actor", ""), hecho.get("actor_generador", ""),
-                            hecho.get("medio", ""), hecho.get("victima_situacion", ""), hecho.get("tipo_amenaza", ""),
-                            hecho.get("motivacion_amenaza", ""), hecho.get("nexo_causal", ""),
-                            hecho["descripcion"],
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        hechos_guardados += 1
+                    if st.session_state.hechos:
+                        _start_hecho = hoja_hechos.count() + 1
+                        _rows_hechos = [
+                            [
+                                _start_hecho + i, id_caso, ot_te.strip(),
+                                hecho["tipo"], hecho["fecha"],
+                                hecho.get("departamento", ""), hecho.get("municipio", ""),
+                                hecho.get("tipo_actor", ""), hecho.get("actor_generador", ""),
+                                hecho.get("medio", ""), hecho.get("victima_situacion", ""), hecho.get("tipo_amenaza", ""),
+                                hecho.get("motivacion_amenaza", ""), hecho.get("nexo_causal", ""),
+                                hecho["descripcion"],
+                                st.session_state.nombre_completo, st.session_state.username
+                            ]
+                            for i, hecho in enumerate(st.session_state.hechos)
+                        ]
+                        hoja_hechos.append_many_rows(_rows_hechos)
+                        hechos_guardados = len(_rows_hechos)
                     perfiles_guardados = 0
                     # Perfiles individuales (perfil antiguo individual)
                     _fuente_perfiles = st.session_state.perfiles if es_individual else st.session_state.get("perfiles_col", [])
-                    for perfil in _fuente_perfiles:
-                        id_perfil = obtener_siguiente_id(hoja_perfiles)
-                        hoja_perfiles.append_row([
-                            id_perfil, id_caso, ot_te.strip(),
-                            perfil.get("modo_participacion", ""),
-                            perfil.get("anio_ingreso", ""),
-                            perfil.get("bloque", ""),
-                            perfil.get("estructura", ""),
-                            perfil.get("lugar_acreditacion", ""),
-                            perfil.get("rol", ""),
-                            perfil.get("otro_rol", ""),
-                            perfil.get("subpoblacion", ""),
-                            perfil.get("meses_privado", ""),
-                            perfil.get("tipo_institucion", ""),
-                            perfil.get("pabellon_alta_seguridad", ""),
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        perfiles_guardados += 1
+                    if _fuente_perfiles:
+                        _start_perfil = hoja_perfiles.count() + 1
+                        _rows_perfiles = [
+                            [
+                                _start_perfil + i, id_caso, ot_te.strip(),
+                                perfil.get("modo_participacion", ""),
+                                perfil.get("anio_ingreso", ""),
+                                perfil.get("bloque", ""),
+                                perfil.get("estructura", ""),
+                                perfil.get("lugar_acreditacion", ""),
+                                perfil.get("rol", ""),
+                                perfil.get("otro_rol", ""),
+                                perfil.get("subpoblacion", ""),
+                                perfil.get("meses_privado", ""),
+                                perfil.get("tipo_institucion", ""),
+                                perfil.get("pabellon_alta_seguridad", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ]
+                            for i, perfil in enumerate(_fuente_perfiles)
+                        ]
+                        hoja_perfiles.append_many_rows(_rows_perfiles)
+                        perfiles_guardados = len(_rows_perfiles)
                     pa_guardados = 0
-                    for pa in st.session_state.perfiles_actuales:
-                        id_pa = obtener_siguiente_id(hoja_perfiles_actuales)
-                        hoja_perfiles_actuales.append_row([
-                            id_pa, id_caso, ot_te.strip(),
-                            pa.get("familiar_parte_comunes", ""),
-                            pa.get("nivel_educativo", ""),
-                            pa.get("fuente_ingresos", ""),
-                            pa.get("estado_proyecto_arn", ""),
-                            pa.get("actividad_economica", ""),
-                            pa.get("comparecencia_jep", ""),
-                            pa.get("macrocasos_jep", ""),
-                            pa.get("victima_jep", ""),
-                            pa.get("macrocaso_victima", ""),
-                            pa.get("participacion_toar", ""),
-                            pa.get("busqueda_desaparecidos", ""),
-                            pa.get("participacion_pnis", ""),
-                            pa.get("desminado", ""),
-                            pa.get("participa_comunes", ""),
-                            pa.get("concejo_comunes", ""),
-                            pa.get("instancias_partido", ""),   # compat: 1er registro
-                            pa.get("roles_partido", ""),        # compat: 1er registro
-                            pa.get("consejeria_nacional", ""),  # compat: 1er registro
-                            pa.get("tipo_consejeria", ""),      # compat: 1er registro
-                            pa.get("participa_otras_org", ""),
-                            pa.get("tipo_org", ""),             # compat: 1er registro
-                            pa.get("nombre_org", ""),           # compat: 1er registro
-                            pa.get("ambito_org", ""),           # compat: 1er registro
-                            pa.get("escala_org", ""),           # compat: 1er registro
-                            pa.get("departamento_org", ""),     # compat: 1er registro
-                            pa.get("municipio_org", ""),        # compat: 1er registro
-                            pa.get("rol_org", ""),              # compat: 1er registro
-                            pa.get("anio_inicio_org", ""),      # compat: 1er registro
-                            pa.get("anio_fin_org", ""),         # compat: 1er registro
-                            pa.get("cargo_eleccion", ""),
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        # ── Colección Instancias Comunes (multiregistro) ──────
-                        for ic in pa.get("instancias_comunes", []):
-                            id_ic = obtener_siguiente_id(hoja_instancias_comunes)
-                            hoja_instancias_comunes.append_row([
-                                id_ic, id_pa, id_caso, ot_te.strip(),
-                                ic.get("instancias_partido", ""),
-                                ic.get("roles_partido", ""),
-                                ic.get("consejeria_nacional", ""),
-                                ic.get("tipo_consejeria", ""),
+                    if st.session_state.perfiles_actuales:
+                        _start_pa = hoja_perfiles_actuales.count() + 1
+                        _start_ic = hoja_instancias_comunes.count() + 1
+                        _start_oo = hoja_otras_orgs.count() + 1
+                        _rows_pa, _rows_ic, _rows_oo = [], [], []
+                        _ic_offset, _oo_offset = 0, 0
+                        for i, pa in enumerate(st.session_state.perfiles_actuales):
+                            _id_pa = _start_pa + i
+                            _rows_pa.append([
+                                _id_pa, id_caso, ot_te.strip(),
+                                pa.get("familiar_parte_comunes", ""),
+                                pa.get("nivel_educativo", ""),
+                                pa.get("fuente_ingresos", ""),
+                                pa.get("estado_proyecto_arn", ""),
+                                pa.get("actividad_economica", ""),
+                                pa.get("comparecencia_jep", ""),
+                                pa.get("macrocasos_jep", ""),
+                                pa.get("victima_jep", ""),
+                                pa.get("macrocaso_victima", ""),
+                                pa.get("participacion_toar", ""),
+                                pa.get("busqueda_desaparecidos", ""),
+                                pa.get("participacion_pnis", ""),
+                                pa.get("desminado", ""),
+                                pa.get("participa_comunes", ""),
+                                pa.get("concejo_comunes", ""),
+                                pa.get("instancias_partido", ""),   # compat: 1er registro
+                                pa.get("roles_partido", ""),        # compat: 1er registro
+                                pa.get("consejeria_nacional", ""),  # compat: 1er registro
+                                pa.get("tipo_consejeria", ""),      # compat: 1er registro
+                                pa.get("participa_otras_org", ""),
+                                pa.get("tipo_org", ""),             # compat: 1er registro
+                                pa.get("nombre_org", ""),           # compat: 1er registro
+                                pa.get("ambito_org", ""),           # compat: 1er registro
+                                pa.get("escala_org", ""),           # compat: 1er registro
+                                pa.get("departamento_org", ""),     # compat: 1er registro
+                                pa.get("municipio_org", ""),        # compat: 1er registro
+                                pa.get("rol_org", ""),              # compat: 1er registro
+                                pa.get("anio_inicio_org", ""),      # compat: 1er registro
+                                pa.get("anio_fin_org", ""),         # compat: 1er registro
+                                pa.get("cargo_eleccion", ""),
                                 st.session_state.nombre_completo, st.session_state.username
                             ])
-                        # ── Colección Otras Organizaciones (multiregistro) ────
-                        for oo in pa.get("otras_orgs", []):
-                            id_oo = obtener_siguiente_id(hoja_otras_orgs)
-                            hoja_otras_orgs.append_row([
-                                id_oo, id_pa, id_caso, ot_te.strip(),
-                                oo.get("tipo_org", ""),
-                                oo.get("nombre_org", ""),
-                                oo.get("ambito_org", ""),
-                                oo.get("escala_org", ""),
-                                oo.get("departamento_org", ""),
-                                oo.get("municipio_org", ""),
-                                oo.get("rol_org", ""),
-                                oo.get("anio_inicio_org", ""),
-                                oo.get("anio_fin_org", ""),
-                                st.session_state.nombre_completo, st.session_state.username
-                            ])
-                        pa_guardados += 1
+                            # ── Instancias Comunes (multiregistro) ───────────
+                            for ic in pa.get("instancias_comunes", []):
+                                _rows_ic.append([
+                                    _start_ic + _ic_offset, _id_pa, id_caso, ot_te.strip(),
+                                    ic.get("instancias_partido", ""),
+                                    ic.get("roles_partido", ""),
+                                    ic.get("consejeria_nacional", ""),
+                                    ic.get("tipo_consejeria", ""),
+                                    st.session_state.nombre_completo, st.session_state.username
+                                ])
+                                _ic_offset += 1
+                            # ── Otras Organizaciones (multiregistro) ─────────
+                            for oo in pa.get("otras_orgs", []):
+                                _rows_oo.append([
+                                    _start_oo + _oo_offset, _id_pa, id_caso, ot_te.strip(),
+                                    oo.get("tipo_org", ""),
+                                    oo.get("nombre_org", ""),
+                                    oo.get("ambito_org", ""),
+                                    oo.get("escala_org", ""),
+                                    oo.get("departamento_org", ""),
+                                    oo.get("municipio_org", ""),
+                                    oo.get("rol_org", ""),
+                                    oo.get("anio_inicio_org", ""),
+                                    oo.get("anio_fin_org", ""),
+                                    st.session_state.nombre_completo, st.session_state.username
+                                ])
+                                _oo_offset += 1
+                        hoja_perfiles_actuales.append_many_rows(_rows_pa)
+                        hoja_instancias_comunes.append_many_rows(_rows_ic)
+                        hoja_otras_orgs.append_many_rows(_rows_oo)
+                        pa_guardados = len(_rows_pa)
                     antecedentes_guardados = 0
-                    for ant in st.session_state.antecedentes:
-                        id_ant = obtener_siguiente_id(hoja_antecedentes)
-                        hoja_antecedentes.append_row([
-                            id_ant, id_caso, ot_te.strip(),
-                            ant.get("registra_ot", ""),
-                            # ── NUEVO: Agregar los nuevos campos
-                            ant.get("ot_te_antecede", ""),
-                            ant.get("tipo_ruta_antecedente", ""),
-                            ant.get("nivel_riesgo_anterior", ""),
-                            ant.get("registra_resoluciones", ""),
-                            ant.get("numero_resolucion", ""),
-                            ant.get("dia_resolucion", ""),
-                            ant.get("mes_resolucion", ""),
-                            ant.get("anio_resolucion", ""),
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        antecedentes_guardados += 1
+                    if st.session_state.antecedentes:
+                        _start_ant = hoja_antecedentes.count() + 1
+                        _rows_ant = [
+                            [
+                                _start_ant + i, id_caso, ot_te.strip(),
+                                ant.get("registra_ot", ""),
+                                ant.get("ot_te_antecede", ""),
+                                ant.get("tipo_ruta_antecedente", ""),
+                                ant.get("nivel_riesgo_anterior", ""),
+                                ant.get("registra_resoluciones", ""),
+                                ant.get("numero_resolucion", ""),
+                                ant.get("dia_resolucion", ""),
+                                ant.get("mes_resolucion", ""),
+                                ant.get("anio_resolucion", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ]
+                            for i, ant in enumerate(st.session_state.antecedentes)
+                        ]
+                        hoja_antecedentes.append_many_rows(_rows_ant)
+                        antecedentes_guardados = len(_rows_ant)
                     desp_guardados = 0
-                    for desp in st.session_state.desplazamientos:
-                        id_desp = obtener_siguiente_id(hoja_desplazamientos)
-                        hoja_desplazamientos.append_row([
-                            id_desp, id_caso, ot_te.strip(),
-                            desp.get("motivo", ""),
-                            desp.get("medios_transporte", ""),
-                            desp.get("dep_origen", ""),
-                            desp.get("mun_origen", ""),
-                            desp.get("dep_destino", ""),
-                            desp.get("mun_destino", ""),
-                            desp.get("frecuencia", ""),
-                            desp.get("tipo_via", ""),
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        desp_guardados += 1
+                    if st.session_state.desplazamientos:
+                        _start_desp = hoja_desplazamientos.count() + 1
+                        _rows_desp = [
+                            [
+                                _start_desp + i, id_caso, ot_te.strip(),
+                                desp.get("motivo", ""),
+                                desp.get("medios_transporte", ""),
+                                desp.get("dep_origen", ""),
+                                desp.get("mun_origen", ""),
+                                desp.get("dep_destino", ""),
+                                desp.get("mun_destino", ""),
+                                desp.get("frecuencia", ""),
+                                desp.get("tipo_via", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ]
+                            for i, desp in enumerate(st.session_state.desplazamientos)
+                        ]
+                        hoja_desplazamientos.append_many_rows(_rows_desp)
+                        desp_guardados = len(_rows_desp)
                     ver_guardados = 0
-                    for ver in st.session_state.verificaciones:
-                        id_ver = obtener_siguiente_id(hoja_verificaciones)
-                        hoja_verificaciones.append_row([
-                            id_ver, id_caso, ot_te.strip(),
-                            ver.get("fuente", ""),
-                            ver.get("nombre_fuente", ""),
-                            ver.get("v_hechos_riesgo", ""),
-                            ver.get("v_lugar_hechos", ""),
-                            ver.get("v_actor_hechos", ""),
-                            ver.get("v_motivacion_amenaza", ""),
-                            ver.get("v_perfil_antiguo", ""),
-                            ver.get("v_modo_participacion", ""),
-                            ver.get("v_rol_perfil_antiguo", ""),
-                            ver.get("v_frente_columna", ""),
-                            ver.get("v_perfil_actual", ""),
-                            ver.get("v_organizacion", ""),
-                            ver.get("v_rol_perfil_actual", ""),
-                            ver.get("criterios", ""),
-                            st.session_state.nombre_completo, st.session_state.username
-                        ])
-                        ver_guardados += 1
+                    if st.session_state.verificaciones:
+                        _start_ver = hoja_verificaciones.count() + 1
+                        _rows_ver = [
+                            [
+                                _start_ver + i, id_caso, ot_te.strip(),
+                                ver.get("fuente", ""),
+                                ver.get("nombre_fuente", ""),
+                                ver.get("v_hechos_riesgo", ""),
+                                ver.get("v_lugar_hechos", ""),
+                                ver.get("v_actor_hechos", ""),
+                                ver.get("v_motivacion_amenaza", ""),
+                                ver.get("v_perfil_antiguo", ""),
+                                ver.get("v_modo_participacion", ""),
+                                ver.get("v_rol_perfil_antiguo", ""),
+                                ver.get("v_frente_columna", ""),
+                                ver.get("v_perfil_actual", ""),
+                                ver.get("v_organizacion", ""),
+                                ver.get("v_rol_perfil_actual", ""),
+                                ver.get("criterios", ""),
+                                st.session_state.nombre_completo, st.session_state.username
+                            ]
+                            for i, ver in enumerate(st.session_state.verificaciones)
+                        ]
+                        hoja_verificaciones.append_many_rows(_rows_ver)
+                        ver_guardados = len(_rows_ver)
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
                     st.session_state.perfiles_col = []
