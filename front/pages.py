@@ -98,9 +98,10 @@ def pantalla_cambiar_password():
 
 
 def pantalla_selector():
+    import html as _html
     inyectar_css_selector()
     nombre = st.session_state.nombre_completo or "Analista"
-    nombre_corto = nombre.split()[0] if nombre else "Analista"
+    nombre_corto = _html.escape(nombre.split()[0] if nombre else "Analista")
     st.markdown(f"""
     <div style="text-align:center; margin-bottom:48px; margin-top:20px;">
         <p style="font-family:'DM Sans',sans-serif; font-weight:300; font-size:13px;
@@ -4199,6 +4200,8 @@ def formulario_casos(tipo="individual"):
 
 
 def panel_visualizacion():
+    if not st.session_state.get("es_admin"):
+        st.error("⛔ Acceso restringido a administradores."); return
     import io
     st.title("📊 Casos Registrados"); st.markdown("---")
     tab_ind, tab_col = st.tabs(["👤 Individual", "👥 Colectivo"])
@@ -4364,6 +4367,8 @@ def panel_visualizacion():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def panel_gestion_usuarios():
+    if not st.session_state.get("es_admin"):
+        st.error("⛔ Acceso restringido a administradores."); return
     import unicodedata, io
     from data.mongo.usuarios_repo import crear_usuarios_masivo, hashear_password
 
@@ -4400,7 +4405,7 @@ def panel_gestion_usuarios():
                 nuevo_username = st.text_input("Usuario *", placeholder="nombre.apellido")
                 nuevo_nombre   = st.text_input("Nombre Completo *", placeholder="Juan Pérez")
             with col2:
-                password_default = st.text_input("Contraseña por Defecto *", value="ISMR2024")
+                password_default = st.text_input("Contraseña por Defecto *", placeholder="Mínimo 8 caracteres")
                 es_admin_nuevo   = st.checkbox("¿Es Administrador?", value=False)
             st.info("💡 El usuario deberá cambiar la contraseña en su primer acceso")
             if st.form_submit_button("✅ Crear Usuario", use_container_width=True, type="primary"):
@@ -4477,8 +4482,9 @@ def panel_gestion_usuarios():
                     col_pw, col_adm = st.columns(2)
                     with col_pw:
                         pwd_masiva = st.text_input(
-                            "Contraseña temporal para todos", value="ISMR2024",
+                            "Contraseña temporal para todos",
                             key="pwd_masiva",
+                            placeholder="Mínimo 8 caracteres",
                             help="Todos los usuarios deberán cambiarla al primer ingreso",
                         )
                     with col_adm:

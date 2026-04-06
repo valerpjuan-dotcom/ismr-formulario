@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 import hashlib
 from datetime import datetime, timedelta
@@ -19,8 +19,8 @@ def username_a_email(username: str) -> str:
 
 
 def generar_codigo() -> str:
-    """Genera un código numérico de 6 dígitos."""
-    return "".join(random.choices(string.digits, k=6))
+    """Genera un código numérico de 6 dígitos criptográficamente seguro."""
+    return "".join(secrets.choice(string.digits) for _ in range(6))
 
 
 def guardar_codigo(username: str, codigo: str):
