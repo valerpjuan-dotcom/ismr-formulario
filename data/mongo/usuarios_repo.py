@@ -11,9 +11,9 @@ def _get_client():
         uri,
         tls=True,
         tlsAllowInvalidCertificates=False,
-        serverSelectionTimeoutMS=10000,
-        connectTimeoutMS=10000,
-        socketTimeoutMS=10000,
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=5000,
+        socketTimeoutMS=5000,
         retryWrites=True,
         appName="ISMR",
     )

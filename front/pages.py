@@ -3820,14 +3820,18 @@ def formulario_casos(tipo="individual"):
     st.markdown("---")
     observaciones = st.text_area("Observaciones (Opcional)", height=80, key=f"caso_observaciones_{tipo}")
 
-    # ── Autoguardado silencioso en cada render ────────────────────────────────
+    # ── Autoguardado con debounce (máximo una vez cada 30 segundos) ──────────
     if st.session_state.get(_borrador_key):
-        _ok = guardar_borrador(st.session_state.username, tipo, _construir_datos_borrador(tipo))
-        if _ok:
-            from datetime import datetime
-            from zoneinfo import ZoneInfo
-            st.session_state[f"_ultimo_autoguardado_{tipo}"] = datetime.now(
-                tz=ZoneInfo("America/Bogota")).strftime("%H:%M:%S")
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        _tz = ZoneInfo("America/Bogota")
+        _ahora = datetime.now(tz=_tz)
+        _ultima_ts = st.session_state.get(f"_ultimo_autoguardado_ts_{tipo}")
+        if _ultima_ts is None or (_ahora - _ultima_ts).total_seconds() >= 30:
+            _ok = guardar_borrador(st.session_state.username, tipo, _construir_datos_borrador(tipo))
+            if _ok:
+                st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
+                st.session_state[f"_ultimo_autoguardado_{tipo}"] = _ahora.strftime("%H:%M:%S")
     if st.session_state.get(f"_ultimo_autoguardado_{tipo}"):
         st.caption(f"💾 Autoguardado: {st.session_state[f'_ultimo_autoguardado_{tipo}']}")
 
