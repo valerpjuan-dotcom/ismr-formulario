@@ -3857,7 +3857,6 @@ def formulario_casos(tipo="individual"):
                     # Si falla, NO actualizar timestamp → reintenta en el siguiente render
                 else:
                     # Sin cambios, actualizar timestamp para no re-verificar innecesariamente
-                    st.session_state[f"_ultimo_autoguardado_{tipo}"] = f"✓ {_ahora.strftime('%H:%M:%S')}"
                     st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
     if st.session_state.get(f"_ultimo_autoguardado_{tipo}"):
         st.caption(f"Autoguardado: {st.session_state[f'_ultimo_autoguardado_{tipo}']}")
