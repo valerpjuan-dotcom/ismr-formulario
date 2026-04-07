@@ -3839,9 +3839,9 @@ def formulario_casos(tipo="individual"):
         _ultima_ts = st.session_state.get(f"_ultimo_autoguardado_ts_{tipo}")
         if _ultima_ts is None or (_ahora - _ultima_ts).total_seconds() >= 30:
             _datos_borrador = _construir_datos_borrador(tipo)
-            _ot_actual = str(_datos_borrador.get(f"caso_ot_te_{tipo}", "")).strip()
+            _ot_actual = str(_datos_borrador.get(f"caso_ot_anio_{tipo}", "")).strip()
             if not _ot_actual:
-                # Formulario reseteado (OT-TE vacío) → no sobreescribir borrador existente
+                # Formulario reseteado (año OT vacío) → no sobreescribir borrador existente
                 pass
             else:
                 _hash_actual = hashlib.sha256(
