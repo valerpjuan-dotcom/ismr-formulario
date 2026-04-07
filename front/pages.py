@@ -3852,14 +3852,15 @@ def formulario_casos(tipo="individual"):
                     _ok = guardar_borrador(st.session_state.username, tipo, _datos_borrador)
                     if _ok:
                         st.session_state[f"_hash_borrador_{tipo}"] = _hash_actual
-                        st.session_state[f"_ultimo_autoguardado_{tipo}"] = _ahora.strftime("%H:%M:%S")
+                        st.session_state[f"_ultimo_autoguardado_{tipo}"] = f"💾 {_ahora.strftime('%H:%M:%S')}"
                         st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
                     # Si falla, NO actualizar timestamp → reintenta en el siguiente render
                 else:
                     # Sin cambios, actualizar timestamp para no re-verificar innecesariamente
+                    st.session_state[f"_ultimo_autoguardado_{tipo}"] = f"✓ {_ahora.strftime('%H:%M:%S')}"
                     st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
     if st.session_state.get(f"_ultimo_autoguardado_{tipo}"):
-        st.caption(f"💾 Autoguardado: {st.session_state[f'_ultimo_autoguardado_{tipo}']}")
+        st.caption(f"Autoguardado: {st.session_state[f'_ultimo_autoguardado_{tipo}']}")
 
     # ── Guardar borrador ──────────────────────────────────────────────────────
     col_borrador, col_registrar = st.columns([1, 2])
