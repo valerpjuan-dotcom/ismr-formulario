@@ -3839,20 +3839,25 @@ def formulario_casos(tipo="individual"):
         _ultima_ts = st.session_state.get(f"_ultimo_autoguardado_ts_{tipo}")
         if _ultima_ts is None or (_ahora - _ultima_ts).total_seconds() >= 30:
             _datos_borrador = _construir_datos_borrador(tipo)
-            _hash_actual = hashlib.sha256(
-                json.dumps(_datos_borrador, sort_keys=True, default=str).encode()
-            ).hexdigest()
-            _hash_anterior = st.session_state.get(f"_hash_borrador_{tipo}")
-            if _hash_actual != _hash_anterior:
-                _ok = guardar_borrador(st.session_state.username, tipo, _datos_borrador)
-                if _ok:
-                    st.session_state[f"_hash_borrador_{tipo}"] = _hash_actual
-                    st.session_state[f"_ultimo_autoguardado_{tipo}"] = _ahora.strftime("%H:%M:%S")
-                    st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
-                # Si falla, NO actualizar timestamp → reintenta en el siguiente render
+            _ot_actual = str(_datos_borrador.get(f"caso_ot_te_{tipo}", "")).strip()
+            if not _ot_actual:
+                # Formulario reseteado (OT-TE vacío) → no sobreescribir borrador existente
+                pass
             else:
-                # Sin cambios, actualizar timestamp para no re-verificar innecesariamente
-                st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
+                _hash_actual = hashlib.sha256(
+                    json.dumps(_datos_borrador, sort_keys=True, default=str).encode()
+                ).hexdigest()
+                _hash_anterior = st.session_state.get(f"_hash_borrador_{tipo}")
+                if _hash_actual != _hash_anterior:
+                    _ok = guardar_borrador(st.session_state.username, tipo, _datos_borrador)
+                    if _ok:
+                        st.session_state[f"_hash_borrador_{tipo}"] = _hash_actual
+                        st.session_state[f"_ultimo_autoguardado_{tipo}"] = _ahora.strftime("%H:%M:%S")
+                        st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
+                    # Si falla, NO actualizar timestamp → reintenta en el siguiente render
+                else:
+                    # Sin cambios, actualizar timestamp para no re-verificar innecesariamente
+                    st.session_state[f"_ultimo_autoguardado_ts_{tipo}"] = _ahora
     if st.session_state.get(f"_ultimo_autoguardado_{tipo}"):
         st.caption(f"💾 Autoguardado: {st.session_state[f'_ultimo_autoguardado_{tipo}']}")
 
