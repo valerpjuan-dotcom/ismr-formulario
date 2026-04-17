@@ -4349,15 +4349,22 @@ def panel_visualizacion():
 
             st.markdown("---")
             if not df.empty or not df_h.empty or not df_p.empty or not df_a.empty or not df_pa.empty or not df_d.empty or not df_ver.empty or not df_ic.empty or not df_oo.empty:
+                import re as _re
+                def _limpiar_excel(df_in):
+                    """Elimina caracteres de control ilegales para openpyxl."""
+                    _ctrl = _re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+                    return df_in.map(
+                        lambda v: _ctrl.sub("", v) if isinstance(v, str) else v
+                    )
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-                    (df_f   if not df.empty   else df).to_excel(writer, sheet_name="Casos",              index=False)
-                    (df_hf  if not df_h.empty else df_h).to_excel(writer, sheet_name="Hechos de Riesgo", index=False)
-                    df_p.to_excel(writer, sheet_name="Perfiles",          index=False)
-                    df_a.to_excel(writer, sheet_name="Antecedentes",      index=False)
-                    df_pa.to_excel(writer, sheet_name="Perfiles Actuales", index=False)
-                    df_ic.to_excel(writer, sheet_name="Instancias Comunes",  index=False)
-                    df_oo.to_excel(writer, sheet_name="Otras Orgs",          index=False)
+                    _limpiar_excel(df_f   if not df.empty   else df).to_excel(writer, sheet_name="Casos",              index=False)
+                    _limpiar_excel(df_hf  if not df_h.empty else df_h).to_excel(writer, sheet_name="Hechos de Riesgo", index=False)
+                    _limpiar_excel(df_p).to_excel(writer, sheet_name="Perfiles",          index=False)
+                    _limpiar_excel(df_a).to_excel(writer, sheet_name="Antecedentes",      index=False)
+                    _limpiar_excel(df_pa).to_excel(writer, sheet_name="Perfiles Actuales", index=False)
+                    _limpiar_excel(df_ic).to_excel(writer, sheet_name="Instancias Comunes",  index=False)
+                    _limpiar_excel(df_oo).to_excel(writer, sheet_name="Otras Orgs",          index=False)
                 buffer.seek(0)
                 nombre_archivo = f"ISMR_{tipo}_{datetime.now(tz=_BOGOTA).strftime('%Y%m%d_%H%M')}.xlsx"
                 st.download_button(
