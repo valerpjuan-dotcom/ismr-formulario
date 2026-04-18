@@ -1554,9 +1554,9 @@ def formulario_casos(tipo="individual"):
             sexo = st.selectbox("Sexo *", ["Seleccione...", "Hombre", "Mujer", "Intersexual"],
                                 key=f"caso_sexo_{tipo}")
     else:
-        # Colectivo: "Familiar" → sin fecha; los demás → "Fecha inicio de funcionamiento"
+        # Colectivo: "Familiar" → sin fecha; los demás → "Fecha última acta de asamblea ordinaria"
         if tipo_colectivo != "Familiar":
-            fecha_nacimiento = st.date_input("Fecha inicio de funcionamiento", value=None,
+            fecha_nacimiento = st.date_input("Fecha última acta de asamblea ordinaria", value=None,
                                              min_value=date(1900, 1, 1),
                                              max_value=date.today(),
                                              key=f"caso_fecha_nacimiento_{tipo}")
