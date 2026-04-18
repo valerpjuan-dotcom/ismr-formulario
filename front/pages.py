@@ -1084,7 +1084,8 @@ def _construir_datos_borrador(tipo):
         f"caso_solicitante_{tipo}":      st.session_state.get(f"caso_solicitante_{tipo}", "Seleccione..."),
         f"caso_fecha_expedicion_{tipo}": st.session_state.get(f"caso_fecha_expedicion_{tipo}", None),
         f"caso_tipo_evaluacion_{tipo}":       st.session_state.get(f"caso_tipo_evaluacion_{tipo}", "Seleccione..."),
-        f"caso_tipo_colectivo_{tipo}":        st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
+        f"caso_tipo_colectivo_{tipo}":          st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
+        f"caso_tipo_estructura_partido_{tipo}": st.session_state.get(f"caso_tipo_estructura_partido_{tipo}", "Seleccione..."),
         f"caso_familiar_parte_comunes_{tipo}": st.session_state.get(f"caso_familiar_parte_comunes_{tipo}", "Seleccione..."),
         f"caso_tipo_poblacion_{tipo}":        st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
         **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
@@ -1488,8 +1489,17 @@ def formulario_casos(tipo="individual"):
             ["Seleccione...", "Familiar", "Gremial (Asociaciones, Cooperativas, etc.)", "ETCR, NAR, ETC.", "Estructura de partido"],
             key=f"caso_tipo_colectivo_{tipo}"
         )
+        if tipo_colectivo == "Estructura de partido":
+            tipo_estructura_partido = st.selectbox(
+                "Tipo de Estructura *",
+                ["Seleccione...", "Comuna", "Local", "Municipal", "Metropolitana", "Departamental", "Nacional"],
+                key=f"caso_tipo_estructura_partido_{tipo}"
+            )
+        else:
+            tipo_estructura_partido = ""
     else:
         tipo_colectivo = ""
+        tipo_estructura_partido = ""
 
     # ── Tipo de Población (solo individual) ──────────────────────────────────
     if es_individual:
@@ -3884,6 +3894,7 @@ def formulario_casos(tipo="individual"):
         if fecha_expedicion_ot is None:                 errores.append("La fecha de expedición OT es obligatoria")
         if tipo_evaluacion == "Seleccione...":          errores.append("Debe seleccionar el tipo de evaluación")
         if not es_individual and tipo_colectivo == "Seleccione...": errores.append("Debe seleccionar el tipo de colectivo")
+        if not es_individual and tipo_colectivo == "Estructura de partido" and tipo_estructura_partido == "Seleccione...": errores.append("Debe seleccionar el tipo de estructura")
         if es_individual and tipo_poblacion == "Seleccione...":  errores.append("Debe seleccionar el tipo de población")
         if es_individual and len(subpoblacion) == 0:              errores.append("Debe seleccionar al menos una subpoblación")
         if es_individual and fecha_nacimiento is None:       errores.append("La fecha de nacimiento es obligatoria")
@@ -3926,6 +3937,7 @@ def formulario_casos(tipo="individual"):
                         str(fecha_expedicion_ot) if fecha_expedicion_ot else "",
                         tipo_evaluacion,
                         tipo_colectivo if tipo_colectivo and tipo_colectivo != "Seleccione..." else "",
+                        tipo_estructura_partido if tipo_estructura_partido and tipo_estructura_partido != "Seleccione..." else "",
                         tipo_poblacion, " | ".join(subpoblacion),
                         str(fecha_nacimiento) if fecha_nacimiento else "", sexo,
                         genero if genero and genero != "Seleccione..." else "",
