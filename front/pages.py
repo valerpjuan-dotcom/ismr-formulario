@@ -1485,7 +1485,7 @@ def formulario_casos(tipo="individual"):
     if not es_individual:
         tipo_colectivo = st.selectbox(
             "Tipo de Colectivo *",
-            ["Seleccione...", "Familiar", "Gremial (Asociaciones, Cooperativas, etc.)", "ETCR, NAR, ETC."],
+            ["Seleccione...", "Familiar", "Gremial (Asociaciones, Cooperativas, etc.)", "ETCR, NAR, ETC.", "Estructura de partido"],
             key=f"caso_tipo_colectivo_{tipo}"
         )
     else:
