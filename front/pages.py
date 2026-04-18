@@ -1086,6 +1086,7 @@ def _construir_datos_borrador(tipo):
         f"caso_tipo_evaluacion_{tipo}":       st.session_state.get(f"caso_tipo_evaluacion_{tipo}", "Seleccione..."),
         f"caso_tipo_colectivo_{tipo}":          st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
         f"caso_tipo_estructura_partido_{tipo}": st.session_state.get(f"caso_tipo_estructura_partido_{tipo}", "Seleccione..."),
+        f"caso_estructura_adscrita_{tipo}":     st.session_state.get(f"caso_estructura_adscrita_{tipo}", "Seleccione..."),
         f"caso_familiar_parte_comunes_{tipo}": st.session_state.get(f"caso_familiar_parte_comunes_{tipo}", "Seleccione..."),
         f"caso_tipo_poblacion_{tipo}":        st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
         **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
@@ -1495,11 +1496,28 @@ def formulario_casos(tipo="individual"):
                 ["Seleccione...", "Comuna", "Local", "Municipal", "Metropolitana", "Departamental", "Nacional"],
                 key=f"caso_tipo_estructura_partido_{tipo}"
             )
+            _opciones_adscrita = {
+                "Comuna":       ["Municipal", "Local"],
+                "Local":        ["Metropolitana", "Departamental"],
+                "Municipal":    ["Metropolitana", "Departamental"],
+                "Metropolitana":["Departamental"],
+            }
+            _opts_ads = _opciones_adscrita.get(tipo_estructura_partido)
+            if _opts_ads:
+                estructura_adscrita = st.selectbox(
+                    "Estructura a la que está adscrita el colectivo evaluado *",
+                    ["Seleccione..."] + _opts_ads,
+                    key=f"caso_estructura_adscrita_{tipo}"
+                )
+            else:
+                estructura_adscrita = ""
         else:
             tipo_estructura_partido = ""
+            estructura_adscrita = ""
     else:
         tipo_colectivo = ""
         tipo_estructura_partido = ""
+        estructura_adscrita = ""
 
     # ── Tipo de Población (solo individual) ──────────────────────────────────
     if es_individual:
@@ -3898,6 +3916,7 @@ def formulario_casos(tipo="individual"):
         if tipo_evaluacion == "Seleccione...":          errores.append("Debe seleccionar el tipo de evaluación")
         if not es_individual and tipo_colectivo == "Seleccione...": errores.append("Debe seleccionar el tipo de colectivo")
         if not es_individual and tipo_colectivo == "Estructura de partido" and tipo_estructura_partido == "Seleccione...": errores.append("Debe seleccionar el tipo de estructura")
+        if not es_individual and tipo_estructura_partido in ("Comuna", "Local", "Municipal", "Metropolitana") and estructura_adscrita == "Seleccione...": errores.append("Debe seleccionar la estructura a la que está adscrita")
         if es_individual and tipo_poblacion == "Seleccione...":  errores.append("Debe seleccionar el tipo de población")
         if es_individual and len(subpoblacion) == 0:              errores.append("Debe seleccionar al menos una subpoblación")
         if es_individual and fecha_nacimiento is None:       errores.append("La fecha de nacimiento es obligatoria")
@@ -3941,6 +3960,7 @@ def formulario_casos(tipo="individual"):
                         tipo_evaluacion,
                         tipo_colectivo if tipo_colectivo and tipo_colectivo != "Seleccione..." else "",
                         tipo_estructura_partido if tipo_estructura_partido and tipo_estructura_partido != "Seleccione..." else "",
+                        estructura_adscrita if estructura_adscrita and estructura_adscrita != "Seleccione..." else "",
                         tipo_poblacion, " | ".join(subpoblacion),
                         str(fecha_nacimiento) if fecha_nacimiento else "", sexo,
                         genero if genero and genero != "Seleccione..." else "",
