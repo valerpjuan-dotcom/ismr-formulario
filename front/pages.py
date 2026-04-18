@@ -1564,13 +1564,16 @@ def formulario_casos(tipo="individual"):
             fecha_nacimiento = None
 
         # ── Departamento | Municipio (colectivo) ──────────────────────────────
+        _es_estructura_partido = tipo_colectivo == "Estructura de partido"
+        _label_dep = "DEPARTAMENTO DE UBICACIÓN DE LA SEDE *" if _es_estructura_partido else "SELECCIONE EL DEPARTAMENTO *"
+        _label_mun = "MUNICIPIO DE UBICACIÓN DE LA SEDE *"    if _es_estructura_partido else "SELECCIONE EL MUNICIPIO *"
         _col_dep, _col_mun = st.columns(2)
         with _col_dep:
-            departamento = st.selectbox("SELECCIONE EL DEPARTAMENTO *",
+            departamento = st.selectbox(_label_dep,
                                         ["Seleccione..."] + list(_MUNICIPIOS.keys()),
                                         key=f"p_departamento_{tipo}")
         with _col_mun:
-            municipio = st.selectbox("SELECCIONE EL MUNICIPIO *",
+            municipio = st.selectbox(_label_mun,
                                      _MUNICIPIOS.get(departamento, ["Seleccione..."]),
                                      key=f"p_municipio_{tipo}")
 
