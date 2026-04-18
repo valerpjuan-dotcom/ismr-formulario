@@ -1087,6 +1087,11 @@ def _construir_datos_borrador(tipo):
         f"caso_tipo_colectivo_{tipo}":          st.session_state.get(f"caso_tipo_colectivo_{tipo}", "Seleccione..."),
         f"caso_tipo_estructura_partido_{tipo}": st.session_state.get(f"caso_tipo_estructura_partido_{tipo}", "Seleccione..."),
         f"caso_estructura_adscrita_{tipo}":     st.session_state.get(f"caso_estructura_adscrita_{tipo}", "Seleccione..."),
+        f"caso_cant_comunas_{tipo}":            st.session_state.get(f"caso_cant_comunas_{tipo}", 0),
+        f"caso_cant_locales_{tipo}":            st.session_state.get(f"caso_cant_locales_{tipo}", 0),
+        f"caso_cant_municipales_{tipo}":        st.session_state.get(f"caso_cant_municipales_{tipo}", 0),
+        f"caso_cant_metropolitanas_{tipo}":     st.session_state.get(f"caso_cant_metropolitanas_{tipo}", 0),
+        f"caso_cant_consejerias_{tipo}":        st.session_state.get(f"caso_cant_consejerias_{tipo}", 0),
         f"caso_familiar_parte_comunes_{tipo}": st.session_state.get(f"caso_familiar_parte_comunes_{tipo}", "Seleccione..."),
         f"caso_tipo_poblacion_{tipo}":        st.session_state.get(f"caso_tipo_poblacion_{tipo}", "Seleccione..."),
         **{f"subpob_{i}_{tipo}": st.session_state.get(f"subpob_{i}_{tipo}", False)
@@ -1511,13 +1516,41 @@ def formulario_casos(tipo="individual"):
                 )
             else:
                 estructura_adscrita = ""
+            # ── Conteos de sub-estructuras (lógica de omisión según #2) ──────
+            cant_comunas      = None
+            cant_locales      = None
+            cant_municipales  = None
+            cant_metropolitanas = None
+            cant_consejerias  = None
+            if tipo_estructura_partido == "Local":
+                cant_comunas = st.number_input("Cantidad de Comunas", min_value=0, step=1,
+                                               key=f"caso_cant_comunas_{tipo}")
+            elif tipo_estructura_partido == "Municipal":
+                cant_comunas = st.number_input("Cantidad de Comunas", min_value=0, step=1,
+                                               key=f"caso_cant_comunas_{tipo}")
+            elif tipo_estructura_partido == "Metropolitana":
+                cant_locales = st.number_input("Cantidad de Locales", min_value=0, step=1,
+                                               key=f"caso_cant_locales_{tipo}")
+            elif tipo_estructura_partido == "Departamental":
+                _cc1, _cc2 = st.columns(2)
+                with _cc1:
+                    cant_municipales = st.number_input("Cantidad de Municipales", min_value=0, step=1,
+                                                       key=f"caso_cant_municipales_{tipo}")
+                with _cc2:
+                    cant_metropolitanas = st.number_input("Cantidad de Metropolitanas", min_value=0, step=1,
+                                                          key=f"caso_cant_metropolitanas_{tipo}")
+            elif tipo_estructura_partido == "Nacional":
+                cant_consejerias = st.number_input("Cantidad de Consejerías", min_value=0, step=1,
+                                                   key=f"caso_cant_consejerias_{tipo}")
         else:
             tipo_estructura_partido = ""
             estructura_adscrita = ""
+            cant_comunas = cant_locales = cant_municipales = cant_metropolitanas = cant_consejerias = None
     else:
         tipo_colectivo = ""
         tipo_estructura_partido = ""
         estructura_adscrita = ""
+        cant_comunas = cant_locales = cant_municipales = cant_metropolitanas = cant_consejerias = None
 
     # ── Tipo de Población (solo individual) ──────────────────────────────────
     if es_individual:
@@ -3961,6 +3994,11 @@ def formulario_casos(tipo="individual"):
                         tipo_colectivo if tipo_colectivo and tipo_colectivo != "Seleccione..." else "",
                         tipo_estructura_partido if tipo_estructura_partido and tipo_estructura_partido != "Seleccione..." else "",
                         estructura_adscrita if estructura_adscrita and estructura_adscrita != "Seleccione..." else "",
+                        cant_comunas      if cant_comunas      is not None else "",
+                        cant_locales      if cant_locales      is not None else "",
+                        cant_municipales  if cant_municipales  is not None else "",
+                        cant_metropolitanas if cant_metropolitanas is not None else "",
+                        cant_consejerias  if cant_consejerias  is not None else "",
                         tipo_poblacion, " | ".join(subpoblacion),
                         str(fecha_nacimiento) if fecha_nacimiento else "", sexo,
                         genero if genero and genero != "Seleccione..." else "",
