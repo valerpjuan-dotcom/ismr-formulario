@@ -1505,13 +1505,13 @@ def formulario_casos(tipo="individual"):
                 "Comuna":       ["Municipal", "Local"],
                 "Local":        ["Metropolitana", "Departamental"],
                 "Municipal":    ["Metropolitana", "Departamental"],
-                "Metropolitana":["Departamental"],
             }
-            _opts_ads = _opciones_adscrita.get(tipo_estructura_partido)
-            if _opts_ads:
+            if tipo_estructura_partido == "Metropolitana":
+                estructura_adscrita = "Departamental"
+            elif tipo_estructura_partido in _opciones_adscrita:
                 estructura_adscrita = st.selectbox(
                     "Estructura a la que está adscrita el colectivo evaluado *",
-                    ["Seleccione..."] + _opts_ads,
+                    ["Seleccione..."] + _opciones_adscrita[tipo_estructura_partido],
                     key=f"caso_estructura_adscrita_{tipo}"
                 )
             else:
@@ -3949,7 +3949,7 @@ def formulario_casos(tipo="individual"):
         if tipo_evaluacion == "Seleccione...":          errores.append("Debe seleccionar el tipo de evaluación")
         if not es_individual and tipo_colectivo == "Seleccione...": errores.append("Debe seleccionar el tipo de colectivo")
         if not es_individual and tipo_colectivo == "Estructura de partido" and tipo_estructura_partido == "Seleccione...": errores.append("Debe seleccionar el tipo de estructura")
-        if not es_individual and tipo_estructura_partido in ("Comuna", "Local", "Municipal", "Metropolitana") and estructura_adscrita == "Seleccione...": errores.append("Debe seleccionar la estructura a la que está adscrita")
+        if not es_individual and tipo_estructura_partido in ("Comuna", "Local", "Municipal") and estructura_adscrita == "Seleccione...": errores.append("Debe seleccionar la estructura a la que está adscrita")
         if es_individual and tipo_poblacion == "Seleccione...":  errores.append("Debe seleccionar el tipo de población")
         if es_individual and len(subpoblacion) == 0:              errores.append("Debe seleccionar al menos una subpoblación")
         if es_individual and fecha_nacimiento is None:       errores.append("La fecha de nacimiento es obligatoria")
