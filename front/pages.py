@@ -116,7 +116,7 @@ def pantalla_selector():
     </div>""", unsafe_allow_html=True)
     _, col_logo, _ = st.columns([1, 2, 1])
     with col_logo:
-        st.image(_LOGO, use_container_width=True)
+        st.image(_LOGO, width=240)
 
     col1, col2 = st.columns(2, gap="medium")
     with col1:
