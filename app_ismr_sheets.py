@@ -7,7 +7,7 @@ import hashlib
 import time
 import os
 
-LOGO_PATH = os.path.join(os.path.dirname(__file__), "front", "logo_hidra.png")
+LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "front", "logo_hidra.png")
 
 st.set_page_config(page_title="HIDRA", page_icon="💧", layout="centered")
 
