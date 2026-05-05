@@ -1,4 +1,7 @@
 import streamlit as st
+import os
+
+_LOGO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "front", "logo_hidra.png")
 
 from configuration.settings import defaults
 from service.auth_service import logout
@@ -14,7 +17,7 @@ from front.pages import (
     pantalla_recovery_nueva_password,
 )
 
-st.set_page_config(page_title="Sistema ISMR", page_icon="📋", layout="centered")
+st.set_page_config(page_title="HIDRA", page_icon="💧", layout="centered")
 
 from front.styles import inyectar_css_selector
 inyectar_css_selector()
@@ -50,7 +53,7 @@ def main():
         pantalla_cambiar_password(); return
 
     if st.session_state.es_admin:
-        st.sidebar.title("📊 Sistema ISMR")
+        st.sidebar.image(_LOGO, use_container_width=True)
         st.sidebar.success(f"👤 {st.session_state.nombre_completo}")
         st.sidebar.markdown("---")
         opcion = st.sidebar.radio("Menú", ["🏠 Inicio", "📊 Ver Datos", "👥 Gestionar Usuarios"])
