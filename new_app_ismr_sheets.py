@@ -53,7 +53,7 @@ def main():
         pantalla_cambiar_password(); return
 
     if st.session_state.es_admin:
-        st.sidebar.image(_LOGO, use_container_width=True)
+        st.sidebar.image(_LOGO, width=200)
         st.sidebar.success(f"👤 {st.session_state.nombre_completo}")
         st.sidebar.markdown("---")
         opcion = st.sidebar.radio("Menú", ["🏠 Inicio", "📊 Ver Datos", "👥 Gestionar Usuarios"])
