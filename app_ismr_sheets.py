@@ -6,7 +6,7 @@ import pandas as pd
 import hashlib
 import time
 
-st.set_page_config(page_title="Sistema ISMR", page_icon="📋", layout="centered")
+st.set_page_config(page_title="HIDRA", page_icon="front/logo_hidra.png", layout="centered")
 
 defaults = {
     "autenticado": False, "username": None, "nombre_completo": None,
@@ -181,7 +181,7 @@ def logout():
 # ── Pantallas ─────────────────────────────────────────────────────────────────
 
 def login_page():
-    st.title("🔐 Acceso al Sistema ISMR")
+    st.image("front/logo_hidra.png", width=280)
     st.markdown("---")
     st.info("👋 Identifícate para acceder al sistema")
     with st.form("login_form"):
@@ -205,6 +205,7 @@ def login_page():
     st.caption("🔒 Si tienes problemas, contacta al administrador")
 
 def pantalla_cambiar_password():
+    st.image("front/logo_hidra.png", width=220)
     st.title("🔐 Cambio de Contraseña Obligatorio")
     st.markdown("---")
     st.warning("⚠️ Debes cambiar tu contraseña antes de continuar")
@@ -241,6 +242,9 @@ def pantalla_selector():
                   letter-spacing:3px; color:#F0F0F0; margin:0;">{nombre_corto}</p>
         <p style="font-size:12px; color:#444; letter-spacing:1px; margin-top:6px;">SELECCIONA EL TIPO DE FORMULARIO</p>
     </div>""", unsafe_allow_html=True)
+    col_logo, _, _ = st.columns([1, 2, 1])
+    with col_logo:
+        st.image("front/logo_hidra.png", width=160)
 
     col1, col2 = st.columns(2, gap="medium")
     with col1:
@@ -524,7 +528,7 @@ def main():
     if st.session_state.debe_cambiar_password:
         pantalla_cambiar_password(); return
     if st.session_state.es_admin:
-        st.sidebar.title("📊 Sistema ISMR")
+        st.sidebar.image("front/logo_hidra.png", use_container_width=True)
         st.sidebar.success(f"👤 {st.session_state.nombre_completo}")
         st.sidebar.markdown("---")
         opcion = st.sidebar.radio("Menú", ["🏠 Inicio", "📊 Ver Datos", "👥 Gestionar Usuarios"])
