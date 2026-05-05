@@ -114,9 +114,9 @@ def pantalla_selector():
                   letter-spacing:3px; color:#F0F0F0; margin:0;">{nombre_corto}</p>
         <p style="font-size:12px; color:#444; letter-spacing:1px; margin-top:6px;">SELECCIONA EL TIPO DE FORMULARIO</p>
     </div>""", unsafe_allow_html=True)
-    col_logo, _, _ = st.columns([1, 2, 1])
+    _, col_logo, _ = st.columns([1, 2, 1])
     with col_logo:
-        st.image(_LOGO, width=160)
+        st.image(_LOGO, use_container_width=True)
 
     col1, col2 = st.columns(2, gap="medium")
     with col1:
