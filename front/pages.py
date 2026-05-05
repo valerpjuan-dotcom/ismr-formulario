@@ -4,10 +4,15 @@ import time
 import calendar
 import pandas as pd
 import os
+import base64
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
 _LOGO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "front", "logo_hidra.png")
+
+def _logo_b64():
+    with open(_LOGO, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 _BOGOTA = ZoneInfo("America/Bogota")
 from data.diccionarios import (
@@ -42,7 +47,11 @@ from front.styles import inyectar_css_selector
 
 
 def login_page():
-    st.image(_LOGO, width=280)
+    st.markdown(
+        f'<div style="display:flex;justify-content:center;margin-bottom:16px;">'
+        f'<img src="data:image/png;base64,{_logo_b64()}" width="280"></div>',
+        unsafe_allow_html=True
+    )
     st.markdown("---")
     st.info("👋 Identifícate para acceder al sistema")
     with st.form("login_form"):
@@ -75,7 +84,11 @@ def login_page():
 
 
 def pantalla_cambiar_password():
-    st.image(_LOGO, width=220)
+    st.markdown(
+        f'<div style="display:flex;justify-content:center;margin-bottom:16px;">'
+        f'<img src="data:image/png;base64,{_logo_b64()}" width="220"></div>',
+        unsafe_allow_html=True
+    )
     st.title("🔐 Cambio de Contraseña Obligatorio")
     st.markdown("---")
     st.warning("⚠️ Debes cambiar tu contraseña antes de continuar")
@@ -114,9 +127,11 @@ def pantalla_selector():
                   letter-spacing:3px; color:#F0F0F0; margin:0;">{nombre_corto}</p>
         <p style="font-size:12px; color:#444; letter-spacing:1px; margin-top:6px;">SELECCIONA EL TIPO DE FORMULARIO</p>
     </div>""", unsafe_allow_html=True)
-    _, col_logo, _ = st.columns([1, 2, 1])
-    with col_logo:
-        st.image(_LOGO, width=240)
+    st.markdown(
+        f'<div style="display:flex;justify-content:center;margin-bottom:32px;">'
+        f'<img src="data:image/png;base64,{_logo_b64()}" width="200"></div>',
+        unsafe_allow_html=True
+    )
 
     col1, col2 = st.columns(2, gap="medium")
     with col1:
