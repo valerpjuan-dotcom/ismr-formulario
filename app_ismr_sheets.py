@@ -5,8 +5,11 @@ from datetime import datetime
 import pandas as pd
 import hashlib
 import time
+import os
 
-st.set_page_config(page_title="HIDRA", page_icon="front/logo_hidra.png", layout="centered")
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "front", "logo_hidra.png")
+
+st.set_page_config(page_title="HIDRA", page_icon="💧", layout="centered")
 
 defaults = {
     "autenticado": False, "username": None, "nombre_completo": None,
@@ -181,7 +184,7 @@ def logout():
 # ── Pantallas ─────────────────────────────────────────────────────────────────
 
 def login_page():
-    st.image("front/logo_hidra.png", width=280)
+    st.image(LOGO_PATH, width=280)
     st.markdown("---")
     st.info("👋 Identifícate para acceder al sistema")
     with st.form("login_form"):
@@ -205,7 +208,7 @@ def login_page():
     st.caption("🔒 Si tienes problemas, contacta al administrador")
 
 def pantalla_cambiar_password():
-    st.image("front/logo_hidra.png", width=220)
+    st.image(LOGO_PATH, width=220)
     st.title("🔐 Cambio de Contraseña Obligatorio")
     st.markdown("---")
     st.warning("⚠️ Debes cambiar tu contraseña antes de continuar")
@@ -244,7 +247,7 @@ def pantalla_selector():
     </div>""", unsafe_allow_html=True)
     col_logo, _, _ = st.columns([1, 2, 1])
     with col_logo:
-        st.image("front/logo_hidra.png", width=160)
+        st.image(LOGO_PATH, width=160)
 
     col1, col2 = st.columns(2, gap="medium")
     with col1:
@@ -528,7 +531,7 @@ def main():
     if st.session_state.debe_cambiar_password:
         pantalla_cambiar_password(); return
     if st.session_state.es_admin:
-        st.sidebar.image("front/logo_hidra.png", use_container_width=True)
+        st.sidebar.image(LOGO_PATH, use_container_width=True)
         st.sidebar.success(f"👤 {st.session_state.nombre_completo}")
         st.sidebar.markdown("---")
         opcion = st.sidebar.radio("Menú", ["🏠 Inicio", "📊 Ver Datos", "👥 Gestionar Usuarios"])
