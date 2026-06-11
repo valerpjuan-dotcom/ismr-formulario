@@ -4147,6 +4147,12 @@ def formulario_casos(tipo="individual"):
                                 pa.get("busqueda_desaparecidos", ""),
                                 pa.get("participacion_pnis", ""),
                                 pa.get("desminado", ""),
+                                pa.get("col_jep_comp_cnt", 0),
+                                pa.get("col_jep_vic_cnt", 0),
+                                pa.get("col_toar_cnt", 0),
+                                pa.get("col_busq_cnt", 0),
+                                pa.get("col_pnis_cnt", 0),
+                                pa.get("col_desminado_cnt", 0),
                                 pa.get("participa_comunes", ""),
                                 pa.get("concejo_comunes", ""),
                                 pa.get("instancias_partido", ""),   # compat: 1er registro
@@ -4164,6 +4170,7 @@ def formulario_casos(tipo="individual"):
                                 pa.get("anio_inicio_org", ""),      # compat: 1er registro
                                 pa.get("anio_fin_org", ""),         # compat: 1er registro
                                 pa.get("cargo_eleccion", ""),
+                                pa.get("col_cargo_eleccion_cnt", 0),
                                 st.session_state.nombre_completo, st.session_state.username
                             ])
                             # ── Instancias Comunes (multiregistro) ───────────
@@ -4179,6 +4186,7 @@ def formulario_casos(tipo="individual"):
                                 _ic_offset += 1
                             # ── Otras Organizaciones (multiregistro) ─────────
                             for oo in pa.get("otras_orgs", []):
+                                _amb = oo.get("ambito_counts", {})
                                 _rows_oo.append([
                                     _start_oo + _oo_offset, _id_pa, id_caso, ot_te.strip(),
                                     oo.get("tipo_org", ""),
@@ -4190,6 +4198,15 @@ def formulario_casos(tipo="individual"):
                                     oo.get("rol_org", ""),
                                     oo.get("anio_inicio_org", ""),
                                     oo.get("anio_fin_org", ""),
+                                    oo.get("num_personas_org", 0),
+                                    _amb.get("Ambiental", 0), _amb.get("Campesino", 0),
+                                    _amb.get("Comunal", 0), _amb.get("Comunicaciones", 0),
+                                    _amb.get("DDHH", 0), _amb.get("Discapacidad", 0),
+                                    _amb.get("Educativo", 0), _amb.get("Étnico", 0),
+                                    _amb.get("Género", 0), _amb.get("Juvenil", 0),
+                                    _amb.get("Político", 0), _amb.get("Reincorporación", 0),
+                                    _amb.get("Sector solidario", 0), _amb.get("Sindical", 0),
+                                    _amb.get("Víctimas", 0), _amb.get("Otros", 0),
                                     st.session_state.nombre_completo, st.session_state.username
                                 ])
                                 _oo_offset += 1
@@ -4457,7 +4474,9 @@ def panel_visualizacion():
                     _limpiar_excel(df_hf  if not df_h.empty else df_h).to_excel(writer, sheet_name="Hechos de Riesgo", index=False)
                     _limpiar_excel(df_p).to_excel(writer, sheet_name="Perfiles",          index=False)
                     _limpiar_excel(df_a).to_excel(writer, sheet_name="Antecedentes",      index=False)
-                    _limpiar_excel(df_pa).to_excel(writer, sheet_name="Perfiles Actuales", index=False)
+                    _limpiar_excel(df_pa).to_excel(writer, sheet_name="Perfiles Actuales",   index=False)
+                    _limpiar_excel(df_d).to_excel(writer,  sheet_name="Desplazamientos",     index=False)
+                    _limpiar_excel(df_ver).to_excel(writer, sheet_name="Verificaciones",     index=False)
                     _limpiar_excel(df_ic).to_excel(writer, sheet_name="Instancias Comunes",  index=False)
                     _limpiar_excel(df_oo).to_excel(writer, sheet_name="Otras Orgs",          index=False)
                 buffer.seek(0)

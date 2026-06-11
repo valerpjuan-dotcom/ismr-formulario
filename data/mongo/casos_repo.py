@@ -95,6 +95,9 @@ _CABECERAS_PERFILES_ACTUALES = [
     "Victima JEP", "Macrocaso Victima",
     "Participacion TOAR", "Busqueda Desaparecidos",
     "Participacion PNIS", "Desminado",
+    "Col JEP Comparecencia", "Col JEP Victima",
+    "Col TOAR", "Col Busqueda Desaparecidos",
+    "Col PNIS", "Col Desminado",
     "Participa Comunes", "Concejo Comunes",
     "Instancias Partido", "Roles Partido",
     "Consejeria Nacional", "Tipo Consejeria",
@@ -102,7 +105,7 @@ _CABECERAS_PERFILES_ACTUALES = [
     "Nombre Org", "Ambito Org", "Escala Org",
     "Departamento Org", "Municipio Org", "Rol Org",
     "Anio Inicio Org", "Anio Fin Org",
-    "Cargo Eleccion",
+    "Cargo Eleccion", "Col Cargo Eleccion Cnt",
     "Analista", "Usuario Analista"
 ]
 
@@ -122,6 +125,11 @@ _CABECERAS_OTRAS_ORGS = [
     "Departamento Org", "Municipio Org",
     "Rol Org",
     "Anio Inicio Org", "Anio Fin Org",
+    "Num Personas Org",
+    "Ambito Ambiental", "Ambito Campesino", "Ambito Comunal", "Ambito Comunicaciones",
+    "Ambito DDHH", "Ambito Discapacidad", "Ambito Educativo", "Ambito Etnico",
+    "Ambito Genero", "Ambito Juvenil", "Ambito Politico", "Ambito Reincorporacion",
+    "Ambito Sector solidario", "Ambito Sindical", "Ambito Victimas", "Ambito Otros",
     "Analista", "Usuario Analista"
 ]
 
