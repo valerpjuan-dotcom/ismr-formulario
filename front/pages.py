@@ -154,17 +154,17 @@ def pantalla_selector():
     with col2:
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👥</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-colectivo">', unsafe_allow_html=True)
+        # ── NOTA: El formulario COLECTIVO está temporalmente inactivo por
+        # mantenimiento (en desarrollo). No se elimina ni modifica su lógica;
+        # solo se bloquea el acceso desde este selector mostrando un aviso.
         if st.button("FORMULARIO\nCOLECTIVO", key="btn_colectivo", use_container_width=True):
-            st.session_state.vista = "colectivo"
-            st.session_state.hechos = []
-            st.session_state.perfiles = []
-            st.session_state.perfiles_col = []
-            st.session_state.perfiles_actuales = []
-            st.session_state.desplazamientos = []
-            st.session_state.composiciones_col = []
-            st.session_state.antecedentes = []
-            st.session_state["borrador_cargado_colectivo"] = False
-            st.rerun()
+            st.session_state["_aviso_colectivo_inactivo"] = True
+        if st.session_state.get("_aviso_colectivo_inactivo"):
+            st.warning(
+                "🚧 El formulario COLECTIVO está temporalmente **inactivo por mantenimiento**. "
+                "Se están realizando ajustes y estará disponible próximamente. "
+                "Por ahora, utiliza el formulario INDIVIDUAL."
+            )
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Múltiples personas afectadas</p>', unsafe_allow_html=True)
 
@@ -1879,7 +1879,8 @@ def formulario_casos(tipo="individual"):
 
     if es_individual:
         osiegd = st.text_input(
-            "F. Orientación Sexual, Identidad y Expresión de Género Diversa (OSIEGD)",
+            "F. Orientación Sexual, Identidad y Expresión de Género Diversa (OSIEGD) *",
+            help="Si no aplica o no hay información, escriba NO REPORTA",
             key=f"caso_osiegd_{tipo}"
         )
 
@@ -1899,14 +1900,14 @@ def formulario_casos(tipo="individual"):
             factor_cuidador = st.selectbox("F. Cuidador *", _CUIDADOR,
                                            key=f"caso_factor_cuidador_{tipo}")
 
-        st.markdown("**F. Víctima de Conflicto Armado \\***")
+        st.markdown("**F. Víctima de Conflicto Armado**")
         cols_vic = st.columns(2)
         victima_conflicto = [
             opcion for i, opcion in enumerate(_VICTIMA_CONFLICTO_ARMADO)
             if cols_vic[i % 2].checkbox(opcion, key=f"victima_{i}_{tipo}")
         ]
 
-        st.markdown("**F. Líder Social y Defensor de DDHH \\***")
+        st.markdown("**F. Líder Social y Defensor de DDHH**")
         cols_lid = st.columns(2)
         lider_social = [
             opcion for i, opcion in enumerate(_LIDER_SOCIAL_DDHH)
@@ -3704,21 +3705,21 @@ def formulario_casos(tipo="individual"):
     imp_eco_col1, imp_eco_col2 = st.columns(2)
     with imp_eco_col1:
         imp_eco_dependencia = st.selectbox(
-            "DEPENDENCIA EN PROGRAMAS DE SUBSIDIO DEL ESTADO",
+            "DEPENDENCIA EN PROGRAMAS DE SUBSIDIO DEL ESTADO *",
             _IMPACTO_SI_NR,
             key=f"imp_eco_dependencia_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_dependencia_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_eco_dependencia_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_eco_empleos = st.selectbox(
-            "ACCESO RESTRINGIDO A EMPLEOS FORMALES",
+            "ACCESO RESTRINGIDO A EMPLEOS FORMALES *",
             _IMPACTO_SI_NR,
             key=f"imp_eco_empleos_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_eco_empleos_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_eco_bienes = st.selectbox(
-            "ACCESO A SERVICIOS Y BIENES O ENSERES DE PRIMERA NECESIDAD",
+            "ACCESO A SERVICIOS Y BIENES O ENSERES DE PRIMERA NECESIDAD *",
             _IMPACTO_SI_NR,
             key=f"imp_eco_bienes_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_bienes_{tipo}", "Seleccione..."))
@@ -3726,14 +3727,14 @@ def formulario_casos(tipo="individual"):
         )
     with imp_eco_col2:
         imp_eco_iniciativas = st.selectbox(
-            "PÉRDIDA DE INICIATIVAS PRODUCTIVAS",
+            "PÉRDIDA DE INICIATIVAS PRODUCTIVAS *",
             _IMPACTO_SI_NR,
             key=f"imp_eco_iniciativas_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_iniciativas_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_eco_iniciativas_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_eco_ilicita = st.selectbox(
-            "INSERCIÓN EN PROCESOS DE ECONOMÍAS ILÍCITAS O EMPLEOS INFORMALES PRECARIZADOS",
+            "INSERCIÓN EN PROCESOS DE ECONOMÍAS ILÍCITAS O EMPLEOS INFORMALES PRECARIZADOS *",
             _IMPACTO_SI_NR,
             key=f"imp_eco_ilicita_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_eco_ilicita_{tipo}", "Seleccione..."))
@@ -3744,28 +3745,28 @@ def formulario_casos(tipo="individual"):
     imp_soc_col1, imp_soc_col2 = st.columns(2)
     with imp_soc_col1:
         imp_soc_tejido = st.selectbox(
-            "RUPTURA DEL TEJIDO SOCIAL",
+            "RUPTURA DEL TEJIDO SOCIAL *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_tejido_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_tejido_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_soc_tejido_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_soc_traslado = st.selectbox(
-            "TRASLADO DE FACTORES DE VIOLENCIA DE UN TERRITORIO A OTRO",
+            "TRASLADO DE FACTORES DE VIOLENCIA DE UN TERRITORIO A OTRO *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_traslado_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_traslado_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_soc_traslado_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_soc_movilidad = st.selectbox(
-            "RESTRICCIÓN DE MOVILIDAD",
+            "RESTRICCIÓN DE MOVILIDAD *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_movilidad_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_movilidad_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_soc_movilidad_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_soc_normalizacion = st.selectbox(
-            "NORMALIZACIÓN DE LA VIOLENCIA",
+            "NORMALIZACIÓN DE LA VIOLENCIA *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_normalizacion_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_normalizacion_{tipo}", "Seleccione..."))
@@ -3773,28 +3774,28 @@ def formulario_casos(tipo="individual"):
         )
     with imp_soc_col2:
         imp_soc_redes = st.selectbox(
-            "PÉRDIDA DE REDES DE APOYO",
+            "PÉRDIDA DE REDES DE APOYO *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_redes_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_redes_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_soc_redes_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_soc_confinamiento = st.selectbox(
-            "CONFINAMIENTO O AUTO-CONFINAMIENTO",
+            "CONFINAMIENTO O AUTO-CONFINAMIENTO *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_confinamiento_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_confinamiento_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_soc_confinamiento_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_soc_desarraigo = st.selectbox(
-            "DESARRAIGO CULTURAL Y TERRITORIAL",
+            "DESARRAIGO CULTURAL Y TERRITORIAL *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_desarraigo_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_soc_desarraigo_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_soc_libertad = st.selectbox(
-            "AFECTACIÓN AL GOCE DEL DERECHO A LA LIBERTAD Y SEGURIDAD PERSONAL",
+            "AFECTACIÓN AL GOCE DEL DERECHO A LA LIBERTAD Y SEGURIDAD PERSONAL *",
             _IMPACTO_SI_NR,
             key=f"imp_soc_libertad_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_soc_libertad_{tipo}", "Seleccione..."))
@@ -3805,21 +3806,21 @@ def formulario_casos(tipo="individual"):
     imp_pol_col1, imp_pol_col2 = st.columns(2)
     with imp_pol_col1:
         imp_pol_participacion = st.selectbox(
-            "RESTRICCIÓN EN LA PARTICIPACIÓN POLÍTICA",
+            "RESTRICCIÓN EN LA PARTICIPACIÓN POLÍTICA *",
             _IMPACTO_SI_NR,
             key=f"imp_pol_participacion_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_participacion_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_pol_participacion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_pol_oferta = st.selectbox(
-            "EXPOSICIÓN POR FALENCIAS EN LA IMPLEMENTACIÓN DE LA OFERTA INSTITUCIONAL",
+            "EXPOSICIÓN POR FALENCIAS EN LA IMPLEMENTACIÓN DE LA OFERTA INSTITUCIONAL *",
             _IMPACTO_SI_NR,
             key=f"imp_pol_oferta_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_oferta_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_pol_oferta_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_pol_estigmatizacion = st.selectbox(
-            "ESTIGMATIZACIÓN",
+            "ESTIGMATIZACIÓN *",
             _IMPACTO_SI_NR,
             key=f"imp_pol_estigmatizacion_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_estigmatizacion_{tipo}", "Seleccione..."))
@@ -3827,21 +3828,21 @@ def formulario_casos(tipo="individual"):
         )
     with imp_pol_col2:
         imp_pol_liderazgos = st.selectbox(
-            "DESARTICULACIÓN EN LOS LIDERAZGOS",
+            "DESARTICULACIÓN EN LOS LIDERAZGOS *",
             _IMPACTO_SI_NR,
             key=f"imp_pol_liderazgos_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_liderazgos_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_pol_liderazgos_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_pol_derechos = st.selectbox(
-            "AFECTACIÓN EN EL GOCE DE SUS DERECHOS POLÍTICOS",
+            "AFECTACIÓN EN EL GOCE DE SUS DERECHOS POLÍTICOS *",
             _IMPACTO_SI_NR,
             key=f"imp_pol_derechos_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_pol_derechos_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_pol_confianza = st.selectbox(
-            "PÉRDIDA DE CONFIANZA EN LAS INSTITUCIONES",
+            "PÉRDIDA DE CONFIANZA EN LAS INSTITUCIONES *",
             _IMPACTO_SI_NR,
             key=f"imp_pol_confianza_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_pol_confianza_{tipo}", "Seleccione..."))
@@ -3852,28 +3853,28 @@ def formulario_casos(tipo="individual"):
     imp_sal_col1, imp_sal_col2 = st.columns(2)
     with imp_sal_col1:
         imp_sal_proyeccion = st.selectbox(
-            "AFECTACIÓN A LA PROYECCIÓN PERSONAL O COLECTIVA",
+            "AFECTACIÓN A LA PROYECCIÓN PERSONAL O COLECTIVA *",
             _IMPACTO_SI_NR,
             key=f"imp_sal_proyeccion_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_proyeccion_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_sal_proyeccion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_sal_desescolarizacion = st.selectbox(
-            "DESESCOLARIZACIÓN",
+            "DESESCOLARIZACIÓN *",
             _IMPACTO_SI_NR,
             key=f"imp_sal_desescolarizacion_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_desescolarizacion_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_sal_desescolarizacion_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_sal_psicosocial = st.selectbox(
-            "AFECTACIÓN PSICOSOCIAL",
+            "AFECTACIÓN PSICOSOCIAL *",
             _IMPACTO_SI_NR,
             key=f"imp_sal_psicosocial_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_psicosocial_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_sal_psicosocial_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_sal_dano_vida = st.selectbox(
-            "DAÑO IRREPARABLE A LA VIDA E INTEGRIDAD PERSONAL",
+            "DAÑO IRREPARABLE A LA VIDA E INTEGRIDAD PERSONAL *",
             _IMPACTO_SI_NR,
             key=f"imp_sal_dano_vida_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_dano_vida_{tipo}", "Seleccione..."))
@@ -3881,21 +3882,21 @@ def formulario_casos(tipo="individual"):
         )
     with imp_sal_col2:
         imp_sal_cuidados = st.selectbox(
-            "IMPOSIBILIDAD DE ATENDER LOS CUIDADOS DOMÉSTICOS O DE PERSONAS DEPENDIENTES",
+            "IMPOSIBILIDAD DE ATENDER LOS CUIDADOS DOMÉSTICOS O DE PERSONAS DEPENDIENTES *",
             _IMPACTO_SI_NR,
             key=f"imp_sal_cuidados_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_cuidados_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_sal_cuidados_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_sal_abandono = st.selectbox(
-            "PROCESOS DE ABANDONO A MENORES Y/O ADULTOS MAYORES",
+            "PROCESOS DE ABANDONO A MENORES Y/O ADULTOS MAYORES *",
             _IMPACTO_SI_NR,
             key=f"imp_sal_abandono_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_abandono_{tipo}", "Seleccione..."))
                 if st.session_state.get(f"imp_sal_abandono_{tipo}", "Seleccione...") in _IMPACTO_SI_NR else 0
         )
         imp_sal_discapacidad = st.selectbox(
-            "DISCAPACIDAD",
+            "DISCAPACIDAD *",
             _IMPACTO_SI_NR,
             key=f"imp_sal_discapacidad_{tipo}",
             index=_IMPACTO_SI_NR.index(st.session_state.get(f"imp_sal_discapacidad_{tipo}", "Seleccione..."))
@@ -3998,6 +3999,41 @@ def formulario_casos(tipo="individual"):
         if es_individual and factor_etnia == "Seleccione...":        errores.append("Debe seleccionar el factor étnico")
         if es_individual and factor_campesino == "Seleccione...":    errores.append("Debe seleccionar el factor campesino")
         if es_individual and factor_cuidador == "Seleccione...":     errores.append("Debe seleccionar el factor cuidador")
+        if es_individual and not osiegd.strip():                     errores.append("El campo OSIEGD es obligatorio (use NO REPORTA si no aplica)")
+
+        # ── Impacto Consecuencial (obligatorio) ──────────────────────────────
+        _campos_impacto = [
+            (imp_eco_dependencia,       "Impacto económico — Dependencia en programas de subsidio del Estado"),
+            (imp_eco_empleos,           "Impacto económico — Acceso restringido a empleos formales"),
+            (imp_eco_bienes,            "Impacto económico — Acceso a servicios y bienes o enseres de primera necesidad"),
+            (imp_eco_iniciativas,       "Impacto económico — Pérdida de iniciativas productivas"),
+            (imp_eco_ilicita,           "Impacto económico — Inserción en procesos de economías ilícitas o empleos informales precarizados"),
+            (imp_soc_tejido,            "Impacto social — Ruptura del tejido social"),
+            (imp_soc_traslado,          "Impacto social — Traslado de factores de violencia de un territorio a otro"),
+            (imp_soc_movilidad,         "Impacto social — Restricción de movilidad"),
+            (imp_soc_normalizacion,     "Impacto social — Normalización de la violencia"),
+            (imp_soc_redes,             "Impacto social — Pérdida de redes de apoyo"),
+            (imp_soc_confinamiento,     "Impacto social — Confinamiento o auto-confinamiento"),
+            (imp_soc_desarraigo,        "Impacto social — Desarraigo cultural y territorial"),
+            (imp_soc_libertad,          "Impacto social — Afectación al goce del derecho a la libertad y seguridad personal"),
+            (imp_pol_participacion,     "Impacto político-institucional — Restricción en la participación política"),
+            (imp_pol_oferta,            "Impacto político-institucional — Exposición por falencias en la implementación de la oferta institucional"),
+            (imp_pol_estigmatizacion,   "Impacto político-institucional — Estigmatización"),
+            (imp_pol_liderazgos,        "Impacto político-institucional — Desarticulación en los liderazgos"),
+            (imp_pol_derechos,          "Impacto político-institucional — Afectación en el goce de sus derechos políticos"),
+            (imp_pol_confianza,         "Impacto político-institucional — Pérdida de confianza en las instituciones"),
+            (imp_sal_proyeccion,        "Impacto en salud y bienestar — Afectación a la proyección personal o colectiva"),
+            (imp_sal_desescolarizacion, "Impacto en salud y bienestar — Desescolarización"),
+            (imp_sal_psicosocial,       "Impacto en salud y bienestar — Afectación psicosocial"),
+            (imp_sal_dano_vida,         "Impacto en salud y bienestar — Daño irreparable a la vida e integridad personal"),
+            (imp_sal_cuidados,          "Impacto en salud y bienestar — Imposibilidad de atender los cuidados domésticos o de personas dependientes"),
+            (imp_sal_abandono,          "Impacto en salud y bienestar — Procesos de abandono a menores y/o adultos mayores"),
+            (imp_sal_discapacidad,      "Impacto en salud y bienestar — Discapacidad"),
+        ]
+        if es_individual:
+            for _valor_imp, _nombre_imp in _campos_impacto:
+                if _valor_imp == "Seleccione...":
+                    errores.append(f"Debe seleccionar una respuesta para: {_nombre_imp}")
 
         if errores:
             st.error("❌ Por favor corrija los siguientes errores:")
