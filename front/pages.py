@@ -1216,6 +1216,49 @@ def _btn_borrador(tipo, sufijo):
                 st.toast("❌ No se pudo guardar el borrador", icon="⚠️")
 
 
+def _construir_fecha_hecho(anio, mes, dia):
+    """Construye la fecha de un Hecho de Riesgo permitiendo que sea parcial:
+    solo año ('YYYY'), año y mes ('YYYY-MM'), o completa ('YYYY-MM-DD').
+    El día (e incluso el mes) puede no reportarse cuando se trata de una
+    fecha estimada, así que nunca se descarta la información ya capturada."""
+    if anio is None:
+        return ""
+    try:
+        anio = int(anio)
+    except (TypeError, ValueError):
+        return ""
+    if mes is None:
+        return f"{anio:04d}"
+    try:
+        mes = int(mes)
+    except (TypeError, ValueError):
+        return f"{anio:04d}"
+    if dia is None:
+        return f"{anio:04d}-{mes:02d}"
+    try:
+        dia = int(dia)
+    except (TypeError, ValueError):
+        return f"{anio:04d}-{mes:02d}"
+    return f"{anio:04d}-{mes:02d}-{dia:02d}"
+
+
+def _parsear_fecha_hecho(fecha_str):
+    """Descompone la fecha (posiblemente parcial) de un Hecho de Riesgo en
+    sus componentes año/mes/día para precargar los campos al editar.
+    Devuelve None en los componentes que no estén presentes."""
+    if not fecha_str:
+        return None, None, None
+    partes = str(fecha_str).split("-")
+
+    def _parte(idx):
+        try:
+            return int(partes[idx]) if len(partes) > idx and partes[idx] != "" else None
+        except (TypeError, ValueError):
+            return None
+
+    return _parte(0), _parte(1), _parte(2)
+
+
 def formulario_casos(tipo="individual"):
     es_individual     = tipo == "individual"
     color             = "#4F8BFF" if es_individual else "#4ADE80"
@@ -3011,15 +3054,7 @@ def formulario_casos(tipo="individual"):
             if st.session_state.get(_edit_hecho_key) == i:
                 # ── Modo edición ──────────────────────────────────────────────
                 st.markdown(f"**✏️ Editando Hecho #{i+1}**")
-                try:
-                    _eh_fecha_parts = datetime.strptime(hecho["fecha"], "%Y-%m-%d")
-                    _eh_anio_val = _eh_fecha_parts.year
-                    _eh_mes_val  = _eh_fecha_parts.month
-                    _eh_dia_val  = _eh_fecha_parts.day
-                except Exception:
-                    _eh_anio_val = None
-                    _eh_mes_val  = None
-                    _eh_dia_val  = None
+                _eh_anio_val, _eh_mes_val, _eh_dia_val = _parsear_fecha_hecho(hecho.get("fecha", ""))
                 _eh_anio_key = f"eh_anio_{tipo}_{i}"
                 _eh_mes_key  = f"eh_mes_{tipo}_{i}"
                 _eh_dia_key  = f"eh_dia_{tipo}_{i}"
@@ -3045,8 +3080,9 @@ def formulario_casos(tipo="individual"):
                         _eh_max_dia = 31
                 with ec_dia:
                     eh_dia = st.number_input(
-                        "DÍA DEL HECHO", min_value=1, max_value=_eh_max_dia,
-                        value=_eh_dia_val, step=1, key=_eh_dia_key
+                        "DÍA DEL HECHO (Opcional)", min_value=1, max_value=_eh_max_dia,
+                        value=_eh_dia_val, step=1, key=_eh_dia_key,
+                        help="Déjalo vacío si la fecha es estimada y solo se conoce el año y el mes."
                     )
                 _eh_dep_opts = ["Seleccione..."] + list(_MUNICIPIOS.keys())
                 _eh_dep_val  = hecho.get("departamento", "Seleccione...")
@@ -3157,12 +3193,7 @@ def formulario_casos(tipo="individual"):
                         if err_e:
                             for e in err_e: st.error(f"• {e}")
                         else:
-                            _fecha_eh = ""
-                            if eh_anio is not None and eh_mes is not None and eh_dia is not None:
-                                try:
-                                    _fecha_eh = f"{int(eh_anio):04d}-{int(eh_mes):02d}-{int(eh_dia):02d}"
-                                except Exception:
-                                    _fecha_eh = ""
+                            _fecha_eh = _construir_fecha_hecho(eh_anio, eh_mes, eh_dia)
                             st.session_state.hechos[i] = {
                                 "tipo": eh_tipo, "fecha": _fecha_eh,
                                 "departamento": eh_departamento if eh_departamento != "Seleccione..." else "",
@@ -3237,8 +3268,9 @@ def formulario_casos(tipo="individual"):
                 _max_dia_hf = 31
         with col_hf_dia:
             hecho_dia = st.number_input(
-                "DÍA DEL HECHO", min_value=1, max_value=_max_dia_hf,
-                value=None, step=1, key=_hf_dia_key
+                "DÍA DEL HECHO (Opcional)", min_value=1, max_value=_max_dia_hf,
+                value=None, step=1, key=_hf_dia_key,
+                help="Déjalo vacío si la fecha es estimada y solo se conoce el año y el mes."
             )
         col_hf_dep, col_hf_mun = st.columns(2)
         with col_hf_dep:
@@ -3326,12 +3358,7 @@ def formulario_casos(tipo="individual"):
             if err_h:
                 for e in err_h: st.error(f"• {e}")
             else:
-                _fecha_hf = ""
-                if hecho_anio is not None and hecho_mes is not None and hecho_dia is not None:
-                    try:
-                        _fecha_hf = f"{int(hecho_anio):04d}-{int(hecho_mes):02d}-{int(hecho_dia):02d}"
-                    except Exception:
-                        _fecha_hf = ""
+                _fecha_hf = _construir_fecha_hecho(hecho_anio, hecho_mes, hecho_dia)
                 st.session_state.hechos.append({
                     "tipo": tipo_hecho, "fecha": _fecha_hf,
                     "departamento": hecho_departamento if hecho_departamento != "Seleccione..." else "",
