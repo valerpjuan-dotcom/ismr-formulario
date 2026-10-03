@@ -154,17 +154,17 @@ def pantalla_selector():
     with col2:
         st.markdown('<div style="text-align:center;margin-bottom:12px;"><span style="font-size:32px;">👥</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="btn-colectivo">', unsafe_allow_html=True)
-        # ── NOTA: El formulario COLECTIVO está temporalmente inactivo por
-        # mantenimiento (en desarrollo). No se elimina ni modifica su lógica;
-        # solo se bloquea el acceso desde este selector mostrando un aviso.
         if st.button("FORMULARIO\nCOLECTIVO", key="btn_colectivo", use_container_width=True):
-            st.session_state["_aviso_colectivo_inactivo"] = True
-        if st.session_state.get("_aviso_colectivo_inactivo"):
-            st.warning(
-                "🚧 El formulario COLECTIVO está temporalmente **inactivo por mantenimiento**. "
-                "Se están realizando ajustes y estará disponible próximamente. "
-                "Por ahora, utiliza el formulario INDIVIDUAL."
-            )
+            st.session_state.vista = "colectivo"
+            st.session_state.hechos = []
+            st.session_state.perfiles = []
+            st.session_state.perfiles_col = []
+            st.session_state.perfiles_actuales = []
+            st.session_state.desplazamientos = []
+            st.session_state.composiciones_col = []
+            st.session_state.antecedentes = []
+            st.session_state["borrador_cargado_colectivo"] = False
+            st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<p style="text-align:center;font-size:11px;color:#444;margin-top:10px;">Múltiples personas afectadas</p>', unsafe_allow_html=True)
 
