@@ -215,18 +215,36 @@ def cargar_borrador(username: str, tipo: str):
         return False
 
 
-def eliminar_borrador(username: str, tipo: str) -> None:
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+def eliminar_borrador(username: str, tipo: str) -> bool:
     """
-    Elimina el borrador del usuario tras un envío definitivo exitoso.
+    Elimina el borrador de un usuario.
+
+    True  -> operación completada.
+    False -> error al conectar o eliminar.
     """
     db = _conectar_db()
-    if db is None:
-        return
-    try:
-        db["borradores"].delete_one({"_username": username, "_tipo": tipo})
-    except Exception as e:
-        st.error(f"Error al eliminar borrador: {str(e)}")
 
+    if db is None:
+        return False
+
+    try:
+        db["borradores"].delete_one({
+            "_username": username,
+            "_tipo": tipo
+        })
+        return True
+
+    except Exception:
+        logger.exception(
+            "Error al eliminar borrador del usuario %s, tipo %s",
+            username, tipo
+        )
+        return False
 
 @st.cache_resource
 def _indices_inicializados():
