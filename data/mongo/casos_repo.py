@@ -1,3 +1,4 @@
+import logging
 import streamlit as st
 from pymongo import MongoClient, ASCENDING
 
@@ -216,8 +217,6 @@ def cargar_borrador(username: str, tipo: str):
 
 
 
-import logging
-
 logger = logging.getLogger(__name__)
 
 def eliminar_borrador(username: str, tipo: str) -> bool:
@@ -396,31 +395,32 @@ class WorksheetProxy:
     # ── Escritura ─────────────────────────────────────────────────────────────
 
     def append_row(self, values: list) -> None:
-        """
-        Inserta un documento mapeando la lista de valores a las cabeceras
-        en el mismo orden que Google Sheets.
-        """
+        """Inserta una fila; propaga errores para impedir falsos éxitos."""
         from pymongo.errors import DuplicateKeyError
+
         if len(values) != len(self._cabeceras):
             raise ValueError(
                 f"Se esperaban {len(self._cabeceras)} valores, "
                 f"se recibieron {len(values)}"
             )
+
         doc = dict(zip(self._cabeceras, values))
         try:
             self._col.insert_one(doc)
         except DuplicateKeyError:
-            ot_val = doc.get("OT-TE", "")
-            st.error(f"❌ El caso '{ot_val}' ya existe en la base de datos.")
+            logger.warning("Intento de insertar un registro duplicado")
+            raise
         except Exception:
-    logger.exception("Error al insertar registro")
-    raise
+            logger.exception("Error al insertar registro en MongoDB")
+            raise
 
     def append_many_rows(self, rows: list) -> None:
-        """Inserta múltiples filas en una sola operación bulk (insert_many)."""
+        """Inserta múltiples filas; propaga errores, incluidos los parciales."""
         if not rows:
             return
+
         from pymongo.errors import BulkWriteError
+
         docs = []
         for values in rows:
             if len(values) != len(self._cabeceras):
@@ -429,12 +429,15 @@ class WorksheetProxy:
                     f"se recibieron {len(values)}"
                 )
             docs.append(dict(zip(self._cabeceras, values)))
+
         try:
             self._col.insert_many(docs, ordered=True)
-        except BulkWriteError as bwe:
-            st.error(f"Error en inserción masiva: {bwe.details}")
-        except Exception as e:
-            st.error(f"Error al insertar registros: {str(e)}")
+        except BulkWriteError:
+            logger.exception("Error de inserción masiva en MongoDB; puede haber registros parciales")
+            raise
+        except Exception:
+            logger.exception("Error al insertar registros en MongoDB")
+            raise
 
     def count(self) -> int:
         """Retorna el número de documentos en la colección (O(1), sin descargar datos)."""
