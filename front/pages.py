@@ -1370,11 +1370,8 @@ def formulario_casos(tipo="individual"):
             with col_des:
                 if st.button("🗑️ Descartar borrador", use_container_width=True, type="secondary", key=f"btn_descartar_{tipo}"):
                     if not eliminar_borrador(st.session_state.username, tipo):
-    st.error(
-        "No fue posible descartar el borrador. "
-        "Intenta nuevamente."
-    )
-    st.stop()
+                        st.error("No fue posible descartar el borrador. Intenta nuevamente.")
+                        st.stop()
                     for _campo in [
                         f"caso_tipo_estudio_{tipo}",
                         f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
@@ -1429,13 +1426,14 @@ def formulario_casos(tipo="individual"):
                         f"imp_sal_dano_vida_{tipo}",
                     ]:
                         st.session_state.pop(_campo, None)
-
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
+                    st.session_state.perfiles_col = []
                     st.session_state.antecedentes = []
                     st.session_state.perfiles_actuales = []
                     st.session_state.desplazamientos = []
                     st.session_state.verificaciones = []
+                    st.session_state.composiciones_col = []
                     st.session_state[_borrador_key] = True
                     st.rerun()
             st.stop()
