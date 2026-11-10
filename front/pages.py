@@ -1369,7 +1369,12 @@ def formulario_casos(tipo="individual"):
                     st.rerun()
             with col_des:
                 if st.button("🗑️ Descartar borrador", use_container_width=True, type="secondary", key=f"btn_descartar_{tipo}"):
-                    eliminar_borrador(st.session_state.username, tipo)
+                    if not eliminar_borrador(st.session_state.username, tipo):
+    st.error(
+        "No fue posible descartar el borrador. "
+        "Intenta nuevamente."
+    )
+    st.stop()
                     for _campo in [
                         f"caso_tipo_estudio_{tipo}",
                         f"caso_ot_anio_{tipo}", f"caso_ot_numero_{tipo}",
@@ -1424,52 +1429,7 @@ def formulario_casos(tipo="individual"):
                         f"imp_sal_dano_vida_{tipo}",
                     ]:
                         st.session_state.pop(_campo, None)
-                    desp_guardados = 0
-                    if st.session_state.desplazamientos:
-                        _start_desp = hoja_desplazamientos.count() + 1
-                        _rows_desp = [
-                            [
-                                _start_desp + i, id_caso, ot_te.strip(),
-                                desp.get("motivo", ""),
-                                desp.get("medios_transporte", ""),
-                                desp.get("dep_origen", ""),
-                                desp.get("mun_origen", ""),
-                                desp.get("dep_destino", ""),
-                                desp.get("mun_destino", ""),
-                                desp.get("frecuencia", ""),
-                                desp.get("tipo_via", ""),
-                                st.session_state.nombre_completo, st.session_state.username
-                            ]
-                            for i, desp in enumerate(st.session_state.desplazamientos)
-                        ]
-                        hoja_desplazamientos.append_many_rows(_rows_desp)
-                        desp_guardados = len(_rows_desp)
-                    ver_guardados = 0
-                    if st.session_state.verificaciones:
-                        _start_ver = hoja_verificaciones.count() + 1
-                        _rows_ver = [
-                            [
-                                _start_ver + i, id_caso, ot_te.strip(),
-                                ver.get("fuente", ""),
-                                ver.get("nombre_fuente", ""),
-                                ver.get("v_hechos_riesgo", ""),
-                                ver.get("v_lugar_hechos", ""),
-                                ver.get("v_actor_hechos", ""),
-                                ver.get("v_motivacion_amenaza", ""),
-                                ver.get("v_perfil_antiguo", ""),
-                                ver.get("v_modo_participacion", ""),
-                                ver.get("v_rol_perfil_antiguo", ""),
-                                ver.get("v_frente_columna", ""),
-                                ver.get("v_perfil_actual", ""),
-                                ver.get("v_organizacion", ""),
-                                ver.get("v_rol_perfil_actual", ""),
-                                ver.get("criterios", ""),
-                                st.session_state.nombre_completo, st.session_state.username
-                            ]
-                            for i, ver in enumerate(st.session_state.verificaciones)
-                        ]
-                        hoja_verificaciones.append_many_rows(_rows_ver)
-                        ver_guardados = len(_rows_ver)
+
                     st.session_state.hechos = []
                     st.session_state.perfiles = []
                     st.session_state.antecedentes = []
