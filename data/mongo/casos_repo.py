@@ -412,8 +412,9 @@ class WorksheetProxy:
         except DuplicateKeyError:
             ot_val = doc.get("OT-TE", "")
             st.error(f"❌ El caso '{ot_val}' ya existe en la base de datos.")
-        except Exception as e:
-            st.error(f"Error al insertar registro: {str(e)}")
+        except Exception:
+    logger.exception("Error al insertar registro")
+    raise
 
     def append_many_rows(self, rows: list) -> None:
         """Inserta múltiples filas en una sola operación bulk (insert_many)."""
